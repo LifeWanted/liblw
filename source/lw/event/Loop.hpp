@@ -15,7 +15,7 @@ public:
         m_loop( other.m_loop )
     {}
 
-    ~Loop( void );
+    virtual ~Loop( void );
 
 private:
     uv_loop_s* m_loop;
