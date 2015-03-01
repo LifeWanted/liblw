@@ -19,6 +19,10 @@ public:
 
     void run( void );
 
+    uv_loop_s* lowest_layer( void ){
+        return m_loop;
+    }
+
 private:
     uv_loop_s* m_loop;
 };

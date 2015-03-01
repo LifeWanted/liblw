@@ -1,6 +1,6 @@
 {
     "target_defaults" : {
-        "cflags" : [ "-Wall", "-std=c++11" ]
+        "cflags" : [ "-Wall", "-std=c++14" ]
     },
     "targets" : [{
         "target_name" : "liblw",
@@ -17,6 +17,8 @@
             "source/lw/Application.hpp",
             "source/lw/Singleton.hpp",
 
+            "source/lw/event/Idle.cpp",
+            "source/lw/event/Idle.hpp",
             "source/lw/event/Loop.cpp",
             "source/lw/event/Loop.hpp"
         ]
