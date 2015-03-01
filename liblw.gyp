@@ -15,12 +15,17 @@
         "sources" : [
             "source/lw/Application.cpp",
             "source/lw/Application.hpp",
+            "source/lw/event.hpp",
+            "source/lw/fs.hpp",
             "source/lw/Singleton.hpp",
 
             "source/lw/event/Idle.cpp",
             "source/lw/event/Idle.hpp",
             "source/lw/event/Loop.cpp",
-            "source/lw/event/Loop.hpp"
+            "source/lw/event/Loop.hpp",
+
+            "source/lw/fs/File.cpp",
+            "source/lw/fs/File.hpp"
         ]
     },{
         "target_name" : "libgtest",
@@ -38,7 +43,9 @@
         "sources" : [
             "tests/main.cpp",
 
-            "tests/event/LoopBasicTests.cpp"
+            "tests/event/LoopBasicTests.cpp",
+
+            "tests/fs/FileTests.cpp"
         ]
     }]
 }
