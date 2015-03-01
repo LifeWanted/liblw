@@ -2,7 +2,8 @@
 
 namespace lw {
 
-#define LW_DEFINE_SINGLETON_INSTANCE( _Type ) _Type* Singleton< _Type >::s_instance = nullptr;
+#define LW_DEFINE_SINGLETON_INSTANCE( _Type ) \
+    template<> _Type* Singleton< _Type >::s_instance = nullptr;
 
 /// @brief Base class for singletons.
 ///
