@@ -1,4 +1,10 @@
+# Generated Project files
+*.Makefile
+*.target.mk
+Makefile
+
 # Compiled Object files
+out/
 *.slo
 *.lo
 *.o
