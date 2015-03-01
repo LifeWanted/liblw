@@ -18,5 +18,9 @@ Loop::~Loop( void ){
     free( m_loop );
 }
 
+void Loop::run( void ){
+    uv_run( m_loop, UV_RUN_DEFAULT );
+}
+
 }
 }

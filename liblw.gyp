@@ -34,7 +34,9 @@
         "dependencies" : [ "liblw", "libgtest" ],
         "include_dirs" : [ "./tests" ],
         "sources" : [
-            "tests/main.cpp"
+            "tests/main.cpp",
+
+            "tests/event/LoopBasicTests.cpp"
         ]
     }]
 }

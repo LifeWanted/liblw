@@ -17,6 +17,8 @@ public:
 
     virtual ~Loop( void );
 
+    void run( void );
+
 private:
     uv_loop_s* m_loop;
 };
