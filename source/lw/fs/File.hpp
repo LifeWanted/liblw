@@ -29,11 +29,7 @@ public:
         open( path, mode ).then( std::forward< Func >( func ) );
     }
 
-    event::Future open( const std::string& path ){
-        return open( path, std::ios::in | std::ios::out );
-    }
-
-    event::Future open( const std::string& path, const std::ios::openmode mode );
+    event::Future open( const std::string& path, const std::ios::openmode mode = std::ios::in | std::ios::out );
 
 private:
     static void _handle_cb( uv_fs_s* handle );
