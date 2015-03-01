@@ -3,6 +3,9 @@
 *.target.mk
 Makefile
 
+# Dependencies
+gtest/
+
 # Compiled Object files
 out/
 *.slo
