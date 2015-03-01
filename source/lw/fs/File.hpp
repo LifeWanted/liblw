@@ -2,9 +2,11 @@
 
 #include <functional>
 #include <ios>
+#include <memory>
 #include <string>
 
 #include "lw/event/Loop.hpp"
+#include "lw/event/Promise.hpp"
 
 struct uv_fs_s;
 
@@ -24,29 +26,23 @@ public:
     ):
         File( loop )
     {
-        open( path, mode, std::forward< Func >( func ) );
+        open( path, mode ).then( std::forward< Func >( func ) );
     }
 
-    template< typename Func >
-    void open( const std::string& path, Func&& func ){
-        open( path, std::ios::in | std::ios::out, std::forward< Func >( func ) );
+    event::Future open( const std::string& path ){
+        return open( path, std::ios::in | std::ios::out );
     }
 
-    template< typename Func >
-    void open( const std::string& path, const std::ios::openmode mode, Func&& func ){
-        m_callback = std::forward< Func >( func );
-        _open( path, mode );
-    }
+    event::Future open( const std::string& path, const std::ios::openmode mode );
 
 private:
     static void _handle_cb( uv_fs_s* handle );
 
     void _open( const std::string& path, const std::ios::openmode mode );
 
-    typedef std::function< void( void ) > Callback;
     event::Loop& m_loop;
     uv_fs_s* m_handle;
-    File::Callback m_callback;
+    std::unique_ptr< event::Promise > m_promise;
 };
 
 }

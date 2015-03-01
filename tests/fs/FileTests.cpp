@@ -21,18 +21,19 @@ TEST_F( FileTests, Open ){
     fs::File file( loop );
     bool started = false;
     bool finished = false;
+    bool promiseCalled = false;
 
-    file.open(
-        fileName,
-        [&](){
-            EXPECT_TRUE( started );
-            EXPECT_FALSE( finished );
-        }
-    );
+    file.open( fileName ).then([&]( event::Promise&& next ){
+        EXPECT_TRUE( started );
+        EXPECT_FALSE( finished );
+        promiseCalled = true;
+    });
 
     started = true;
     loop.run();
     finished = true;
+
+    EXPECT_TRUE( promiseCalled );
 }
 
 }

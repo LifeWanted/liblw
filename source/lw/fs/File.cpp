@@ -10,9 +10,15 @@ namespace fs {
 File::File( event::Loop& loop ):
     m_loop( loop ),
     m_handle( (uv_fs_s*)malloc( sizeof( uv_fs_s ) ) ),
-    m_callback( nullptr )
+    m_promise( nullptr )
 {
     m_handle->data = (void*)this;
+}
+
+event::Future File::open( const std::string& path, const std::ios::openmode mode ){
+    _open( path, mode );
+    m_promise = std::make_unique< event::Promise >();
+    return m_promise->future();
 }
 
 void File::_open( const std::string& path, const std::ios::openmode mode ){
@@ -43,7 +49,7 @@ void File::_open( const std::string& path, const std::ios::openmode mode ){
 }
 
 void File::_handle_cb( uv_fs_s* handle ){
-    ((File*)handle->data)->m_callback();
+    ((File*)handle->data)->m_promise->resolve();
 }
 
 }
