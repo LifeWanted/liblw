@@ -12,7 +12,7 @@ class Future;
 class Promise {
 public:
     Promise( void );
-    Promise( const Promise&) = delete;
+    Promise( const Promise& ) = delete;
     Promise( Promise&& other );
 
     Future future( void );
@@ -38,21 +38,26 @@ private:
 
 class Future {
 public:
-    template< typename Func >
+    template<
+        typename Func,
+        typename = typename std::result_of< Func( Promise&& ) >::type
+    >
     Future then( Func&& func ){
-        auto promise = std::make_shared< Promise >();
-        m_state->handler = [=](){
-            func( std::move( *promise ) );
+        auto next = std::make_shared< Promise >();
+        auto prev = m_state;
+        m_state->handler = [ func, prev, next ]() mutable {
+            func( std::move( *next ) );
+            prev.reset();
         };
-        return promise->future();
+        return next->future();
     }
 
-    Future then( Promise&& promise );
+    void then( Promise&& promise );
 
 private:
     friend class ::lw::event::Promise;
 
-    Future( Promise::_SharedStatePtr state ):
+    Future( const Promise::_SharedStatePtr& state ):
         m_state( state )
     {}
 

@@ -24,18 +24,33 @@ Future Promise::future( void ){
 
 void Promise::resolve( void ){
     m_state->resolved = true;
-    m_state->handler();
+    if( m_state->handler ){
+        m_state->handler();
+    }
 }
 
 void Promise::reject( void ){
     m_state->rejected = true;
-    m_state->handler();
+    if( m_state->handler ){
+        m_state->handler();
+    }
 }
 
 Promise& Promise::operator=( Promise&& other ){
     m_state = std::move( other.m_state );
     other.m_state = nullptr;
     return *this;
+}
+
+void Future::then( Promise&& promise ){
+    auto next = std::make_shared< Promise >( std::move( promise ) );
+    auto prev = m_state;
+    m_state->handler = [ prev, next ]() mutable {
+        if( next ){
+            next->resolve();
+        }
+        prev.reset();
+    };
 }
 
 }
