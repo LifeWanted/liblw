@@ -1,4 +1,5 @@
 
+#include <cstring>
 #include <uv.h>
 
 #include "lw/fs/File.hpp"
@@ -9,15 +10,26 @@ namespace fs {
 File::File( event::Loop& loop ):
     m_loop( loop ),
     m_handle( (uv_fs_s*)malloc( sizeof( uv_fs_s ) ) ),
-    m_promise( nullptr )
+    m_promise( nullptr ),
+    m_file_descriptor( -1 ),
+    m_write_buffer{ 0 },
+    m_uv_write_buffer( (uv_buf_t*)malloc( sizeof( uv_buf_t ) ) )
 {
     m_handle->data = (void*)this;
 }
 
+File::~File( void ){
+    if( m_file_descriptor ){
+        uv_fs_close( m_loop.lowest_layer(), m_handle, m_file_descriptor, nullptr );
+    }
+
+    free( m_uv_write_buffer );
+    free( m_handle );
+}
+
 event::Future File::open( const std::string& path, const std::ios::openmode mode ){
     _open( path, mode );
-    m_promise = std::make_unique< event::Promise >();
-    return m_promise->future();
+    return _reset_promise();
 }
 
 void File::_open( const std::string& path, const std::ios::openmode mode ){
@@ -43,12 +55,57 @@ void File::_open( const std::string& path, const std::ios::openmode mode ){
         path.c_str(),
         flags,
         permissions,
-        &File::_handle_cb
+        &File::_open_cb
     );
 }
 
-void File::_handle_cb( uv_fs_s* handle ){
-    ((File*)handle->data)->m_promise->resolve();
+void File::_open_cb( uv_fs_s* handle ){
+    File* file = (File*)handle->data;
+    file->m_file_descriptor = handle->result;
+    file->m_promise->resolve();
+}
+
+event::Future File::close( void ){
+    uv_fs_close(
+        m_loop.lowest_layer(),
+        m_handle,
+        m_file_descriptor,
+        &File::_close_cb
+    );
+    return _reset_promise();
+}
+
+void File::_close_cb( uv_fs_s* handle ){
+    File* file = (File*)handle->data;
+    file->m_file_descriptor = -1;
+    file->m_promise->resolve();
+}
+
+event::Future File::write( const std::string& str ){
+    std::memcpy( m_write_buffer, str.c_str(), str.size() + 1 );
+    *m_uv_write_buffer = uv_buf_init( (char*)m_write_buffer, str.size() );
+
+    uv_fs_write(
+        m_loop.lowest_layer(),
+        m_handle,
+        m_file_descriptor,
+        m_uv_write_buffer,
+        1,
+        -1,
+        &File::_write_cb
+    );
+
+    return _reset_promise();
+}
+
+void File::_write_cb( uv_fs_s* handle ){
+    File* file = (File*)handle->data;
+    file->m_promise->resolve();
+}
+
+event::Future File::_reset_promise( void ){
+    m_promise = std::make_unique< event::Promise >();
+    return m_promise->future();
 }
 
 }
