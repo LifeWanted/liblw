@@ -18,6 +18,8 @@ File::File( event::Loop& loop ):
     m_handle->data = (void*)this;
 }
 
+// -------------------------------------------------------------------------- //
+
 File::~File( void ){
     if( m_file_descriptor ){
         uv_fs_close( m_loop.lowest_layer(), m_handle, m_file_descriptor, nullptr );
@@ -27,10 +29,14 @@ File::~File( void ){
     free( m_handle );
 }
 
+// -------------------------------------------------------------------------- //
+
 event::Future File::open( const std::string& path, const std::ios::openmode mode ){
     _open( path, mode );
     return _reset_promise();
 }
+
+// -------------------------------------------------------------------------- //
 
 void File::_open( const std::string& path, const std::ios::openmode mode ){
     int flags = O_CREAT
@@ -59,11 +65,15 @@ void File::_open( const std::string& path, const std::ios::openmode mode ){
     );
 }
 
+// -------------------------------------------------------------------------- //
+
 void File::_open_cb( uv_fs_s* handle ){
     File* file = (File*)handle->data;
     file->m_file_descriptor = handle->result;
     file->m_promise->resolve();
 }
+
+// -------------------------------------------------------------------------- //
 
 event::Future File::close( void ){
     uv_fs_close(
@@ -75,11 +85,15 @@ event::Future File::close( void ){
     return _reset_promise();
 }
 
+// -------------------------------------------------------------------------- //
+
 void File::_close_cb( uv_fs_s* handle ){
     File* file = (File*)handle->data;
     file->m_file_descriptor = -1;
     file->m_promise->resolve();
 }
+
+// -------------------------------------------------------------------------- //
 
 event::Future File::write( const std::string& str ){
     std::memcpy( m_write_buffer, str.c_str(), str.size() + 1 );
@@ -98,10 +112,14 @@ event::Future File::write( const std::string& str ){
     return _reset_promise();
 }
 
+// -------------------------------------------------------------------------- //
+
 void File::_write_cb( uv_fs_s* handle ){
     File* file = (File*)handle->data;
     file->m_promise->resolve();
 }
+
+// -------------------------------------------------------------------------- //
 
 event::Future File::_reset_promise( void ){
     m_promise = std::make_unique< event::Promise >();

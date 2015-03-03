@@ -14,37 +14,73 @@ struct uv_buf_t;
 namespace lw {
 namespace fs {
 
+/// @brief Wraps file access in a clean, promise-friendly package.
 class File {
 public:
+    /// @brief Constructs an unopened file associated with the given event loop.
+    ///
+    /// @param loop The event loop to use for all file-related events.
     File( event::Loop& loop );
 
-    template< typename Func >
-    File(
-        event::Loop& loop,
-        const std::string& path,
-        const std::ios::openmode mode,
-        Func&& func
-    ):
-        File( loop )
-    {
-        open( path, mode ).then( std::forward< Func >( func ) );
-    }
+    // ---------------------------------------------------------------------- //
 
+    /// @brief Destructor will close the file if it is open.
     ~File( void );
 
-    event::Future open( const std::string& path, const std::ios::openmode mode = std::ios::in | std::ios::out );
+    // ---------------------------------------------------------------------- //
 
+    /// @brief Asynchronously opens a file handle.
+    ///
+    /// @param path The path to the file to open.
+    /// @param mode The mode to open with (default is `in` and `out`).
+    ///
+    /// @return A promise to have the file opened.
+    event::Future open(
+        const std::string& path,
+        const std::ios::openmode mode = std::ios::in | std::ios::out
+    );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Asynchronously closes the file handle.
+    ///
+    /// @return A promise to close the file.
     event::Future close( void );
 
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Asynchronously writes data to the file.
+    ///
+    /// @param str The data to write.
+    ///
+    /// @return A promise to have the data written.
     event::Future write( const std::string& str );
 
+    // ---------------------------------------------------------------------- //
+
 private:
+    /// @brief Handler for open requests.
     static void _open_cb( uv_fs_s* handle );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Handler for close requests.
     static void _close_cb( uv_fs_s* handle );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Handler for write requests.
     static void _write_cb( uv_fs_s* handle );
 
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Creates a new promise and returns the associate future.
     event::Future _reset_promise( void );
+
+
     void _open( const std::string& path, const std::ios::openmode mode );
+
+    // ---------------------------------------------------------------------- //
 
     event::Loop& m_loop;
     uv_fs_s* m_handle;
