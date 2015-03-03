@@ -103,6 +103,28 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @brief Chaining for `Future`-returning functors.
+    ///
+    /// @tparam Func A functor which returns a `Future`.
+    ///
+    /// @param func The functor to call when this one is ready.
+    ///
+    /// @return A `Future` which will be resolved by `func`.
+    template<
+        typename Func,
+        typename FuncResult = typename std::result_of< Func() >::type,
+        typename std::enable_if<
+            std::is_base_of< Future, FuncResult >::value
+        >::type* = nullptr
+    >
+    Future then( Func&& func ){
+        return then([ func ]( Promise&& promise ){
+            func().then( std::move( promise ) );
+        });
+    }
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief Connects this promise to the one provided.
     ///
     /// @param promise The promise to resolve/reject with this one.

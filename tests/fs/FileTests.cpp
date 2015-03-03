@@ -11,13 +11,15 @@ namespace tests {
 
 struct FileTests : public testing::Test {
     event::Loop loop;
-    std::string fileName = "/tmp/testFile";
+    std::string fileName = "/tmp/liblw-filetests-testfile";
     std::string contents = "an awesome message to keep";
 
     void TearDown( void ){
         std::remove( fileName.c_str() );
     }
 };
+
+// -------------------------------------------------------------------------- //
 
 TEST_F( FileTests, Open ){
     fs::File file( loop );
@@ -38,23 +40,27 @@ TEST_F( FileTests, Open ){
     EXPECT_TRUE( promiseCalled );
 }
 
+// -------------------------------------------------------------------------- //
+
 TEST_F( FileTests, Close ){
     fs::File file( loop );
 
-    file.open( fileName ).then([&]( event::Promise&& next ){
-        file.close().then( std::move( next ) );
+    file.open( fileName ).then([&](){
+        return file.close();
     });
 
     loop.run();
 }
 
+// -------------------------------------------------------------------------- //
+
 TEST_F( FileTests, Write ){
     fs::File file( loop );
 
-    file.open( fileName ).then([&]( event::Promise&& next ){
-        file.write( contents ).then( std::move( next ) );
-    }).then([&]( event::Promise&& next ){
-        file.close().then( std::move( next ) );
+    file.open( fileName ).then([&](){
+        return file.write( contents );
+    }).then([&](){
+        return file.close();
     });
 
     loop.run();
