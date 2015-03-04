@@ -75,10 +75,9 @@ private:
     // ---------------------------------------------------------------------- //
 
     /// @brief Creates a new promise and returns the associate future.
+    ///
+    /// @return The future half of the new promise.
     event::Future _reset_promise( void );
-
-
-    void _open( const std::string& path, const std::ios::openmode mode );
 
     // ---------------------------------------------------------------------- //
 

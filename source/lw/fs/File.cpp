@@ -32,13 +32,6 @@ File::~File( void ){
 // -------------------------------------------------------------------------- //
 
 event::Future File::open( const std::string& path, const std::ios::openmode mode ){
-    _open( path, mode );
-    return _reset_promise();
-}
-
-// -------------------------------------------------------------------------- //
-
-void File::_open( const std::string& path, const std::ios::openmode mode ){
     int flags = O_CREAT
         | (mode & std::ios::app     ? O_APPEND  : 0)
         | (mode & std::ios::trunc   ? O_TRUNC   : 0)
@@ -63,6 +56,8 @@ void File::_open( const std::string& path, const std::ios::openmode mode ){
         permissions,
         &File::_open_cb
     );
+
+    return _reset_promise();
 }
 
 // -------------------------------------------------------------------------- //
