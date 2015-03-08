@@ -17,6 +17,8 @@
             "source/lw/Application.hpp",
             "source/lw/event.hpp",
             "source/lw/fs.hpp",
+            "source/lw/iter.hpp"
+            "source/lw/memory.hpp",
             "source/lw/Singleton.hpp",
 
             "source/lw/event/Idle.cpp",
@@ -28,7 +30,12 @@
             "source/lw/event/Promise.void.hpp",
 
             "source/lw/fs/File.cpp",
-            "source/lw/fs/File.hpp"
+            "source/lw/fs/File.hpp",
+
+            "source/lw/iter/Iterable.hpp",
+
+            "source/lw/memory/Buffer.cpp",
+            "source/lw/memory/Buffer.hpp"
         ]
     },{
         "target_name" : "libgtest",
