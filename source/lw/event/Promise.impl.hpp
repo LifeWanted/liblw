@@ -17,5 +17,13 @@ inline Future< void > Promise< void >::future( void ){
     return Future< void >( m_state );
 }
 
+// -------------------------------------------------------------------------- //
+
+template< typename T >
+template< typename Func, typename >
+Future<> Future< T >::then( Func&& func ){
+    return then< void >( std::move( func ) );
+}
+
 }
 }

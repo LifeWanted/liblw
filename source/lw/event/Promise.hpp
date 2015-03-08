@@ -142,6 +142,21 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @brief Chaining for generic functors promising nothing.
+    ///
+    /// @tparam Func A functor type that can take a `Promise&&` as its parameter.
+    ///
+    /// @param func The functor to call when this one is resolved.
+    ///
+    /// @return A new future, for when the provided `func` completes its action.
+    template<
+        typename Func,
+        typename = typename std::result_of< Func( T&&, Promise<>&& ) >::type
+    >
+    Future<> then( Func&& func );
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief Chaining for `Future`-returning functors.
     ///
     /// @tparam Func A functor which returns a `Future`.
