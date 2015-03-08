@@ -125,7 +125,7 @@ public:
         typename = typename std::result_of< Func( T&&, Promise< Result >&& ) >::type
     >
     Future< Result > then( Func&& func ){
-        auto next = std::make_shared< Promise< T > >();
+        auto next = std::make_shared< Promise< Result > >();
         auto prev = m_state;
         m_state->resolve = [ func, prev, next ]( T&& value ) mutable {
             func( std::move( value ), std::move( *next ) );
