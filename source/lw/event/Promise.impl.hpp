@@ -7,7 +7,7 @@ namespace lw {
 namespace event {
 
 template< typename T >
-Future< T > Promise< T >::future( void ){
+inline Future< T > Promise< T >::future( void ){
     return Future< T >( m_state );
 }
 
