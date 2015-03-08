@@ -22,91 +22,6 @@ namespace iter {
 /// @tparam ValueType   The type being iterated over.
 template< class T, typename ValueType >
 class RandomAccessIterator {
-private:
-    /// @brief Our offset within whatever container is being iterated over.
-    std::size_t m_offset;
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Up casts `this` to the child class.
-    ///
-    /// @return A pointer to `T` for `this`.
-    T* castThis( void ){
-        return (T*)this;
-    }
-
-    // ---------------------------------------------------------------------- //
-
-    /// @copydoc RandomAccessIterator::castThis()
-    const T* castThis( void ) const {
-        return (T*)this;
-    }
-
-    // ---------------------------------------------------------------------- //
-
-protected:
-    /// @brief Access to the current offset position for child classes.
-    ///
-    /// @return The current offset into whatever container is being iterated over.
-    std::size_t _getOffset( void ) const {
-        return m_offset;
-    }
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Default constructor.
-    RandomAccessIterator( void ):
-        m_offset( 0 )
-    {}
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Starting offset constructor.
-    ///
-    /// @param offset The offset in the container to start at.
-    explicit RandomAccessIterator( const std::size_t offset ):
-        m_offset( offset )
-    {}
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Copy constructor.
-    ///
-    /// @param other The iterator to copy.
-    RandomAccessIterator( const RandomAccessIterator& other ):
-        m_offset( other.m_offset )
-    {}
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Assignment operator only available to sub-classes.
-    ///
-    /// Copies the position of `other` into this one. It is up to the child
-    /// class `T` to implement any aditional copying or moving of data as needed.
-    ///
-    /// @param other The iterator to copy the position of.
-    ///
-    /// @return A reference to this iterator as a `T`.
-    T& operator=( const RandomAccessIterator& other ){
-        m_offset = other.m_offset;
-        return *castThis();
-    }
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Equality operator only available to sub-classes.
-    ///
-    /// Two `RandomAccessIterator`s are considered equal if both have the same
-    /// offset. It is up to the child class `T` to implement any further
-    /// equality comparisons as needed.
-    ///
-    /// @param other The iterator to check for equality with.
-    bool operator==( const RandomAccessIterator& other ) const {
-        return m_offset == other.m_offset;
-    }
-
-    // ---------------------------------------------------------------------- //
-
 public:
     typedef ValueType       value_type;         ///< The type being iterated over.
     typedef value_type&     reference;          ///< For references to values.
@@ -136,7 +51,7 @@ public:
     /// @return A reference to this iterator at the new position.
     T& operator+=( const std::size_t rhs ){
         m_offset += rhs;
-        return *castThis();
+        return *cast_this();
     }
 
     // ---------------------------------------------------------------------- //
@@ -147,7 +62,7 @@ public:
     ///
     /// @return A reference to this iterator at the new position.
     T& operator-=( const std::size_t rhs ){
-        return (*castThis()) += (-rhs);
+        return (*cast_this()) += (-rhs);
     }
 
     // ---------------------------------------------------------------------- //
@@ -157,7 +72,7 @@ public:
     /// @return A reference to this iterator at the new position.
     T& operator++( void ){
         ++m_offset;
-        return *castThis();
+        return *cast_this();
     }
 
     // ---------------------------------------------------------------------- //
@@ -167,7 +82,7 @@ public:
     /// @return A reference to this iterator at the new position.
     T& operator--( void ){
         --m_offset;
-        return *castThis();
+        return *cast_this();
     }
 
     // ---------------------------------------------------------------------- //
@@ -177,7 +92,7 @@ public:
     ///
     /// @return An iterator pointing to the old position.
     T operator++( int ){
-        T iterator( *castThis() );
+        T iterator( *cast_this() );
         ++m_offset;
         return std::move( iterator );
     }
@@ -189,7 +104,7 @@ public:
     ///
     /// @return An iterator pointing to the old position.
     T operator--( int ){
-        T iterator( *castThis() );
+        T iterator( *cast_this() );
         --m_offset;
         return std::move( iterator );
     }
@@ -221,7 +136,7 @@ public:
     /// @return True if the position of this iterator is less than the position
     ///         of the other or equal to it.
     bool operator<=( const T& other ) const {
-        return (*castThis()) == other || (*castThis()) < other;
+        return (*cast_this()) == other || (*cast_this()) < other;
     }
 
     // ---------------------------------------------------------------------- //
@@ -231,7 +146,7 @@ public:
     /// @return True if the position of this iterator is greater than the
     ///         position of the other or equal to it.
     bool operator>=( const T& other ) const {
-        return (*castThis()) == other || (*castThis()) > other;
+        return (*cast_this()) == other || (*cast_this()) > other;
     }
 
     // ---------------------------------------------------------------------- //
@@ -278,6 +193,91 @@ public:
     /// @copydoc operator-(const T&, const difference_type)
     friend T operator-( const difference_type n, const T& it ){
         return it - n;
+    }
+
+    // ---------------------------------------------------------------------- //
+
+protected:
+    /// @brief Default constructor.
+    RandomAccessIterator( void ):
+        m_offset( 0 )
+    {}
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Starting offset constructor.
+    ///
+    /// @param offset The offset in the container to start at.
+    explicit RandomAccessIterator( const std::size_t offset ):
+        m_offset( offset )
+    {}
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Copy constructor.
+    ///
+    /// @param other The iterator to copy.
+    RandomAccessIterator( const RandomAccessIterator& other ):
+        m_offset( other.m_offset )
+    {}
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Access to the current offset position for child classes.
+    ///
+    /// @return The current offset into whatever container is being iterated over.
+    std::size_t get_offset( void ) const {
+        return m_offset;
+    }
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Assignment operator only available to sub-classes.
+    ///
+    /// Copies the position of `other` into this one. It is up to the child
+    /// class `T` to implement any aditional copying or moving of data as needed.
+    ///
+    /// @param other The iterator to copy the position of.
+    ///
+    /// @return A reference to this iterator as a `T`.
+    T& operator=( const RandomAccessIterator& other ){
+        m_offset = other.m_offset;
+        return *cast_this();
+    }
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Equality operator only available to sub-classes.
+    ///
+    /// Two `RandomAccessIterator`s are considered equal if both have the same
+    /// offset. It is up to the child class `T` to implement any further
+    /// equality comparisons as needed.
+    ///
+    /// @param other The iterator to check for equality with.
+    bool operator==( const RandomAccessIterator& other ) const {
+        return m_offset == other.m_offset;
+    }
+
+    // ---------------------------------------------------------------------- //
+
+private:
+    /// @brief Our offset within whatever container is being iterated over.
+    std::size_t m_offset;
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Up casts `this` to the child class.
+    ///
+    /// @return A pointer to `T` for `this`.
+    T* cast_this( void ){
+        return (T*)this;
+    }
+
+    // ---------------------------------------------------------------------- //
+
+    /// @copydoc RandomAccessIterator::cast_this()
+    const T* cast_this( void ) const {
+        return (T*)this;
     }
 };
 
