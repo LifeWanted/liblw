@@ -4,18 +4,13 @@
 #include <functional>
 #include <memory>
 
+#include "lw/event/Promise.hpp"
+
 namespace lw {
 namespace event {
 
-template< typename T >
-class Future;
-
-/// @brief `Promise`s and `Future`s allow for chaining callbacks without nesting.
-///
-/// A `Promise` is the active side of the pair. Asynchronous functions create a
-/// promise and later fulfill it by either resolving or rejecting the promise.
-template< typename T >
-class Promise {
+template<>
+class Promise< void >{
 public:
     /// @brief Default construction.
     Promise( void ):
@@ -43,15 +38,15 @@ public:
     // ---------------------------------------------------------------------- //
 
     /// @brief Returns a future associated with this promise.
-    Future< T > future( void );
+    Future< void > future( void );
 
     // ---------------------------------------------------------------------- //
 
     /// @brief Resolves the promise as a success.
-    void resolve( T&& value ){
+    void resolve( void ){
         m_state->resolved = true;
         if( m_state->resolve ){
-            m_state->resolve( std::move( value ) );
+            m_state->resolve();
         }
     }
 
@@ -89,7 +84,7 @@ private:
     struct _SharedState {
         std::atomic_bool resolved;
         std::atomic_bool rejected;
-        std::function< void( T&& ) > resolve;
+        std::function< void( void ) > resolve;
         std::function< void( void ) > reject;
     };
     typedef std::shared_ptr< _SharedState > _SharedStatePtr;
@@ -102,18 +97,14 @@ private:
 
 // -------------------------------------------------------------------------- //
 
-/// @brief The passive half of the `Promise`-`Future` pair.
-///
-/// `Future`s are the requester's handle on an asynchronous event. They allow
-/// callbacks to be registered for after it has been started.
-template< typename T >
-class Future {
+template<>
+class Future< void >{
 public:
     /// @brief The type promised by this future.
-    typedef T ResultType;
+    typedef void ResultType;
 
     /// @brief The type of Promise that made this future.
-    typedef Promise< T > PromiseType;
+    typedef Promise< void > PromiseType;
 
     // ---------------------------------------------------------------------- //
 
@@ -128,13 +119,13 @@ public:
     template<
         typename Result,
         typename Func,
-        typename = typename std::result_of< Func( T&&, Promise< Result >&& ) >::type
+        typename = typename std::result_of< Func( Promise< Result >&& ) >::type
     >
     Future< Result > then( Func&& func ){
         auto next = std::make_shared< Promise< Result > >();
         auto prev = m_state;
-        m_state->resolve = [ func, prev, next ]( T&& value ) mutable {
-            func( std::move( value ), std::move( *next ) );
+        m_state->resolve = [ func, prev, next ]() mutable {
+            func( std::move( *next ) );
             prev.reset();
         };
         return next->future();
@@ -151,7 +142,7 @@ public:
     /// @return A `Future` which will be resolved by `func`.
     template<
         typename Func,
-        typename FuncResult = typename std::result_of< Func( T&& ) >::type,
+        typename FuncResult = typename std::result_of< Func() >::type,
         typename std::enable_if<
             std::is_base_of<
                 Future< typename FuncResult::ResultType >,
@@ -161,8 +152,8 @@ public:
     >
     Future< typename FuncResult::ResultType > then( Func&& func ){
         typedef typename FuncResult::ResultType Result;
-        return then< Result >([ func ]( T&& value, Promise< Result >&& promise ){
-            func( std::move( value ) ).then( std::move( promise ) );
+        return then< Result >([ func ]( Promise< Result >&& promise ){
+            func().then( std::move( promise ) );
         });
     }
 
@@ -174,9 +165,9 @@ public:
     void then( PromiseType&& promise ){
         auto next = std::make_shared< PromiseType >( std::move( promise ) );
         auto prev = m_state;
-        m_state->resolve = [ prev, next ]( T&& value ) mutable {
+        m_state->resolve = [ prev, next ]() mutable {
             if( next ){
-                next->resolve( std::move( value ) );
+                next->resolve();
             }
             prev.reset();
         };

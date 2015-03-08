@@ -27,7 +27,7 @@ TEST_F( FileTests, Open ){
     bool finished = false;
     bool promiseCalled = false;
 
-    file.open( fileName ).then< int >([&]( int, event::Promise< int >&& next ){
+    file.open( fileName ).then< void >([&]( event::Promise< void >&& next ){
         EXPECT_TRUE( started );
         EXPECT_FALSE( finished );
         promiseCalled = true;
@@ -45,7 +45,7 @@ TEST_F( FileTests, Open ){
 TEST_F( FileTests, Close ){
     fs::File file( loop );
 
-    file.open( fileName ).then([&]( int ){
+    file.open( fileName ).then([&](){
         return file.close();
     });
 
@@ -57,9 +57,9 @@ TEST_F( FileTests, Close ){
 TEST_F( FileTests, Write ){
     fs::File file( loop );
 
-    file.open( fileName ).then([&]( int ){
+    file.open( fileName ).then([&](){
         return file.write( contents );
-    }).then([&]( int ){
+    }).then([&](){
         return file.close();
     });
 

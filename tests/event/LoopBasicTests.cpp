@@ -25,7 +25,7 @@ TEST_F( LoopBasicTests, IdleLoop ){
         }
     });
 
-    EXPECT_EQ( 0, counter );
+    EXPECT_EQ( 0ul, counter );
 
     loop.run();
 

@@ -24,6 +24,8 @@
             "source/lw/event/Loop.cpp",
             "source/lw/event/Loop.hpp",
             "source/lw/event/Promise.hpp",
+            "source/lw/event/Promise.impl.hpp",
+            "source/lw/event/Promise.void.hpp",
 
             "source/lw/fs/File.cpp",
             "source/lw/fs/File.hpp"
