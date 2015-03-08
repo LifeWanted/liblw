@@ -23,7 +23,6 @@
             "source/lw/event/Idle.hpp",
             "source/lw/event/Loop.cpp",
             "source/lw/event/Loop.hpp",
-            "source/lw/event/Promise.cpp",
             "source/lw/event/Promise.hpp",
 
             "source/lw/fs/File.cpp",
