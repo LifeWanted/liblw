@@ -14,7 +14,7 @@ class Future;
 ///
 /// A `Promise` is the active side of the pair. Asynchronous functions create a
 /// promise and later fulfill it by either resolving or rejecting the promise.
-template< typename T >
+template< typename T = void >
 class Promise {
 public:
     /// @brief Default construction.
@@ -106,7 +106,7 @@ private:
 ///
 /// `Future`s are the requester's handle on an asynchronous event. They allow
 /// callbacks to be registered for after it has been started.
-template< typename T >
+template< typename T = void >
 class Future {
 public:
     /// @brief The type promised by this future.

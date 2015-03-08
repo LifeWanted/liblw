@@ -34,7 +34,7 @@ public:
     /// @param mode The mode to open with (default is `in` and `out`).
     ///
     /// @return A promise to have the file opened.
-    event::Future< void > open(
+    event::Future<> open(
         const std::string& path,
         const std::ios::openmode mode = std::ios::in | std::ios::out
     );
@@ -44,7 +44,7 @@ public:
     /// @brief Asynchronously closes the file handle.
     ///
     /// @return A promise to close the file.
-    event::Future< void > close( void );
+    event::Future<> close( void );
 
     // ---------------------------------------------------------------------- //
 
@@ -53,7 +53,7 @@ public:
     /// @param str The data to write.
     ///
     /// @return A promise to have the data written.
-    event::Future< void > write( const std::string& str );
+    event::Future<> write( const std::string& str );
 
     // ---------------------------------------------------------------------- //
 
@@ -76,13 +76,13 @@ private:
     /// @brief Creates a new promise and returns the associate future.
     ///
     /// @return The future half of the new promise.
-    event::Future< void > _reset_promise( void );
+    event::Future<> _reset_promise( void );
 
     // ---------------------------------------------------------------------- //
 
     event::Loop& m_loop;
     uv_fs_s* m_handle;
-    std::unique_ptr< event::Promise< void > > m_promise;
+    std::unique_ptr< event::Promise<> > m_promise;
     int m_file_descriptor;
     unsigned char m_write_buffer[ 1024 ];
     uv_buf_t* m_uv_write_buffer;
