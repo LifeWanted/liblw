@@ -110,10 +110,10 @@ template< typename T = void >
 class Future {
 public:
     /// @brief The type promised by this future.
-    typedef T ResultType;
+    typedef T result_type;
 
     /// @brief The type of Promise that made this future.
-    typedef Promise< T > PromiseType;
+    typedef Promise< T > promise_type;
 
     // ---------------------------------------------------------------------- //
 
@@ -169,13 +169,13 @@ public:
         typename FuncResult = typename std::result_of< Func( T&& ) >::type,
         typename std::enable_if<
             std::is_base_of<
-                Future< typename FuncResult::ResultType >,
+                Future< typename FuncResult::result_type >,
                 FuncResult
             >::value
         >::type* = nullptr
     >
-    Future< typename FuncResult::ResultType > then( Func&& func ){
-        typedef typename FuncResult::ResultType Result;
+    Future< typename FuncResult::result_type > then( Func&& func ){
+        typedef typename FuncResult::result_type Result;
         return then< Result >([ func ]( T&& value, Promise< Result >&& promise ){
             func( std::move( value ) ).then( std::move( promise ) );
         });
@@ -186,8 +186,8 @@ public:
     /// @brief Connects this promise to the one provided.
     ///
     /// @param promise The promise to resolve/reject with this one.
-    void then( PromiseType&& promise ){
-        auto next = std::make_shared< PromiseType >( std::move( promise ) );
+    void then( promise_type&& promise ){
+        auto next = std::make_shared< promise_type >( std::move( promise ) );
         auto prev = m_state;
         m_state->resolve = [ prev, next ]( T&& value ) mutable {
             if( next ){
@@ -208,7 +208,7 @@ private:
     /// @brief Only `Promise`s can construct us.
     ///
     /// @param state The shared state to associate with.
-    Future( const typename PromiseType::_SharedStatePtr& state ):
+    Future( const typename promise_type::_SharedStatePtr& state ):
         m_state( state )
     {}
 
@@ -229,7 +229,7 @@ private:
     // ---------------------------------------------------------------------- //
 
     /// @brief Our internal shared state.
-    typename PromiseType::_SharedStatePtr m_state;
+    typename promise_type::_SharedStatePtr m_state;
 };
 
 }
