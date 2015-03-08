@@ -33,6 +33,7 @@
             "source/lw/fs/File.hpp",
 
             "source/lw/iter/Iterable.hpp",
+            "source/lw/iter/RandomAccessIterator.hpp",
 
             "source/lw/memory/Buffer.cpp",
             "source/lw/memory/Buffer.hpp"
