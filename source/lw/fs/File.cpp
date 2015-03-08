@@ -31,7 +31,7 @@ File::~File( void ){
 
 // -------------------------------------------------------------------------- //
 
-event::Future File::open( const std::string& path, const std::ios::openmode mode ){
+event::Future< int > File::open( const std::string& path, const std::ios::openmode mode ){
     int flags = O_CREAT
         | (mode & std::ios::app     ? O_APPEND  : 0)
         | (mode & std::ios::trunc   ? O_TRUNC   : 0)
@@ -65,12 +65,12 @@ event::Future File::open( const std::string& path, const std::ios::openmode mode
 void File::_open_cb( uv_fs_s* handle ){
     File* file = (File*)handle->data;
     file->m_file_descriptor = handle->result;
-    file->m_promise->resolve();
+    file->m_promise->resolve( 1 );
 }
 
 // -------------------------------------------------------------------------- //
 
-event::Future File::close( void ){
+event::Future< int > File::close( void ){
     uv_fs_close(
         m_loop.lowest_layer(),
         m_handle,
@@ -85,12 +85,12 @@ event::Future File::close( void ){
 void File::_close_cb( uv_fs_s* handle ){
     File* file = (File*)handle->data;
     file->m_file_descriptor = -1;
-    file->m_promise->resolve();
+    file->m_promise->resolve( 1 );
 }
 
 // -------------------------------------------------------------------------- //
 
-event::Future File::write( const std::string& str ){
+event::Future< int > File::write( const std::string& str ){
     std::memcpy( m_write_buffer, str.c_str(), str.size() + 1 );
     *m_uv_write_buffer = uv_buf_init( (char*)m_write_buffer, str.size() );
 
@@ -111,13 +111,13 @@ event::Future File::write( const std::string& str ){
 
 void File::_write_cb( uv_fs_s* handle ){
     File* file = (File*)handle->data;
-    file->m_promise->resolve();
+    file->m_promise->resolve( 1 );
 }
 
 // -------------------------------------------------------------------------- //
 
-event::Future File::_reset_promise( void ){
-    m_promise = std::make_unique< event::Promise >();
+event::Future< int > File::_reset_promise( void ){
+    m_promise = std::make_unique< event::Promise< int > >();
     return m_promise->future();
 }
 
