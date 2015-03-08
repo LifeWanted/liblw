@@ -111,6 +111,14 @@ private:
 template< typename T >
 class Future {
 public:
+    /// @brief The type promised by this future.
+    typedef T ResultType;
+
+    /// @brief The type of Promise that made this future.
+    typedef Promise< T > PromiseType;
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief Chaining for generic functors.
     ///
     /// @tparam Result  The type given functor promises.
@@ -144,14 +152,17 @@ public:
     ///
     /// @return A `Future` which will be resolved by `func`.
     template<
-        typename Result,
         typename Func,
         typename FuncResult = typename std::result_of< Func( T&& ) >::type,
         typename std::enable_if<
-            std::is_base_of< Future< Result >, FuncResult >::value
+            std::is_base_of<
+                Future< typename FuncResult::ResultType >,
+                FuncResult
+            >::value
         >::type* = nullptr
     >
-    Future< Result > then( Func&& func ){
+    Future< typename FuncResult::ResultType > then( Func&& func ){
+        typedef typename FuncResult::ResultType Result;
         return then< Result >([ func ]( T&& value, Promise< Result >&& promise ){
             func( std::move( value ) ).then( std::move( promise ) );
         });
@@ -162,8 +173,8 @@ public:
     /// @brief Connects this promise to the one provided.
     ///
     /// @param promise The promise to resolve/reject with this one.
-    void then( Promise< T >&& promise ){
-        auto next = std::make_shared< Promise< T > >( std::move( promise ) );
+    void then( PromiseType&& promise ){
+        auto next = std::make_shared< PromiseType >( std::move( promise ) );
         auto prev = m_state;
         m_state->resolve = [ prev, next ]( T&& value ) mutable {
             if( next ){
@@ -172,7 +183,6 @@ public:
             prev.reset();
         };
     }
-
 
     // ---------------------------------------------------------------------- //
 
@@ -185,7 +195,7 @@ private:
     /// @brief Only `Promise`s can construct us.
     ///
     /// @param state The shared state to associate with.
-    Future( const typename Promise< T >::_SharedStatePtr& state ):
+    Future( const typename PromiseType::_SharedStatePtr& state ):
         m_state( state )
     {}
 
@@ -206,7 +216,7 @@ private:
     // ---------------------------------------------------------------------- //
 
     /// @brief Our internal shared state.
-    typename Promise< T >::_SharedStatePtr m_state;
+    typename PromiseType::_SharedStatePtr m_state;
 };
 
 }

@@ -45,7 +45,7 @@ TEST_F( FileTests, Open ){
 TEST_F( FileTests, Close ){
     fs::File file( loop );
 
-    file.open( fileName ).then< int >([&]( int ){
+    file.open( fileName ).then([&]( int ){
         return file.close();
     });
 
@@ -57,9 +57,9 @@ TEST_F( FileTests, Close ){
 TEST_F( FileTests, Write ){
     fs::File file( loop );
 
-    file.open( fileName ).then< int >([&]( int ){
+    file.open( fileName ).then([&]( int ){
         return file.write( contents );
-    }).then< int >([&]( int ){
+    }).then([&]( int ){
         return file.close();
     });
 
