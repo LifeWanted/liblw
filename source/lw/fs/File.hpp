@@ -89,5 +89,20 @@ private:
     uv_buf_t* m_uv_write_buffer;
 };
 
+// -------------------------------------------------------------------------- //
+
+/// @brief Asynchronously opens a file.
+///
+/// @param loop The event loop to open the file with.
+/// @param path The path to the file to open.
+/// @param mode The file mode to use.
+///
+/// @return A future file.
+event::Future< File > open(
+    event::Loop& loop,
+    const std::string& path,
+    const std::ios::openmode mode = std::ios::in | std::ios::out
+);
+
 }
 }

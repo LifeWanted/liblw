@@ -121,5 +121,20 @@ event::Future< int > File::_reset_promise( void ){
     return m_promise->future();
 }
 
+// -------------------------------------------------------------------------- //
+
+event::Future< File > open(
+    event::Loop& loop,
+    const std::string& path,
+    const std::ios::openmode mode
+){
+    auto file = std::make_shared< File >( loop );
+    return file->open( path, mode )
+        .then< File >([ file ]( int, event::Promise< File >&& promise ){
+            promise.resolve( std::move( *file ) );
+        })
+    ;
+}
+
 }
 }
