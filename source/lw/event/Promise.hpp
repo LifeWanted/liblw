@@ -183,6 +183,47 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @brief Chaining for value-returning functors (i.e. synchronous ones).
+    ///
+    /// @tparam Func A synchronous functor type.
+    ///
+    /// @param func A synchronous functor returning some value.
+    ///
+    /// @return A `Future` which will be resolved with the return value from `func`.
+    template<
+        typename Func,
+        typename FuncResult = typename std::result_of< Func( T&& ) >::type,
+        typename std::enable_if<
+            !std::is_base_of<
+                Future< typename FuncResult::result_type >,
+                FuncResult
+            >::value
+        >::type* = nullptr
+    >
+    Future< FuncResult > then( Func&& func ){
+        return then< FuncResult >([ func ]( T&& value, Promise< FuncResult >&& promise ){
+            promise.resolve( func( std::move( value ) ) );
+        });
+    }
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Chaining for void-returning synchronous functors.
+    ///
+    /// @tparam Func A synchronous functor type.
+    ///
+    /// @param func A synchronous functor with no return value.
+    ///
+    /// @return A `Future` which will be resolved `func` runs.
+    template<
+        typename Func,
+        typename FuncResult = typename std::result_of< Func( T&& ) >::type,
+        typename std::enable_if< std::is_void< FuncResult >::value >::type* = nullptr
+    >
+    Future<> then( Func&& func );
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief Connects this promise to the one provided.
     ///
     /// @param promise The promise to resolve/reject with this one.

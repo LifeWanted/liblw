@@ -25,5 +25,18 @@ Future<> Future< T >::then( Func&& func ){
     return then< void >( std::move( func ) );
 }
 
+template< typename T >
+template<
+    typename Func,
+    typename FuncResult,
+    typename std::enable_if< std::is_void< FuncResult >::value >::type*
+>
+Future<> Future< T >::then( Func&& func ){
+    return then([ func ]( T&& value, Promise<>&& promise ){
+        func( std::move( value ) );
+        promise.resolve();
+    });
+}
+
 }
 }
