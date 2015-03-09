@@ -13,6 +13,8 @@ namespace memory {
 
 typedef std::uint8_t byte;
 
+// -------------------------------------------------------------------------- //
+
 /// @brief A buffer that can store dynamically or statically allocated memory.
 ///
 /// The buffers can be built around existing memory blocks (optionally taking
@@ -26,23 +28,6 @@ public:
 
     // ---------------------------------------------------------------------- //
 
-private:
-    size_type   m_capacity; ///< The capacity of the buffer in bytes.
-    byte*       m_data;     ///< The data wrapped by the buffer.
-    bool        m_ownData;  ///< Flag indiciating if the buffer owns the memory.
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Performs XOR between two buffers into a third.
-    ///
-    /// @param lhs Buffer on the left-hand-side of the XOR.
-    /// @param rhs Buffer ont he right-hand-side of the XOR.
-    /// @param out Buffer to assign the results of the XOR to.
-    static void _xor( const Buffer& lhs, const Buffer& rhs, Buffer& out );
-
-    // ---------------------------------------------------------------------- //
-
-public:
     /// @brief Creates an empty buffer object.
     Buffer( void ):
         m_capacity( 0       ),
@@ -282,22 +267,31 @@ public:
     ///
     /// @return A new buffer containing the combined data.
     Buffer operator^( const Buffer& other ) const;
+
+    // ---------------------------------------------------------------------- //
+
+private:
+    size_type   m_capacity; ///< The capacity of the buffer in bytes.
+    byte*       m_data;     ///< The data wrapped by the buffer.
+    bool        m_ownData;  ///< Flag indicating if the buffer owns the memory.
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Performs XOR between two buffers into a third.
+    ///
+    /// @param lhs Buffer on the left-hand-side of the XOR.
+    /// @param rhs Buffer ont he right-hand-side of the XOR.
+    /// @param out Buffer to assign the results of the XOR to.
+    static void _xor( const Buffer& lhs, const Buffer& rhs, Buffer& out );
 };
 
 // -------------------------------------------------------------------------- //
 
-/// @headerfile pl/memory.hpp
-/// @ingroup plMemory
 /// @brief Creates a memory buffer on the stack.
 ///
 /// @tparam Capacity The size, in bytes, of the buffer.
 template< std::size_t Capacity >
 class StackBuffer : public Buffer {
-private:
-    byte m_data[ Capacity ]; ///< Internal buffer, allocated on the stack.
-
-    // ---------------------------------------------------------------------- //
-
 public:
     /// @brief Constructor has no options.
     StackBuffer( void ): Buffer( m_data, Capacity, false ){}
@@ -339,6 +333,11 @@ public:
 
     /// @brief ~Destructor.
     ~StackBuffer( void ){}
+
+    // ---------------------------------------------------------------------- //
+
+private:
+    byte m_data[ Capacity ]; ///< Internal buffer, allocated on the stack.
 };
 
 }
