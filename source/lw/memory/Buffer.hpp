@@ -75,6 +75,24 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @brief Move and resize constructor.
+    ///
+    /// Like `Buffer::Buffer(Buffer&&)`, ownership is transfered to this buffer,
+    /// but the reported size will be the one given, regardless of the size of
+    /// `other`.
+    ///
+    /// @param other    The buffer to move the ownership from.
+    /// @param size     The new size to report with.
+    Buffer( Buffer&& other, const std::size_t size ):
+        m_capacity( size            ),
+        m_data(     other.m_data    ),
+        m_ownData(  other.m_ownData )
+    {
+        other.m_ownData = false;
+    }
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief Create a buffer which allocates its own memory.
     ///
     /// @param size The number of bytes to allocate.
