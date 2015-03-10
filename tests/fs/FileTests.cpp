@@ -35,7 +35,7 @@ TEST_F( FileTests, Open ){
     bool finished = false;
     bool promise_called = false;
 
-    file.open( file_name ).then([&]( event::Promise<>&& next ){
+    file.open( file_name ).then([&](){
         EXPECT_TRUE( started );
         EXPECT_FALSE( finished );
         promise_called = true;
