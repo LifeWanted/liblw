@@ -10,6 +10,28 @@ namespace event {
 template< typename T >
 class Future;
 
+// -------------------------------------------------------------------------- //
+
+/// @brief  Determines if the given variable is a `Future`, or derives publicly
+///         from `Future`.
+///
+/// @tparam T The type to check.
+template< typename T >
+struct IsFuture : public std::integral_constant< bool, false >{};
+
+template< typename T >
+struct IsFuture< Future< T > > : public std::integral_constant< bool, true >{};
+
+template< template< typename > class T, typename Value >
+struct IsFuture< T< Value > > :
+    public std::integral_constant<
+        bool,
+        std::is_base_of< Future< Value >, T< Value > >::value
+    >
+{};
+
+// -------------------------------------------------------------------------- //
+
 /// @brief `Promise`s and `Future`s allow for chaining callbacks without nesting.
 ///
 /// A `Promise` is the active side of the pair. Asynchronous functions create a
@@ -167,18 +189,15 @@ public:
     template<
         typename Func,
         typename FuncResult = typename std::result_of< Func( T&& ) >::type,
-        typename std::enable_if<
-            std::is_base_of<
-                Future< typename FuncResult::result_type >,
-                FuncResult
-            >::value
-        >::type* = nullptr
+        typename std::enable_if< IsFuture< FuncResult >::value >::type* = nullptr
     >
     Future< typename FuncResult::result_type > then( Func&& func ){
         typedef typename FuncResult::result_type Result;
-        return then< Result >([ func ]( T&& value, Promise< Result >&& promise ){
-            func( std::move( value ) ).then( std::move( promise ) );
-        });
+        return then< Result >(
+            [ func ]( T&& value, Promise< Result >&& promise ) mutable {
+                func( std::move( value ) ).then( std::move( promise ) );
+            }
+        );
     }
 
     // ---------------------------------------------------------------------- //
@@ -194,16 +213,16 @@ public:
         typename Func,
         typename FuncResult = typename std::result_of< Func( T&& ) >::type,
         typename std::enable_if<
-            !std::is_base_of<
-                Future< typename FuncResult::result_type >,
-                FuncResult
-            >::value
+            !IsFuture< FuncResult >::value &&
+            !std::is_void< FuncResult >::value
         >::type* = nullptr
     >
     Future< FuncResult > then( Func&& func ){
-        return then< FuncResult >([ func ]( T&& value, Promise< FuncResult >&& promise ){
-            promise.resolve( func( std::move( value ) ) );
-        });
+        return then< FuncResult >(
+            [ func ]( T&& value, Promise< FuncResult >&& promise ) mutable {
+                promise.resolve( func( std::move( value ) ) );
+            }
+        );
     }
 
     // ---------------------------------------------------------------------- //
