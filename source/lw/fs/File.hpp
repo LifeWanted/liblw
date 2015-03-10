@@ -6,6 +6,7 @@
 #include <string>
 
 #include "lw/event.hpp"
+#include "lw/memory.hpp"
 
 struct uv_fs_s;
 struct uv_buf_t;
@@ -48,12 +49,38 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @brief Reads from the file into the provided buffer.
+    ///
+    /// At most `data.size()` bytes will be read from the file. The actual
+    /// number of bytes read will be returned. It is up to the caller to ensure
+    /// the lifetime of the given buffer exceeds that of the this function's
+    /// execution.
+    ///
+    /// @param data The buffer to read into.
+    ///
+    /// @return A future integer conaining the number of bytes read.
+    event::Future< int > read( memory::Buffer& data );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Reads up to the given number of bytes from the file.
+    ///
+    /// The buffer returned at the end will be tight-wrapped around the read
+    /// data, thus `buffer.size()` will tell you how much was read.
+    ///
+    /// @param bytes The maximum number of bytes to read.
+    ///
+    /// @return A future buffer containing the read data.
+    event::Future< memory::Buffer > read( const std::size_t bytes );
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief Asynchronously writes data to the file.
     ///
-    /// @param str The data to write.
+    /// @param data The data to write.
     ///
     /// @return A promise to have the data written.
-    event::Future<> write( const std::string& str );
+    event::Future<> write( const memory::Buffer& data );
 
     // ---------------------------------------------------------------------- //
 
@@ -65,6 +92,11 @@ private:
 
     /// @brief Handler for close requests.
     static void _close_cb( uv_fs_s* handle );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Handler for read requests.
+    static void _read_cb( uv_fs_s* handle );
 
     // ---------------------------------------------------------------------- //
 
@@ -84,8 +116,7 @@ private:
     uv_fs_s* m_handle;
     std::unique_ptr< event::Promise<> > m_promise;
     int m_file_descriptor;
-    unsigned char m_write_buffer[ 1024 ];
-    uv_buf_t* m_uv_write_buffer;
+    uv_buf_t* m_uv_buffer;
 };
 
 // -------------------------------------------------------------------------- //

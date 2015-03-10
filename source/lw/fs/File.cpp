@@ -12,8 +12,7 @@ File::File( event::Loop& loop ):
     m_handle( (uv_fs_s*)malloc( sizeof( uv_fs_s ) ) ),
     m_promise( nullptr ),
     m_file_descriptor( -1 ),
-    m_write_buffer{ 0 },
-    m_uv_write_buffer( (uv_buf_t*)malloc( sizeof( uv_buf_t ) ) )
+    m_uv_buffer( (uv_buf_t*)malloc( sizeof( uv_buf_t ) ) )
 {
     m_handle->data = (void*)this;
 }
@@ -25,7 +24,7 @@ File::~File( void ){
         uv_fs_close( m_loop.lowest_layer(), m_handle, m_file_descriptor, nullptr );
     }
 
-    free( m_uv_write_buffer );
+    free( m_uv_buffer );
     free( m_handle );
 }
 
@@ -90,15 +89,55 @@ void File::_close_cb( uv_fs_s* handle ){
 
 // -------------------------------------------------------------------------- //
 
-event::Future<> File::write( const std::string& str ){
-    std::memcpy( m_write_buffer, str.c_str(), str.size() + 1 );
-    *m_uv_write_buffer = uv_buf_init( (char*)m_write_buffer, str.size() );
+event::Future< int > File::read( memory::Buffer& data ){
+    *m_uv_buffer = uv_buf_init( (char*)data.data(), data.size() );
+
+    uv_fs_read(
+        m_loop.lowest_layer(),
+        m_handle,
+        m_file_descriptor,
+        m_uv_buffer,
+        1,
+        -1,
+        &File::_read_cb
+    );
+
+    auto handlePtr = m_handle;
+    return _reset_promise()
+        .then< int >([ handlePtr ]( event::Promise< int >&& promise ){
+            promise.resolve( handlePtr->result );
+        })
+    ;
+}
+
+// -------------------------------------------------------------------------- //
+
+event::Future< memory::Buffer > File::read( const std::size_t bytes ){
+    auto dataPtr = std::make_shared< memory::Buffer >( bytes );
+    return read( *dataPtr )
+        .then([ dataPtr ]( int size ) mutable {
+            return memory::Buffer( std::move( *dataPtr ), size );
+        })
+    ;
+}
+
+// -------------------------------------------------------------------------- //
+
+void File::_read_cb( uv_fs_s* handle ){
+    File* file = (File*)handle->data;
+    file->m_promise->resolve();
+}
+
+// -------------------------------------------------------------------------- //
+
+event::Future<> File::write( const memory::Buffer& data ){
+    *m_uv_buffer = uv_buf_init( (char*)data.data(), data.size() );
 
     uv_fs_write(
         m_loop.lowest_layer(),
         m_handle,
         m_file_descriptor,
-        m_uv_write_buffer,
+        m_uv_buffer,
         1,
         -1,
         &File::_write_cb
