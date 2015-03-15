@@ -8,14 +8,14 @@ namespace lw {
 namespace event {
 
 Loop::Loop( void ):
-    m_loop( (uv_loop_s*)malloc( sizeof( uv_loop_s ) ) )
+    m_loop( (uv_loop_s*)std::malloc( sizeof( uv_loop_s ) ) )
 {
     uv_loop_init( m_loop );
 }
 
 Loop::~Loop( void ){
     uv_loop_close( m_loop );
-    free( m_loop );
+    std::free( m_loop );
 }
 
 void Loop::run( void ){

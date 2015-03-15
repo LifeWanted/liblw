@@ -1,4 +1,5 @@
 
+#include <cstdlib>
 #include <uv.h>
 
 #include "lw/event/Idle.hpp"
@@ -7,7 +8,7 @@ namespace lw {
 namespace event {
 
 Idle::Idle( Loop& loop ):
-    m_handle( (uv_idle_s*)malloc( sizeof( uv_idle_s ) ) ),
+    m_handle( (uv_idle_s*)std::malloc( sizeof( uv_idle_s ) ) ),
     m_callback( nullptr ),
     m_started( false )
 {
@@ -17,7 +18,7 @@ Idle::Idle( Loop& loop ):
 
 Idle::~Idle( void ){
     stop();
-    free( m_handle );
+    std::free( m_handle );
 }
 
 void Idle::start( void ){

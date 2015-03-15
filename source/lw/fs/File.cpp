@@ -1,4 +1,5 @@
 
+#include <cstdlib>
 #include <cstring>
 #include <uv.h>
 
@@ -9,10 +10,10 @@ namespace fs {
 
 File::File( event::Loop& loop ):
     m_loop( loop ),
-    m_handle( (uv_fs_s*)malloc( sizeof( uv_fs_s ) ) ),
+    m_handle( (uv_fs_s*)std::malloc( sizeof( uv_fs_s ) ) ),
     m_promise( nullptr ),
     m_file_descriptor( -1 ),
-    m_uv_buffer( (uv_buf_t*)malloc( sizeof( uv_buf_t ) ) )
+    m_uv_buffer( (uv_buf_t*)std::malloc( sizeof( uv_buf_t ) ) )
 {
     m_handle->data = (void*)this;
 }
@@ -24,8 +25,8 @@ File::~File( void ){
         uv_fs_close( m_loop.lowest_layer(), m_handle, m_file_descriptor, nullptr );
     }
 
-    free( m_uv_buffer );
-    free( m_handle );
+    std::free( m_uv_buffer );
+    std::free( m_handle );
 }
 
 // -------------------------------------------------------------------------- //
