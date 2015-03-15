@@ -13,4 +13,5 @@ install:
     - ./setup.sh
 script:
     - cd build
-    - make -j2 liblw-tests && Default/liblw-tests
+    - make -j2 liblw-tests
+    - Default/liblw-tests
