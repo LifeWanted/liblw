@@ -1,0 +1,8 @@
+language: c++
+compiler:
+    - clang
+os:
+    - linux
+install:
+    - ./setup.sh
+script: cd build; make -j2 liblw-tests && out/Default/liblw-tests
