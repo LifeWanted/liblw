@@ -1,6 +1,6 @@
 language: c++
 compiler:
-    - clang
+    - gcc-4.9
 os:
     - linux
 install:
