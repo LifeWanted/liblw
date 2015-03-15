@@ -3,7 +3,7 @@
         "uv_library" : "static_library"
     },
     "target_defaults" : {
-        "cflags" : [ "-Wall", "-std=c++14", "-fPIC" ]
+        "cflags" : [ "-Wall", "-std=c++1y", "-fPIC" ]
     },
     "includes" : [ "external/libuv/uv.gypi" ],
     "targets" : [{
