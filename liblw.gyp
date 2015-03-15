@@ -3,7 +3,7 @@
         "uv_library" : "static_library"
     },
     "target_defaults" : {
-        "cflags" : [ "-Wall", "-std=c++1y", "-fPIC" ]
+        "cflags" : [ "-Wall", "-fPIC" ],
     },
     "includes" : [ "external/libuv/uv.gypi" ],
     "targets" : [{
@@ -11,9 +11,11 @@
         "type" : "shared_library",
         "include_dirs" : [ "./source" ],
         "dependencies" : [ "libuv" ],
+        "cflags" : [ "-std=c++1y" ],
         "direct_dependent_settings" : {
             "include_dirs" : [ "./source" ],
-            "libraries" : [ "-pthread" ]
+            "libraries" : [ "-pthread" ],
+            "cflags" : [ "-std=c++1y" ]
         },
         "sources" : [
             "source/lw/Application.cpp",
