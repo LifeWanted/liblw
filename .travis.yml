@@ -4,5 +4,10 @@ compiler:
 os:
     - linux
 install:
+    - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    - sudo apt-get update
+    - sudo apt-get install gcc-4.9 g++-4.9
     - ./setup.sh
-script: cd build; make -j2 liblw-tests && out/Default/liblw-tests
+script:
+    - cd build
+    - CC=gcc-4.9 CXX=g++4.9 make -j2 liblw-tests && out/Default/liblw-tests
