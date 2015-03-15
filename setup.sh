@@ -14,23 +14,33 @@ else
 fi
 
 # Fetch gtest
-if [ ! -d gtest ]; then
-    wget https://googletest.googlecode.com/files/gtest-1.7.0.zip
-    unzip gtest-1.7.0.zip
-    mv gtest-1.7.0 gtest
-    rm gtest-1.7.0.zip
+if [ ! -d "gtest" ]; then
+    gtest_version=1.7.0
+    gtest_dir=gtest-$gtest_version
+    gtest_zip=$gtest_dir.zip
+    wget "https://googletest.googlecode.com/files/$gtest_zip"
+    unzip "$gtest_zip"
+    rm "$gtest_zip"
+    mv "$gtest_dir" gtest
 else
     echo " -- gtest already installed"
 fi
 
 # Then get libuv
-if [ ! -d libuv ]; then
-    git clone --branch v1.4.2 git@github.com:libuv/libuv
-    mv libuv/uv.gyp libuv/uv.gypi
+if [ ! -d "libuv" ]; then
+    libuv_version=1.4.2
+    libuv_dir=libuv-$libuv_version
+    libuv_tar=v$libuv_version.tar.gz
+    wget "https://github.com/libuv/libuv/archive/$libuv_tar"
+    tar -xzf "$libuv_tar"
+    rm "$libuv_tar"
+    mv "$libuv_dir/uv.gyp" "$libuv_dir/uv.gypi"
+    mv "$libuv_dir" "libuv"
 else
     echo " -- libuv already installed"
 fi
 
+# Leave the external directory
 cd ..
 
 # And then run gyp
