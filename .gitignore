@@ -5,9 +5,11 @@ Makefile
 
 # Dependencies
 gtest/
+libuv/
 
 # Compiled Object files
 out/
+build/
 *.slo
 *.lo
 *.o

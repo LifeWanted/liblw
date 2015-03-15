@@ -1,13 +1,16 @@
 {
-    "target_defaults" : {
-        "cflags" : [ "-Wall", "-std=c++14" ]
+    "variables" : {
+        "uv_library" : "static_library"
     },
+    "target_defaults" : {
+        "cflags" : [ "-Wall", "-std=c++14", "-fPIC" ]
+    },
+    "includes" : [ "libuv/uv.gypi" ],
     "targets" : [{
         "target_name" : "liblw",
         "type" : "shared_library",
         "include_dirs" : [ "./source" ],
-        "cflags" : [ "-fPIC" ],
-        "libraries" : [ "/usr/local/lib/libuv.a" ],
+        "dependencies" : [ "libuv" ],
         "direct_dependent_settings" : {
             "include_dirs" : [ "./source" ],
             "libraries" : [ "-pthread" ]
