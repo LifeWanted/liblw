@@ -10,4 +10,4 @@ install:
     - ./setup.sh
 script:
     - cd build
-    - CC=gcc-4.9 CXX=g++4.9 make -j2 liblw-tests && out/Default/liblw-tests
+    - V=1 CC=gcc-4.9 CXX=g++-4.9 make -j2 liblw-tests && Default/liblw-tests
