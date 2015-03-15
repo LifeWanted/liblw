@@ -1,10 +1,13 @@
 language: c++
 compiler:
-    - clang
+    - gcc-4.9
 os:
     - linux
 install:
+    - sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test
+    - sudo apt-get update
+    - sudo apt-get install gcc-4.9 g++-4.9
     - ./setup.sh
 script:
     - cd build
-    - V=1 make -j2 liblw-tests && Default/liblw-tests
+    - V=1 CC=gcc-4.9 CXX=g++-4.9 make -j2 liblw-tests && Default/liblw-tests
