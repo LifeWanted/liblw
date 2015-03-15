@@ -3,7 +3,17 @@
 mkdir external
 cd external
 
-# First fetch gtest
+# Instal gyp if needed.
+if [ "`which gyp`" == "" ]; then
+    git clone https://chromium.googlesource.com/external/gyp
+    cd gyp
+    sudo python setup.py install
+    cd ..
+else
+    echo " -- gyp already installed"
+fi
+
+# Fetch gtest
 if [ ! -d gtest ]; then
     wget https://googletest.googlecode.com/files/gtest-1.7.0.zip
     unzip gtest-1.7.0.zip
@@ -19,15 +29,6 @@ if [ ! -d libuv ]; then
     mv libuv/uv.gyp libuv/uv.gypi
 else
     echo " -- libuv already installed"
-fi
-
-if [ "`which gyp`" == "" ]; then
-    git clone https://chromium.googlesource.com/external/gyp
-    cd gyp
-    sudo python setup.py install
-    cd ..
-else
-    echo " -- gyp already installed"
 fi
 
 cd ..
