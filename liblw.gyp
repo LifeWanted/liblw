@@ -5,7 +5,7 @@
     "target_defaults" : {
         "cflags" : [ "-Wall", "-std=c++14", "-fPIC" ]
     },
-    "includes" : [ "libuv/uv.gypi" ],
+    "includes" : [ "external/libuv/uv.gypi" ],
     "targets" : [{
         "target_name" : "liblw",
         "type" : "shared_library",
@@ -44,11 +44,11 @@
     },{
         "target_name" : "libgtest",
         "type" : "static_library",
-        "include_dirs" : [ "./gtest/include" ],
+        "include_dirs" : [ "./external/gtest/include" ],
         "direct_dependent_settings" : {
-            "include_dirs" : [ "./gtest/include" ]
+            "include_dirs" : [ "./external/gtest/include" ]
         },
-        "sources" : [ "gtest/fused-src/gtest/gtest-all.cc" ]
+        "sources" : [ "external/gtest/fused-src/gtest/gtest-all.cc" ]
     },{
         "target_name" : "liblw-tests",
         "type" : "executable",

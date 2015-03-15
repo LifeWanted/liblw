@@ -1,5 +1,8 @@
 #! /bin/bash
 
+mkdir external
+cd external
+
 # First fetch gtest
 if [ ! -d gtest ]; then
     wget https://googletest.googlecode.com/files/gtest-1.7.0.zip
@@ -17,6 +20,17 @@ if [ ! -d libuv ]; then
 else
     echo " -- libuv already installed"
 fi
+
+if [ "`which gyp`" == "" ]; then
+    git clone https://chromium.googlesource.com/external/gyp
+    cd gyp
+    sudo python setup.py install
+    cd ..
+else
+    echo " -- gyp already installed"
+fi
+
+cd ..
 
 # And then run gyp
 gyp liblw.gyp --depth=. --generator-output=build/

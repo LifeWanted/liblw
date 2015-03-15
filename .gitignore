@@ -4,8 +4,7 @@
 Makefile
 
 # Dependencies
-gtest/
-libuv/
+external/
 
 # Compiled Object files
 out/
