@@ -3,7 +3,7 @@
 BUILD_DIR=build
 DEPENDENCIES_DIR=external
 
-mkdir $DEPENDENCIES_DIR
+mkdir $DEPENDENCIES_DIR 2>/dev/null
 
 # Instal gyp if needed.
 if [ "`which gyp`" == "" ]; then
