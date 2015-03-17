@@ -8,9 +8,9 @@ function has_gcc(){
 function has_right_gcc_version(){
     local gcc_49x=`gcc --version | head -1 | grep '4\.9\.[[:digit:]]'`
     if [ "$gcc_49x" ]; then
-        return 1
-    else
         return 0
+    else
+        return 1
     fi
 }
 
@@ -22,7 +22,7 @@ function get_gcc_version(){
 
 function install_gcc_apt(){
     if ! has_gcc; then
-        sudo apt-get gcc g++
+        sudo apt-get install --yes gcc g++
     fi
 
     if ! has_right_gcc_version; then
@@ -30,7 +30,7 @@ function install_gcc_apt(){
 
         sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install gcc-4.9 g++-4.9
+        sudo apt-get install --yes gcc-4.9 g++-4.9
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$gcc_version 40 --slave /usr/bin/g++ g++ /usr/bin/g++-$gcc_version
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
         sudo update-alternatives --auto gcc
@@ -38,18 +38,18 @@ function install_gcc_apt(){
 }
 
 function install_gcc_yum(){
-    if [ ! has_gcc ]; then
+    if ! has_gcc; then
         sudo yum install gcc gcc-c++
     fi
 
-    if [ ! has_right_gcc_version ]; then
+    if ! has_right_gcc_version; then
         echo " !! Cannot install gcc 4.9 on this platform (do not know how)" >&2
         return 1
     fi
 }
 
 function install_gcc(){
-    if exe_exists; then
+    if exe_exists apt; then
         install_gcc_apt
     else
         install_gcc_yum
