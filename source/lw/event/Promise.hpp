@@ -152,15 +152,7 @@ public:
         typename Func,
         typename = typename std::result_of< Func( T&&, Promise< Result >&& ) >::type
     >
-    Future< Result > then( Func&& func ){
-        auto next = std::make_shared< Promise< Result > >();
-        auto prev = m_state;
-        m_state->resolve = [ func, prev, next ]( T&& value ) mutable {
-            func( std::move( value ), std::move( *next ) );
-            prev.reset();
-        };
-        return next->future();
-    }
+    Future< Result > then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
@@ -191,14 +183,7 @@ public:
         typename FuncResult = typename std::result_of< Func( T&& ) >::type,
         typename std::enable_if< IsFuture< FuncResult >::value >::type* = nullptr
     >
-    Future< typename FuncResult::result_type > then( Func&& func ){
-        typedef typename FuncResult::result_type Result;
-        return then< Result >(
-            [ func ]( T&& value, Promise< Result >&& promise ) mutable {
-                func( std::move( value ) ).then( std::move( promise ) );
-            }
-        );
-    }
+    Future< typename FuncResult::result_type > then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
@@ -217,13 +202,7 @@ public:
             !std::is_void< FuncResult >::value
         >::type* = nullptr
     >
-    Future< FuncResult > then( Func&& func ){
-        return then< FuncResult >(
-            [ func ]( T&& value, Promise< FuncResult >&& promise ) mutable {
-                promise.resolve( func( std::move( value ) ) );
-            }
-        );
-    }
+    Future< FuncResult > then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
