@@ -2,6 +2,7 @@
 
 source scripts/common.sh
 source scripts/install-all.sh
+source scripts/run-gyp.sh
 
 mkdir -p $BUILD_DIR         2>/dev/null
 mkdir -p $DEPENDENCIES_DIR  2>/dev/null
@@ -14,4 +15,4 @@ else
 fi
 
 # And then run gyp
-$GYP_EXE liblw.gyp --depth=. --generator-output=$BUILD_DIR -Goutput_dir=$BUILD_DIR
+run_gyp liblw.gyp --depth=. --generator-output=$BUILD_DIR -Goutput_dir=$BUILD_DIR

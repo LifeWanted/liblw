@@ -4,8 +4,6 @@ export BUILD_DIR=$BASE_DIR/build
 export DEPENDENCIES_DIR=$BASE_DIR/external
 export BIN_DIR=$DEPENDENCIES_DIR/bin
 
-export GYP_EXE=$DEPENDENCIES_DIR/bin/gyp
-
 function exe_exists(){
     command -v "$1" >/dev/null
 }
