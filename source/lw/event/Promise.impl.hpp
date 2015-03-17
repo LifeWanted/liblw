@@ -97,5 +97,24 @@ Future<> Future< T >::then( Func&& func ){
     });
 }
 
+// -------------------------------------------------------------------------- //
+
+template< typename T >
+void Future< T >::then( promise_type&& promise ){
+    auto next = std::make_shared< promise_type >( std::move( promise ) );
+    auto prev = m_state;
+    m_state->resolve = [ prev, next ]( T&& value ) mutable {
+        next->resolve( std::move( value ) );
+        prev->reject = nullptr;
+        prev.reset();
+    };
+    m_state->reject = [ prev, next ]() mutable {
+        next->reject();
+        prev->resolve = nullptr;
+        prev.reset();
+    };
+}
+
+
 }
 }

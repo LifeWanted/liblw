@@ -225,16 +225,7 @@ public:
     /// @brief Connects this promise to the one provided.
     ///
     /// @param promise The promise to resolve/reject with this one.
-    void then( promise_type&& promise ){
-        auto next = std::make_shared< promise_type >( std::move( promise ) );
-        auto prev = m_state;
-        m_state->resolve = [ prev, next ]( T&& value ) mutable {
-            if( next ){
-                next->resolve( std::move( value ) );
-            }
-            prev.reset();
-        };
-    }
+    void then( promise_type&& promise );
 
     // ---------------------------------------------------------------------- //
 
