@@ -44,12 +44,12 @@ function install_gcc_yum(){
 
     if ! has_right_gcc_version; then
         echo " !! Cannot install gcc 4.9 on this platform (do not know how)" >&2
-        return 1
+        exit 1
     fi
 }
 
 function install_gcc(){
-    if exe_exists apt; then
+    if exe_exists apt-get; then
         install_gcc_apt
     else
         install_gcc_yum
