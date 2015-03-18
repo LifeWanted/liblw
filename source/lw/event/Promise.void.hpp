@@ -150,12 +150,7 @@ public:
     template<
         typename Func,
         typename FuncResult = typename std::result_of< Func() >::type,
-        typename std::enable_if<
-            std::is_base_of<
-                Future< typename FuncResult::result_type >,
-                FuncResult
-            >::value
-        >::type* = nullptr
+        typename std::enable_if< IsFuture< FuncResult >::value >::type* = nullptr
     >
     Future< typename FuncResult::result_type > then( Func&& func );
 
@@ -172,10 +167,8 @@ public:
         typename Func,
         typename FuncResult = typename std::result_of< Func() >::type,
         typename std::enable_if<
-            !std::is_base_of<
-                Future< typename FuncResult::result_type >,
-                FuncResult
-            >::value
+            !IsFuture< FuncResult >::value &&
+            !std::is_void< FuncResult >::value
         >::type* = nullptr
     >
     Future< FuncResult > then( Func&& func );

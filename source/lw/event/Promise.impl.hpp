@@ -140,12 +140,7 @@ Future<> Future< void >::then( Func&& func ){
 template<
     typename Func,
     typename FuncResult,
-    typename std::enable_if<
-        std::is_base_of<
-            Future< typename FuncResult::result_type >,
-            FuncResult
-        >::value
-    >::type*
+    typename std::enable_if< IsFuture< FuncResult >::value >::type*
 >
 Future< typename FuncResult::result_type > Future< void >::then( Func&& func ){
     typedef typename FuncResult::result_type Result;
@@ -160,10 +155,8 @@ template<
     typename Func,
     typename FuncResult,
     typename std::enable_if<
-        !std::is_base_of<
-            Future< typename FuncResult::result_type >,
-            FuncResult
-        >::value
+        !IsFuture< FuncResult >::value &&
+        !std::is_void< FuncResult >::value
     >::type*
 >
 Future< FuncResult > Future< void >::then( Func&& func ){
