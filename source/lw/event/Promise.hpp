@@ -251,20 +251,6 @@ private:
 
     // ---------------------------------------------------------------------- //
 
-    /// @brief Returns true if this future has been resolved.
-    bool is_resolved( void ) const {
-        return m_state->resolved;
-    }
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Returns true if this future has been rejected.
-    bool is_rejected( void ) const {
-        return m_state->rejected;
-    }
-
-    // ---------------------------------------------------------------------- //
-
     /// @brief Our internal shared state.
     typename promise_type::_SharedStatePtr m_state;
 };
