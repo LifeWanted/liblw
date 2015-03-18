@@ -6,13 +6,13 @@
 namespace lw {
 namespace tests {
 
-struct PromiseSynchronousVoidTests : public testing::Test {
+struct PromiseVoidSynchronousTests : public testing::Test {
     event::Loop loop;
 };
 
 // -------------------------------------------------------------------------- //
 
-TEST_F( PromiseSynchronousVoidTests, Void_PromiseInt ){
+TEST_F( PromiseVoidSynchronousTests, Void_PromiseInt ){
     // State observation variables.
     bool chained    = false;
     bool resolved   = false;
@@ -51,7 +51,7 @@ TEST_F( PromiseSynchronousVoidTests, Void_PromiseInt ){
 
 // -------------------------------------------------------------------------- //
 
-TEST_F( PromiseSynchronousVoidTests, Void_PromiseVoid ){
+TEST_F( PromiseVoidSynchronousTests, Void_PromiseVoid ){
     // State observation variables.
     bool chained    = false;
     bool resolved   = false;
@@ -87,7 +87,7 @@ TEST_F( PromiseSynchronousVoidTests, Void_PromiseVoid ){
 
 // -------------------------------------------------------------------------- //
 
-TEST_F( PromiseSynchronousVoidTests, FutureInt_Void ){
+TEST_F( PromiseVoidSynchronousTests, FutureInt_Void ){
     // State observation variables.
     bool chained    = false;
     bool resolved   = false;
@@ -132,7 +132,7 @@ TEST_F( PromiseSynchronousVoidTests, FutureInt_Void ){
 
 // -------------------------------------------------------------------------- //
 
-TEST_F( PromiseSynchronousVoidTests, Int_Void ){
+TEST_F( PromiseVoidSynchronousTests, Int_Void ){
     // State observation variables.
     bool chained    = false;
     bool resolved   = false;
@@ -171,7 +171,7 @@ TEST_F( PromiseSynchronousVoidTests, Int_Void ){
 
 // -------------------------------------------------------------------------- //
 
-TEST_F( PromiseSynchronousVoidTests, Void_Void ){
+TEST_F( PromiseVoidSynchronousTests, Void_Void ){
     // State observation variables.
     bool chained    = false;
     bool resolved   = false;
@@ -206,7 +206,7 @@ TEST_F( PromiseSynchronousVoidTests, Void_Void ){
 
 // -------------------------------------------------------------------------- //
 
-TEST_F( PromiseSynchronousVoidTests, ConnectPromise ){
+TEST_F( PromiseVoidSynchronousTests, ConnectPromise ){
     // State observation variables.
     bool chained    = false;
     bool resolved   = false;

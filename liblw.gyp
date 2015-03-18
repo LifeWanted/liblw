@@ -60,7 +60,7 @@
             "tests/main.cpp",
 
             "tests/event/LoopBasicTests.cpp",
-            "tests/event/PromiseSynchronousVoidTests.cpp",
+            "tests/event/PromiseVoidSynchronousTests.cpp",
 
             "tests/fs/FileTests.cpp"
         ]
