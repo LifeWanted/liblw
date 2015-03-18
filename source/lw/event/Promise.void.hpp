@@ -121,15 +121,7 @@ public:
         typename Func,
         typename = typename std::result_of< Func( Promise< Result >&& ) >::type
     >
-    Future< Result > then( Func&& func ){
-        auto next = std::make_shared< Promise< Result > >();
-        auto prev = m_state;
-        m_state->resolve = [ func, prev, next ]() mutable {
-            func( std::move( *next ) );
-            prev.reset();
-        };
-        return next->future();
-    }
+    Future< Result > then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
@@ -144,9 +136,7 @@ public:
         typename Func,
         typename = typename std::result_of< Func( Promise<>&& ) >::type
     >
-    Future<> then( Func&& func ){
-        return then< void >( std::move( func ) );
-    }
+    Future<> then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
@@ -167,12 +157,7 @@ public:
             >::value
         >::type* = nullptr
     >
-    Future< typename FuncResult::result_type > then( Func&& func ){
-        typedef typename FuncResult::result_type Result;
-        return then< Result >([ func ]( Promise< Result >&& promise ){
-            func().then( std::move( promise ) );
-        });
-    }
+    Future< typename FuncResult::result_type > then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
@@ -193,11 +178,7 @@ public:
             >::value
         >::type* = nullptr
     >
-    Future< FuncResult > then( Func&& func ){
-        return then< FuncResult >([ func ]( Promise< FuncResult >&& promise ){
-            promise.resolve( func() );
-        });
-    }
+    Future< FuncResult > then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
@@ -213,28 +194,14 @@ public:
         typename FuncResult = typename std::result_of< Func() >::type,
         typename std::enable_if< std::is_void< FuncResult >::value >::type* = nullptr
     >
-    Future< void > then( Func&& func ){
-        return then< void >([ func ]( Promise< void >&& promise ){
-            func();
-            promise.resolve();
-        });
-    }
+    Future< void > then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
     /// @brief Connects this promise to the one provided.
     ///
     /// @param promise The promise to resolve/reject with this one.
-    void then( promise_type&& promise ){
-        auto next = std::make_shared< promise_type >( std::move( promise ) );
-        auto prev = m_state;
-        m_state->resolve = [ prev, next ]() mutable {
-            if( next ){
-                next->resolve();
-            }
-            prev.reset();
-        };
-    }
+    void then( promise_type&& promise );
 
     // ---------------------------------------------------------------------- //
 
