@@ -79,6 +79,13 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @copydoc Promise::resolve(T&&)
+    void resolve( const T& value ){
+        resolve( T( value ) );
+    }
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief Rejects the promise as a failure.
     void reject( void ){
         m_state->rejected = true;
