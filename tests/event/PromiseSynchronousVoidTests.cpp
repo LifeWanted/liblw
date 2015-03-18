@@ -6,11 +6,19 @@
 namespace lw {
 namespace tests {
 
-struct PromiseVoidTests : public testing::Test {
-
+struct PromiseSynchronousVoidTests : public testing::Test {
+    event::Loop loop;
 };
 
-TEST_F( PromiseVoidTests, FutureTest ){
+// -------------------------------------------------------------------------- //
+
+TEST_F( PromiseSynchronousVoidTests, IntVoidTest ){
+    
+}
+
+// -------------------------------------------------------------------------- //
+
+TEST_F( PromiseSynchronousVoidTests, VoidVoidTest ){
     // State observation variables.
     bool chained    = false;
     bool resolved   = false;
