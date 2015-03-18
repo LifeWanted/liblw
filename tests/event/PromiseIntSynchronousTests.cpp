@@ -7,7 +7,6 @@ namespace lw {
 namespace tests {
 
 struct PromiseIntSynchronousTests : public testing::Test {
-    event::Loop loop;
 };
 
 // -------------------------------------------------------------------------- //
