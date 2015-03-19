@@ -56,7 +56,7 @@ template<
 >
 Future< typename FuncResult::result_type > Future< T >::_then( Func&& func ){
     typedef typename FuncResult::result_type Result;
-    return _then< Result >(
+    return then< Result >(
         [ func ]( T&& value, Promise< Result >&& promise ) mutable {
             func( std::move( value ) ).then( std::move( promise ) );
         }
@@ -75,7 +75,7 @@ template<
     >::type*
 >
 Future< FuncResult > Future< T >::_then( Func&& func ){
-    return _then< FuncResult >(
+    return then< FuncResult >(
         [ func ]( T&& value, Promise< FuncResult >&& promise ) mutable {
             promise.resolve( func( std::move( value ) ) );
         }
@@ -91,7 +91,7 @@ template<
     typename std::enable_if< std::is_void< FuncResult >::value >::type*
 >
 Future<> Future< T >::_then( Func&& func ){
-    return _then([ func ]( T&& value, Promise<>&& promise ){
+    return then([ func ]( T&& value, Promise<>&& promise ){
         func( std::move( value ) );
         promise.resolve();
     });
