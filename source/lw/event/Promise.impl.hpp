@@ -20,17 +20,17 @@ inline Future< void > Promise< void >::future( void ){
 // -------------------------------------------------------------------------- //
 
 template< typename T >
-template< typename Result, typename Func, typename >
-Future< Result > Future< T >::_then( Func&& func ){
+template< typename Result, typename Resolve, typename Reject, typename >
+Future< Result > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
     auto next = std::make_shared< Promise< Result > >();
     auto prev = m_state;
-    m_state->resolve = [ func, prev, next ]( T&& value ) mutable {
-        func( std::move( value ), std::move( *next ) );
+    m_state->resolve = [ resolve, prev, next ]( T&& value ) mutable {
+        resolve( std::move( value ), std::move( *next ) );
         prev->reject = nullptr;
         prev.reset();
     };
-    m_state->reject = [ prev, next ]() mutable {
-        next->reject();
+    m_state->reject = [ reject, prev, next ]() mutable {
+        reject();
         prev->resolve = nullptr;
         prev.reset();
     };
@@ -41,25 +41,11 @@ Future< Result > Future< T >::_then( Func&& func ){
 // -------------------------------------------------------------------------- //
 
 template< typename T >
-template< typename Func, typename >
-Future<> Future< T >::_then( Func&& func ){
-    return then< void >( std::move( func ) );
-}
-
-// -------------------------------------------------------------------------- //
-
-template< typename T >
-template<
-    typename Func,
-    typename FuncResult,
-    typename std::enable_if< IsFuture< FuncResult >::value >::type*
->
-Future< typename FuncResult::result_type > Future< T >::_then( Func&& func ){
-    typedef typename FuncResult::result_type Result;
-    return then< Result >(
-        [ func ]( T&& value, Promise< Result >&& promise ) mutable {
-            func( std::move( value ) ).then( std::move( promise ) );
-        }
+template< typename Resolve, typename Reject, typename >
+inline Future<> Future< T >::_then( Resolve&& resolve, Reject&& reject ){
+    return then< void >(
+        std::forward< Resolve   >( resolve  ),
+        std::forward< Reject    >( reject   )
     );
 }
 
@@ -67,18 +53,39 @@ Future< typename FuncResult::result_type > Future< T >::_then( Func&& func ){
 
 template< typename T >
 template<
-    typename Func,
-    typename FuncResult,
+    typename Resolve,
+    typename Reject,
+    typename ResolveResult,
+    typename std::enable_if< IsFuture< ResolveResult >::value >::type*
+>
+Future< typename ResolveResult::result_type > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
+    typedef typename ResolveResult::result_type Result;
+    return then< Result >(
+        [ resolve ]( T&& value, Promise< Result >&& promise ) mutable {
+            resolve( std::move( value ) ).then( std::move( promise ) );
+        },
+        std::forward< Reject >( reject )
+    );
+}
+
+// -------------------------------------------------------------------------- //
+
+template< typename T >
+template<
+    typename Resolve,
+    typename Reject,
+    typename ResolveResult,
     typename std::enable_if<
-        !IsFuture< FuncResult >::value &&
-        !std::is_void< FuncResult >::value
+        !IsFuture< ResolveResult >::value &&
+        !std::is_void< ResolveResult >::value
     >::type*
 >
-Future< FuncResult > Future< T >::_then( Func&& func ){
-    return then< FuncResult >(
-        [ func ]( T&& value, Promise< FuncResult >&& promise ) mutable {
-            promise.resolve( func( std::move( value ) ) );
-        }
+Future< ResolveResult > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
+    return then< ResolveResult >(
+        [ resolve ]( T&& value, Promise< ResolveResult >&& promise ) mutable {
+            promise.resolve( resolve( std::move( value ) ) );
+        },
+        std::forward< Reject >( reject )
     );
 }
 
@@ -86,15 +93,19 @@ Future< FuncResult > Future< T >::_then( Func&& func ){
 
 template< typename T >
 template<
-    typename Func,
-    typename FuncResult,
-    typename std::enable_if< std::is_void< FuncResult >::value >::type*
+    typename Resolve,
+    typename Reject,
+    typename ResolveResult,
+    typename std::enable_if< std::is_void< ResolveResult >::value >::type*
 >
-Future<> Future< T >::_then( Func&& func ){
-    return then([ func ]( T&& value, Promise<>&& promise ){
-        func( std::move( value ) );
-        promise.resolve();
-    });
+Future<> Future< T >::_then( Resolve&& resolve, Reject&& reject ){
+    return then(
+        [ resolve ]( T&& value, Promise<>&& promise ){
+            resolve( std::move( value ) );
+            promise.resolve();
+        },
+        std::forward< Reject >( reject )
+    );
 }
 
 // -------------------------------------------------------------------------- //
