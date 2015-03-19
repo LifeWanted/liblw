@@ -21,7 +21,7 @@ inline Future< void > Promise< void >::future( void ){
 
 template< typename T >
 template< typename Result, typename Func, typename >
-Future< Result > Future< T >::then( Func&& func ){
+Future< Result > Future< T >::_then( Func&& func ){
     auto next = std::make_shared< Promise< Result > >();
     auto prev = m_state;
     m_state->resolve = [ func, prev, next ]( T&& value ) mutable {
@@ -42,7 +42,7 @@ Future< Result > Future< T >::then( Func&& func ){
 
 template< typename T >
 template< typename Func, typename >
-Future<> Future< T >::then( Func&& func ){
+Future<> Future< T >::_then( Func&& func ){
     return then< void >( std::move( func ) );
 }
 
@@ -54,9 +54,9 @@ template<
     typename FuncResult,
     typename std::enable_if< IsFuture< FuncResult >::value >::type*
 >
-Future< typename FuncResult::result_type > Future< T >::then( Func&& func ){
+Future< typename FuncResult::result_type > Future< T >::_then( Func&& func ){
     typedef typename FuncResult::result_type Result;
-    return then< Result >(
+    return _then< Result >(
         [ func ]( T&& value, Promise< Result >&& promise ) mutable {
             func( std::move( value ) ).then( std::move( promise ) );
         }
@@ -74,8 +74,8 @@ template<
         !std::is_void< FuncResult >::value
     >::type*
 >
-Future< FuncResult > Future< T >::then( Func&& func ){
-    return then< FuncResult >(
+Future< FuncResult > Future< T >::_then( Func&& func ){
+    return _then< FuncResult >(
         [ func ]( T&& value, Promise< FuncResult >&& promise ) mutable {
             promise.resolve( func( std::move( value ) ) );
         }
@@ -90,8 +90,8 @@ template<
     typename FuncResult,
     typename std::enable_if< std::is_void< FuncResult >::value >::type*
 >
-Future<> Future< T >::then( Func&& func ){
-    return then([ func ]( T&& value, Promise<>&& promise ){
+Future<> Future< T >::_then( Func&& func ){
+    return _then([ func ]( T&& value, Promise<>&& promise ){
         func( std::move( value ) );
         promise.resolve();
     });
@@ -118,7 +118,7 @@ void Future< T >::then( promise_type&& promise ){
 // -------------------------------------------------------------------------- //
 
 template< typename Result, typename Func, typename >
-Future< Result > Future< void >::then( Func&& func ){
+Future< Result > Future< void >::_then( Func&& func ){
     auto next = std::make_shared< Promise< Result > >();
     auto prev = m_state;
     m_state->resolve = [ func, prev, next ]() mutable {
@@ -131,7 +131,7 @@ Future< Result > Future< void >::then( Func&& func ){
 // -------------------------------------------------------------------------- //
 
 template< typename Func, typename >
-Future<> Future< void >::then( Func&& func ){
+Future<> Future< void >::_then( Func&& func ){
     return then< void >( std::move( func ) );
 }
 
@@ -142,7 +142,7 @@ template<
     typename FuncResult,
     typename std::enable_if< IsFuture< FuncResult >::value >::type*
 >
-Future< typename FuncResult::result_type > Future< void >::then( Func&& func ){
+Future< typename FuncResult::result_type > Future< void >::_then( Func&& func ){
     typedef typename FuncResult::result_type Result;
     return then< Result >([ func ]( Promise< Result >&& promise ){
         func().then( std::move( promise ) );
@@ -159,7 +159,7 @@ template<
         !std::is_void< FuncResult >::value
     >::type*
 >
-Future< FuncResult > Future< void >::then( Func&& func ){
+Future< FuncResult > Future< void >::_then( Func&& func ){
     return then< FuncResult >([ func ]( Promise< FuncResult >&& promise ){
         promise.resolve( func() );
     });
@@ -172,7 +172,7 @@ template<
     typename FuncResult,
     typename std::enable_if< std::is_void< FuncResult >::value >::type*
 >
-Future< void > Future< void >::then( Func&& func ){
+Future< void > Future< void >::_then( Func&& func ){
     return then< void >([ func ]( Promise< void >&& promise ){
         func();
         promise.resolve();

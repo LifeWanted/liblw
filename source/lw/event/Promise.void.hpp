@@ -108,86 +108,17 @@ public:
 
     // ---------------------------------------------------------------------- //
 
-    /// @brief Chaining for generic functors.
-    ///
-    /// @tparam Result  The type given functor promises.
-    /// @tparam Func    A functor type that can take a `Promise&&` as its parameter.
-    ///
-    /// @param func The functor to call when this one is resolved.
-    ///
-    /// @return A new future, for when the provided `func` completes its action.
-    template<
-        typename Result,
-        typename Func,
-        typename = typename std::result_of< Func( Promise< Result >&& ) >::type
-    >
-    Future< Result > then( Func&& func );
+    template< typename Func >
+    auto then( Func&& func ){
+        return _then( std::forward< Func >( func ) );
+    }
 
     // ---------------------------------------------------------------------- //
 
-    /// @brief Chaining for generic functors promising nothing.
-    ///
-    /// @tparam Func A functor type that can take a `Promise&&` as its parameter.
-    ///
-    /// @param func The functor to call when this one is resolved.
-    ///
-    /// @return A new future, for when the provided `func` completes its action.
-    template<
-        typename Func,
-        typename = typename std::result_of< Func( Promise<>&& ) >::type
-    >
-    Future<> then( Func&& func );
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Chaining for `Future`-returning functors.
-    ///
-    /// @tparam Func A functor which returns a `Future`.
-    ///
-    /// @param func The functor to call when this one is ready.
-    ///
-    /// @return A `Future` which will be resolved by `func`.
-    template<
-        typename Func,
-        typename FuncResult = typename std::result_of< Func() >::type,
-        typename std::enable_if< IsFuture< FuncResult >::value >::type* = nullptr
-    >
-    Future< typename FuncResult::result_type > then( Func&& func );
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Chaining for value-returning functors (i.e. synchronous ones).
-    ///
-    /// @tparam Func A synchronous functor type.
-    ///
-    /// @param func A synchronous functor returning some value.
-    ///
-    /// @return A `Future` which will be resolved with the return value from `func`.
-    template<
-        typename Func,
-        typename FuncResult = typename std::result_of< Func() >::type,
-        typename std::enable_if<
-            !IsFuture< FuncResult >::value &&
-            !std::is_void< FuncResult >::value
-        >::type* = nullptr
-    >
-    Future< FuncResult > then( Func&& func );
-
-    // ---------------------------------------------------------------------- //
-
-    /// @brief Chaining for void-returning synchronous functors.
-    ///
-    /// @tparam Func A synchronous functor type.
-    ///
-    /// @param func A synchronous functor with no return value.
-    ///
-    /// @return A `Future` which will be resolved `func` runs.
-    template<
-        typename Func,
-        typename FuncResult = typename std::result_of< Func() >::type,
-        typename std::enable_if< std::is_void< FuncResult >::value >::type* = nullptr
-    >
-    Future< void > then( Func&& func );
+    template< typename Result, typename Func >
+    auto then( Func&& func ){
+        return _then< Result >( std::forward< Func >( func ) );
+    }
 
     // ---------------------------------------------------------------------- //
 
@@ -213,17 +144,86 @@ private:
 
     // ---------------------------------------------------------------------- //
 
-    /// @brief Returns true if this future has been resolved.
-    bool is_resolved( void ) const {
-        return m_state->resolved;
-    }
+    /// @brief Chaining for generic functors.
+    ///
+    /// @tparam Result  The type given functor promises.
+    /// @tparam Func    A functor type that can take a `Promise&&` as its parameter.
+    ///
+    /// @param func The functor to call when this one is resolved.
+    ///
+    /// @return A new future, for when the provided `func` completes its action.
+    template<
+        typename Result,
+        typename Func,
+        typename = typename std::result_of< Func( Promise< Result >&& ) >::type
+    >
+    Future< Result > _then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
-    /// @brief Returns true if this future has been rejected.
-    bool is_rejected( void ) const {
-        return m_state->rejected;
-    }
+    /// @brief Chaining for generic functors promising nothing.
+    ///
+    /// @tparam Func A functor type that can take a `Promise&&` as its parameter.
+    ///
+    /// @param func The functor to call when this one is resolved.
+    ///
+    /// @return A new future, for when the provided `func` completes its action.
+    template<
+        typename Func,
+        typename = typename std::result_of< Func( Promise<>&& ) >::type
+    >
+    Future<> _then( Func&& func );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Chaining for `Future`-returning functors.
+    ///
+    /// @tparam Func A functor which returns a `Future`.
+    ///
+    /// @param func The functor to call when this one is ready.
+    ///
+    /// @return A `Future` which will be resolved by `func`.
+    template<
+        typename Func,
+        typename FuncResult = typename std::result_of< Func() >::type,
+        typename std::enable_if< IsFuture< FuncResult >::value >::type* = nullptr
+    >
+    Future< typename FuncResult::result_type > _then( Func&& func );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Chaining for value-returning functors (i.e. synchronous ones).
+    ///
+    /// @tparam Func A synchronous functor type.
+    ///
+    /// @param func A synchronous functor returning some value.
+    ///
+    /// @return A `Future` which will be resolved with the return value from `func`.
+    template<
+        typename Func,
+        typename FuncResult = typename std::result_of< Func() >::type,
+        typename std::enable_if<
+            !IsFuture< FuncResult >::value &&
+            !std::is_void< FuncResult >::value
+        >::type* = nullptr
+    >
+    Future< FuncResult > _then( Func&& func );
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Chaining for void-returning synchronous functors.
+    ///
+    /// @tparam Func A synchronous functor type.
+    ///
+    /// @param func A synchronous functor with no return value.
+    ///
+    /// @return A `Future` which will be resolved `func` runs.
+    template<
+        typename Func,
+        typename FuncResult = typename std::result_of< Func() >::type,
+        typename std::enable_if< std::is_void< FuncResult >::value >::type* = nullptr
+    >
+    Future< void > _then( Func&& func );
 
     // ---------------------------------------------------------------------- //
 
