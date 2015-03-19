@@ -128,12 +128,18 @@ void Future< T >::then( promise_type&& promise ){
 
 // -------------------------------------------------------------------------- //
 
-template< typename Result, typename Func, typename >
-Future< Result > Future< void >::_then( Func&& func ){
+template< typename Result, typename Resolve, typename Reject, typename >
+Future< Result > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
     auto next = std::make_shared< Promise< Result > >();
     auto prev = m_state;
-    m_state->resolve = [ func, prev, next ]() mutable {
-        func( std::move( *next ) );
+    m_state->resolve = [ resolve, prev, next ]() mutable {
+        resolve( std::move( *next ) );
+        prev->reject = nullptr;
+        prev.reset();
+    };
+    m_state->reject = [ reject, prev, next ]() mutable {
+        reject();
+        prev->resolve = nullptr;
         prev.reset();
     };
     return next->future();
@@ -141,53 +147,68 @@ Future< Result > Future< void >::_then( Func&& func ){
 
 // -------------------------------------------------------------------------- //
 
-template< typename Func, typename >
-Future<> Future< void >::_then( Func&& func ){
-    return then< void >( std::move( func ) );
+template< typename Resolve, typename Reject, typename >
+Future<> Future< void >::_then( Resolve&& resolve, Reject&& reject ){
+    return then< void >(
+        std::forward< Resolve   >( resolve  ),
+        std::forward< Reject    >( reject   )
+    );
 }
 
 // -------------------------------------------------------------------------- //
 
 template<
-    typename Func,
-    typename FuncResult,
-    typename std::enable_if< IsFuture< FuncResult >::value >::type*
+    typename Resolve,
+    typename Reject,
+    typename ResolveResult,
+    typename std::enable_if< IsFuture< ResolveResult >::value >::type*
 >
-Future< typename FuncResult::result_type > Future< void >::_then( Func&& func ){
-    typedef typename FuncResult::result_type Result;
-    return then< Result >([ func ]( Promise< Result >&& promise ){
-        func().then( std::move( promise ) );
-    });
+Future< typename ResolveResult::result_type > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
+    typedef typename ResolveResult::result_type Result;
+    return then< Result >(
+        [ resolve ]( Promise< Result >&& promise ){
+            resolve().then( std::move( promise ) );
+        },
+        std::forward< Reject >( reject )
+    );
 }
 
 // -------------------------------------------------------------------------- //
 
 template<
-    typename Func,
-    typename FuncResult,
+    typename Resolve,
+    typename Reject,
+    typename ResolveResult,
     typename std::enable_if<
-        !IsFuture< FuncResult >::value &&
-        !std::is_void< FuncResult >::value
+        !IsFuture< ResolveResult >::value &&
+        !std::is_void< ResolveResult >::value
     >::type*
 >
-Future< FuncResult > Future< void >::_then( Func&& func ){
-    return then< FuncResult >([ func ]( Promise< FuncResult >&& promise ){
-        promise.resolve( func() );
-    });
+Future< ResolveResult > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
+    return then< ResolveResult >(
+        [ resolve ]( Promise< ResolveResult >&& promise ){
+            promise.resolve( resolve() );
+        },
+        std::forward< Reject >( reject )
+    );
 }
 
 // -------------------------------------------------------------------------- //
 
 template<
-    typename Func,
-    typename FuncResult,
-    typename std::enable_if< std::is_void< FuncResult >::value >::type*
+    typename Resolve,
+    typename Reject,
+    typename ResolveResult,
+    typename std::enable_if< std::is_void< ResolveResult >::value >::type*
 >
-Future< void > Future< void >::_then( Func&& func ){
-    return then< void >([ func ]( Promise< void >&& promise ){
-        func();
-        promise.resolve();
-    });
+Future< void > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
+    return then< void >(
+        [ resolve ]( Promise< void >&& promise ){
+            resolve();
+            promise.resolve();
+        },
+        std::forward< Reject >( reject )
+    );
 }
 
 // -------------------------------------------------------------------------- //
