@@ -7,6 +7,13 @@ namespace lw {
 namespace tests {
 
 struct PromiseRejectionTests : public testing::Test {
+    const std::int64_t  code    = 42;
+    const std::string   message = "Test error";
+    const error::Exception test_error;
+
+    PromiseRejectionTests():
+        test_error( code, message )
+    {}
 };
 
 // -------------------------------------------------------------------------- //
@@ -20,9 +27,12 @@ TEST_F( PromiseRejectionTests, Reject ){
     event::Promise<> prom;
     prom.future().then([&](){
         FAIL() << "Entered resolve handler for rejected promise.";
-    },[&](){
+    }, [&]( const error::Exception& err ){
         EXPECT_TRUE( chained );
         EXPECT_FALSE( rejected );
+
+        EXPECT_EQ( code,    err.error_code()    );
+        EXPECT_EQ( message, err.what()          );
 
         rejected = true;
     });
@@ -32,7 +42,7 @@ TEST_F( PromiseRejectionTests, Reject ){
     EXPECT_FALSE( rejected );
 
     // Resolve the promise and check that the rejected handler is true
-    prom.reject();
+    prom.reject( test_error );
     EXPECT_TRUE( rejected );
 }
 
@@ -49,9 +59,12 @@ TEST_F( PromiseRejectionTests, RejectBubbling ){
         FAIL() << "Entered resolve handler for rejected promise.";
     }).then([&](){
         FAIL() << "Entered resolve handler after rejected promise.";
-    }, [&](){
+    }, [&]( const error::Exception& err ){
         EXPECT_TRUE( chained );
         EXPECT_FALSE( rejected );
+
+        EXPECT_EQ( code,    err.error_code()    );
+        EXPECT_EQ( message, err.what()          );
 
         rejected = true;
     });
@@ -61,8 +74,23 @@ TEST_F( PromiseRejectionTests, RejectBubbling ){
     EXPECT_FALSE( rejected );
 
     // Resolve the promise and check that the rejected handler is true
-    prom.reject();
+    prom.reject( test_error );
     EXPECT_TRUE( rejected );
+}
+
+// -------------------------------------------------------------------------- //
+
+TEST_F( PromiseRejectionTests, UnhandledRejection ){
+    // Create the promise and assign a resolve handler.
+    event::Promise<> prom;
+    prom.future().then([&](){
+        FAIL() << "Entered resolve handler for rejected promise.";
+    }).then([&](){
+        FAIL() << "Entered resolve handler after rejected promise.";
+    });
+
+    // Resolve the promise and check that the rejected handler is true
+    EXPECT_THROW( prom.reject( test_error ), error::Exception );
 }
 
 }

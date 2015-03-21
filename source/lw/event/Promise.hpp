@@ -4,8 +4,14 @@
 #include <functional>
 #include <memory>
 
+#include "lw/error.hpp"
+
 namespace lw {
 namespace event {
+
+LW_DEFINE_EXCEPTION( PromiseError, error, Exception );
+
+// -------------------------------------------------------------------------- //
 
 template< typename T >
 class Future;
@@ -87,10 +93,13 @@ public:
     // ---------------------------------------------------------------------- //
 
     /// @brief Rejects the promise as a failure.
-    void reject( void ){
+    void reject( const error::Exception& err ){
         m_state->rejected = true;
         if( m_state->reject ){
-            m_state->reject();
+            m_state->reject( err );
+        }
+        else {
+            throw err;
         }
     }
 
@@ -119,7 +128,7 @@ private:
         std::atomic_bool resolved;
         std::atomic_bool rejected;
         std::function< void( T&& ) > resolve;
-        std::function< void( void ) > reject;
+        std::function< void( const error::Exception& ) > reject;
     };
     typedef std::shared_ptr< _SharedState > _SharedStatePtr;
 

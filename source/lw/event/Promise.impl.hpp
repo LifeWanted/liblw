@@ -30,16 +30,20 @@ Future< Result > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
         prev.reset();
     };
 
-    typedef std::function< void() > RejectHandler;
+    typedef std::function< void( const error::Exception& ) > RejectHandler;
     RejectHandler rejectHandler;
     if( std::is_same< nullptr_t, Reject >::value ){
-        rejectHandler = [ next ](){ next->reject(); };
+        rejectHandler = [ next ]( const error::Exception& err ){
+            next->reject( err );
+        };
     }
     else {
         rejectHandler = std::forward< Reject >( reject );
     }
-    m_state->reject = [ rejectHandler, prev, next ]() mutable {
-        rejectHandler();
+    m_state->reject = [ rejectHandler, prev, next ](
+        const error::Exception& err
+    ) mutable {
+        rejectHandler( err );
         prev->resolve = nullptr;
         prev.reset();
     };
@@ -128,8 +132,8 @@ void Future< T >::then( promise_type&& promise ){
         prev->reject = nullptr;
         prev.reset();
     };
-    m_state->reject = [ prev, next ]() mutable {
-        next->reject();
+    m_state->reject = [ prev, next ]( const error::Exception& err ) mutable {
+        next->reject( err );
         prev->resolve = nullptr;
         prev.reset();
     };
@@ -147,16 +151,20 @@ Future< Result > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
         prev.reset();
     };
 
-    typedef std::function< void() > RejectHandler;
+    typedef std::function< void( const error::Exception& ) > RejectHandler;
     RejectHandler rejectHandler;
     if( std::is_same< nullptr_t, Reject >::value ){
-        rejectHandler = [ next ](){ next->reject(); };
+        rejectHandler = [ next ]( const error::Exception& err ){
+            next->reject( err );
+        };
     }
     else {
         rejectHandler = std::forward< Reject >( reject );
     }
-    m_state->reject = [ rejectHandler, prev, next ]() mutable {
-        rejectHandler();
+    m_state->reject = [ rejectHandler, prev, next ](
+        const error::Exception& err
+    ) mutable {
+        rejectHandler( err );
         prev->resolve = nullptr;
         prev.reset();
     };
@@ -240,8 +248,8 @@ inline void Future< void >::then( promise_type&& promise ){
         prev->reject = nullptr;
         prev.reset();
     };
-    m_state->reject = [ prev, next ]() mutable {
-        next->reject();
+    m_state->reject = [ prev, next ]( const error::Exception& err ) mutable {
+        next->reject( err );
         prev->resolve = nullptr;
         prev.reset();
     };
