@@ -96,7 +96,12 @@ template<
 Future< ResolveResult > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
     return then< ResolveResult >(
         [ resolve ]( T&& value, Promise< ResolveResult >&& promise ) mutable {
-            promise.resolve( resolve( std::move( value ) ) );
+            try {
+                promise.resolve( resolve( std::move( value ) ) );
+            }
+            catch( const error::Exception& err ){
+                promise.reject( err );
+            }
         },
         std::forward< Reject >( reject )
     );
@@ -114,7 +119,13 @@ template<
 Future<> Future< T >::_then( Resolve&& resolve, Reject&& reject ){
     return then(
         [ resolve ]( T&& value, Promise<>&& promise ){
-            resolve( std::move( value ) );
+            try {
+                resolve( std::move( value ) );
+            }
+            catch( const error::Exception& err ){
+                promise.reject( err );
+                return;
+            }
             promise.resolve();
         },
         std::forward< Reject >( reject )
@@ -214,7 +225,12 @@ template<
 Future< ResolveResult > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
     return then< ResolveResult >(
         [ resolve ]( Promise< ResolveResult >&& promise ){
-            promise.resolve( resolve() );
+            try {
+                promise.resolve( resolve() );
+            }
+            catch( const error::Exception& err ){
+                promise.reject( err );
+            }
         },
         std::forward< Reject >( reject )
     );
@@ -231,7 +247,13 @@ template<
 Future< void > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
     return then< void >(
         [ resolve ]( Promise< void >&& promise ){
-            resolve();
+            try {
+                resolve();
+            }
+            catch( const error::Exception& err ){
+                promise.reject( err );
+                return;
+            }
             promise.resolve();
         },
         std::forward< Reject >( reject )
