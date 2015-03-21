@@ -62,6 +62,7 @@
             "tests/event/LoopBasicTests.cpp",
             "tests/event/PromiseIntSynchronousTests.cpp",
             "tests/event/PromiseVoidSynchronousTests.cpp",
+            "tests/event/PromiseRejectionTests.cpp",
 
             "tests/fs/FileTests.cpp"
         ]
