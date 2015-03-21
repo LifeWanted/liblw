@@ -26,10 +26,10 @@ private:
 
 // -------------------------------------------------------------------------- //
 
-#define LW_DEFINE_EXECEPTION( _Type, _Parent )  \
-    class _Type : public _Parent {              \
-    public:                                     \
-        using _Parent::_Parent;                 \
+#define LW_DEFINE_EXCEPTION( _Type, _ParentNamespace, _Parent ) \
+    class _Type : public _ParentNamespace::_Parent {            \
+    public:                                                     \
+        using _ParentNamespace::_Parent::_Parent;               \
     };
 
 }
