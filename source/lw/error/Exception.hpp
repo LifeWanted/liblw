@@ -24,5 +24,13 @@ private:
     std::int64_t m_error_code;
 };
 
+// -------------------------------------------------------------------------- //
+
+#define LW_DEFINE_EXECEPTION( _Type, _Parent )  \
+    class _Type : public _Parent {              \
+    public:                                     \
+        using _Parent::_Parent;                 \
+    };
+
 }
 }
