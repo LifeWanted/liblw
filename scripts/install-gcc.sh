@@ -1,6 +1,15 @@
 
 source scripts/common.sh
 
+function apt_install(){
+    # Force installations on travis, we don't care about hurting the machine.
+    if $TRAVIS; then
+        sudo apt-get install --force-yes $@
+    else
+        sudo apt-get install --yes $@
+    fi
+}
+
 function has_gcc(){
     exe_exists gcc && exe_exists g++
 }
@@ -22,7 +31,7 @@ function get_gcc_version(){
 
 function install_gcc_apt(){
     if ! has_gcc; then
-        sudo apt-get install --yes gcc g++
+        apt_install gcc g++
     fi
 
     if ! has_right_gcc_version; then
@@ -30,7 +39,7 @@ function install_gcc_apt(){
 
         sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install --yes gcc-4.9 g++-4.9
+        apt_install gcc-4.9 g++-4.9
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$gcc_version 40 --slave /usr/bin/g++ g++ /usr/bin/g++-$gcc_version
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
         sudo update-alternatives --auto gcc
