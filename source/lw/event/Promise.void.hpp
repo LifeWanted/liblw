@@ -110,14 +110,14 @@ public:
 
     template< typename Func >
     auto then( Func&& func ){
-        return then( std::forward< Func >( func ), [](){} );
+        return then( std::forward< Func >( func ), nullptr );
     }
 
     // ---------------------------------------------------------------------- //
 
     template< typename Result, typename Func >
     auto then( Func&& func ){
-        return then< Result >( std::forward< Func >( func ), [](){} );
+        return then< Result >( std::forward< Func >( func ), nullptr );
     }
 
     // ---------------------------------------------------------------------- //

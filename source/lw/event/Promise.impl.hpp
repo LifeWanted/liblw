@@ -29,8 +29,17 @@ Future< Result > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
         prev->reject = nullptr;
         prev.reset();
     };
-    m_state->reject = [ reject, prev, next ]() mutable {
-        reject();
+
+    typedef std::function< void() > RejectHandler;
+    RejectHandler rejectHandler;
+    if( std::is_same< nullptr_t, Reject >::value ){
+        rejectHandler = [ next ](){ next->reject(); };
+    }
+    else {
+        rejectHandler = std::forward< Reject >( reject );
+    }
+    m_state->reject = [ rejectHandler, prev, next ]() mutable {
+        rejectHandler();
         prev->resolve = nullptr;
         prev.reset();
     };
@@ -137,11 +146,21 @@ Future< Result > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
         prev->reject = nullptr;
         prev.reset();
     };
-    m_state->reject = [ reject, prev, next ]() mutable {
-        reject();
+
+    typedef std::function< void() > RejectHandler;
+    RejectHandler rejectHandler;
+    if( std::is_same< nullptr_t, Reject >::value ){
+        rejectHandler = [ next ](){ next->reject(); };
+    }
+    else {
+        rejectHandler = std::forward< Reject >( reject );
+    }
+    m_state->reject = [ rejectHandler, prev, next ]() mutable {
+        rejectHandler();
         prev->resolve = nullptr;
         prev.reset();
     };
+
     return next->future();
 }
 
