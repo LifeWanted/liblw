@@ -9,7 +9,7 @@
 namespace lw {
 namespace event {
 
-LW_DEFINE_EXCEPTION( PromiseError, error, Exception );
+LW_DEFINE_EXCEPTION( PromiseError );
 
 // -------------------------------------------------------------------------- //
 

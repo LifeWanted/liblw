@@ -26,11 +26,14 @@ private:
 
 // -------------------------------------------------------------------------- //
 
-#define LW_DEFINE_EXCEPTION( _Type, _ParentNamespace, _Parent ) \
-    class _Type : public _ParentNamespace::_Parent {            \
-    public:                                                     \
-        using _ParentNamespace::_Parent::_Parent;               \
+#define LW_DEFINE_EXCEPTION_EX( _Type, _ParentNamespace, _Parent )  \
+    class _Type : public _ParentNamespace::_Parent {                \
+    public:                                                         \
+        using _ParentNamespace::_Parent::_Parent;                   \
     };
+
+#define LW_DEFINE_EXCEPTION( _Type ) \
+    LW_DEFINE_EXCEPTION_EX( _Type, ::lw::error, Exception )
 
 }
 }
