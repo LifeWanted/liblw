@@ -8,6 +8,15 @@
 namespace lw {
 namespace fs {
 
+inline FileError _wrap_uv_error( int err_code ){
+    return FileError(
+        err_code,
+        (std::string)uv_err_name( err_code ) + ": " + uv_strerror( err_code )
+    );
+}
+
+// -------------------------------------------------------------------------- //
+
 File::File( event::Loop& loop ):
     m_loop( loop ),
     m_handle( (uv_fs_s*)std::malloc( sizeof( uv_fs_s ) ) ),
@@ -63,9 +72,15 @@ event::Future<> File::open( const std::string& path, const std::ios::openmode mo
 // -------------------------------------------------------------------------- //
 
 void File::_open_cb( uv_fs_s* handle ){
+    int result = handle->result;
     File* file = (File*)handle->data;
-    file->m_file_descriptor = handle->result;
-    file->m_promise->resolve();
+    if( result < 0 ){
+        file->m_promise->reject( _wrap_uv_error( result ) );
+    }
+    else {
+        file->m_file_descriptor = result;
+        file->m_promise->resolve();
+    }
 }
 
 // -------------------------------------------------------------------------- //
@@ -83,9 +98,15 @@ event::Future<> File::close( void ){
 // -------------------------------------------------------------------------- //
 
 void File::_close_cb( uv_fs_s* handle ){
+    int result = handle->result;
     File* file = (File*)handle->data;
-    file->m_file_descriptor = -1;
-    file->m_promise->resolve();
+    if( result < 0 ){
+        file->m_promise->reject( _wrap_uv_error( result ) );
+    }
+    else {
+        file->m_file_descriptor = -1;
+        file->m_promise->resolve();
+    }
 }
 
 // -------------------------------------------------------------------------- //
@@ -125,8 +146,14 @@ event::Future< memory::Buffer > File::read( const std::size_t bytes ){
 // -------------------------------------------------------------------------- //
 
 void File::_read_cb( uv_fs_s* handle ){
+    int result = handle->result;
     File* file = (File*)handle->data;
-    file->m_promise->resolve();
+    if( result < 0 ){
+        file->m_promise->reject( _wrap_uv_error( result ) );
+    }
+    else {
+        file->m_promise->resolve();
+    }
 }
 
 // -------------------------------------------------------------------------- //
@@ -150,8 +177,14 @@ event::Future<> File::write( const memory::Buffer& data ){
 // -------------------------------------------------------------------------- //
 
 void File::_write_cb( uv_fs_s* handle ){
+    int result = handle->result;
     File* file = (File*)handle->data;
-    file->m_promise->resolve();
+    if( result < 0 ){
+        file->m_promise->reject( _wrap_uv_error( result ) );
+    }
+    else {
+        file->m_promise->resolve();
+    }
 }
 
 // -------------------------------------------------------------------------- //
@@ -163,15 +196,15 @@ event::Future<> File::_reset_promise( void ){
 
 // -------------------------------------------------------------------------- //
 
-event::Future< File > open(
+event::Future< std::shared_ptr< File > > open(
     event::Loop& loop,
     const std::string& path,
     const std::ios::openmode mode
 ){
     auto file = std::make_shared< File >( loop );
     return file->open( path, mode )
-        .then< File >([ file ]( event::Promise< File >&& promise ){
-            promise.resolve( std::move( *file ) );
+        .then([ file ](){
+            return file;
         })
     ;
 }

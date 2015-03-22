@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 
+#include "lw/error.hpp"
 #include "lw/event.hpp"
 #include "lw/memory.hpp"
 
@@ -13,6 +14,8 @@ struct uv_buf_t;
 
 namespace lw {
 namespace fs {
+
+LW_DEFINE_EXCEPTION( FileError );
 
 /// @brief Wraps file access in a clean, promise-friendly package.
 class File {
@@ -128,7 +131,7 @@ private:
 /// @param mode The file mode to use.
 ///
 /// @return A future file.
-event::Future< File > open(
+event::Future< std::shared_ptr< File > > open(
     event::Loop& loop,
     const std::string& path,
     const std::ios::openmode mode = std::ios::in | std::ios::out
