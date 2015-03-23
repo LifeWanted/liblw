@@ -34,6 +34,8 @@ File::~File( void ){
         uv_fs_close( m_loop.lowest_layer(), m_handle, m_file_descriptor, nullptr );
     }
 
+    uv_fs_req_cleanup( m_handle );
+
     std::free( m_uv_buffer );
     std::free( m_handle );
 }
