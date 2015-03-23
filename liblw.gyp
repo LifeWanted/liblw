@@ -33,6 +33,9 @@
             "source/lw/event/Promise.hpp",
             "source/lw/event/Promise.impl.hpp",
             "source/lw/event/Promise.void.hpp",
+            "source/lw/event/Timeout.cpp",
+            "source/lw/event/Timeout.hpp",
+            "source/lw/event/Timeout.impl.hpp",
 
             "source/lw/fs/File.cpp",
             "source/lw/fs/File.hpp",
