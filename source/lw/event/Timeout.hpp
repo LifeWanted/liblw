@@ -45,7 +45,7 @@ private:
 
         event::Loop& loop;
         std::atomic_bool triggered;
-        uv_timer_s handle;
+        uv_timer_s* handle;
         std::function< void() > task;
     };
 

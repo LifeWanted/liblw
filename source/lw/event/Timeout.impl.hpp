@@ -15,8 +15,7 @@ Future<> Timeout::repeat( const resolution& interval, Func&& func ){
 
 // -------------------------------------------------------------------------- //
 
-template< class Rep >
-Future<> wait( Loop& loop, const std::chrono::duration< Rep, Timeout::resolution >& delay ){
+inline Future<> wait( Loop& loop, const Timeout::resolution& delay ){
     Timeout timeout( loop );
     return timeout.start( delay );
 }
@@ -30,16 +29,16 @@ Future<> wait_until(
 ){
     return wait(
         loop,
-        when - std::time_point_cast< Timeout::resolution >( Clock::now() )
+        when - std::chrono::time_point_cast< Timeout::resolution >( Clock::now() )
     );
 }
 
 // -------------------------------------------------------------------------- //
 
-template< class Rep, typename Func >
+template< typename Func >
 Future<> repeat(
     Loop& loop,
-    const std::chrono::duration< Rep, Timeout::resolution >& interval,
+    const Timeout::resolution& interval,
     Func&& func
 ){
     Timeout timeout( loop );
