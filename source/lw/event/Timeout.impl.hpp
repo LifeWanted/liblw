@@ -6,15 +6,6 @@
 namespace lw {
 namespace event {
 
-template< class Func >
-Future<> Timeout::repeat( const resolution& interval, Func&& func ){
-    auto state = m_state;
-    m_state->task = [ state, func ](){ func( Timeout( state ) ); };
-    return _repeat( interval );
-}
-
-// -------------------------------------------------------------------------- //
-
 inline Future<> wait( Loop& loop, const Timeout::resolution& delay ){
     Timeout timeout( loop );
     return timeout.start( delay );

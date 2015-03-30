@@ -15,6 +15,7 @@ namespace event {
 class Timeout {
 public:
     typedef std::chrono::milliseconds resolution;
+    typedef std::function< void( Timeout& ) > repeat_callback;
 
     // ---------------------------------------------------------------------- //
 
@@ -22,16 +23,11 @@ public:
 
     // ---------------------------------------------------------------------- //
 
-    ~Timeout( void );
-
-    // ---------------------------------------------------------------------- //
-
     Future<> start( const resolution& delay );
 
     // ---------------------------------------------------------------------- //
 
-    template< class Func >
-    Future<> repeat( const resolution& interval, Func&& func );
+    Future<> repeat( const resolution& interval, const repeat_callback& cb );
 
     // ---------------------------------------------------------------------- //
 
@@ -40,22 +36,17 @@ public:
     // ---------------------------------------------------------------------- //
 
 private:
-    struct _State {
-        ~_State( void );
-
-        event::Loop& loop;
-        std::atomic_bool triggered;
-        uv_timer_s* handle;
-        std::function< void() > task;
-    };
+    struct _State;
 
     // ---------------------------------------------------------------------- //
 
-    Timeout( const std::shared_ptr< _State >& state );
+    static void _timer_cb( uv_timer_s* handle );
 
     // ---------------------------------------------------------------------- //
 
-    Future<> _repeat( const resolution& interval );
+    Timeout( const std::shared_ptr< _State >& state ):
+        m_state( state )
+    {}
 
     // ---------------------------------------------------------------------- //
 
