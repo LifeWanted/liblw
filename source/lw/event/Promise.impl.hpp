@@ -32,7 +32,7 @@ Future< Result > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
 
     typedef std::function< void( const error::Exception& ) > RejectHandler;
     RejectHandler rejectHandler;
-    if( std::is_same< nullptr_t, Reject >::value ){
+    if( std::is_same< std::nullptr_t, Reject >::value ){
         rejectHandler = [ next ]( const error::Exception& err ){
             next->reject( err );
         };
@@ -164,7 +164,7 @@ Future< Result > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
 
     typedef std::function< void( const error::Exception& ) > RejectHandler;
     RejectHandler rejectHandler;
-    if( std::is_same< nullptr_t, Reject >::value ){
+    if( std::is_same< std::nullptr_t, Reject >::value ){
         rejectHandler = [ next ]( const error::Exception& err ){
             next->reject( err );
         };

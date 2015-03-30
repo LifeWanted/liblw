@@ -65,6 +65,27 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @brief Indicates if the promise has been resolved.
+    bool is_resolved( void ) const {
+        return m_state->resolved;
+    }
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Indicates if the promise has been rejected.
+    bool is_rejected( void ) const {
+        return m_state->rejected;
+    }
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Indicates if the promise has been either resolved or rejected.
+    bool is_finished( void ) const {
+        return is_resolved() || is_rejected();
+    }
+
+    // ---------------------------------------------------------------------- //
+
     /// @brief No copying!
     Promise& operator=( const Promise& ) = delete;
 
