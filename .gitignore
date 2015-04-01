@@ -2,6 +2,7 @@
 *.Makefile
 *.target.mk
 Makefile
+.c9
 
 # Dependencies
 external/
