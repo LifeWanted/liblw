@@ -122,5 +122,31 @@ TEST_F( TimeoutTests, Repeat ){
     EXPECT_TRUE( resolved );
 }
 
+// -------------------------------------------------------------------------- //
+
+TEST_F( TimeoutTests, Stop ){
+    time_point start;
+    bool rejected = false;
+
+    event::Timeout timeout( loop );
+    timeout.start( short_delay * 5 ).then([&](){
+        FAIL() << "Timeout promise was resolved, not rejected.";
+    }, [&]( const error::Exception& err ){
+        EXPECT_EQ( 1, err.error_code() );
+        EXPECT_EQ( (std::string)"Timeout cancelled.", err.what() );
+
+        rejected = true;
+    });
+    EXPECT_FALSE( rejected );
+
+    event::wait( loop, short_delay ).then([&](){
+        timeout.stop();
+    });
+
+    start = clock::now();
+    loop.run();
+    EXPECT_TRUE( rejected );
+}
+
 }
 }
