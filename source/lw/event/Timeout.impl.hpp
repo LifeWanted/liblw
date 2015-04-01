@@ -13,14 +13,14 @@ inline Future<> wait( Loop& loop, const Timeout::resolution& delay ){
 
 // -------------------------------------------------------------------------- //
 
-template< class Clock >
+template< class Clock, class Duration >
 Future<> wait_until(
     Loop& loop,
-    const std::chrono::time_point< Clock, Timeout::resolution >& when
+    const std::chrono::time_point< Clock, Duration >& when
 ){
     return wait(
         loop,
-        when - std::chrono::time_point_cast< Timeout::resolution >( Clock::now() )
+        std::chrono::duration_cast< Timeout::resolution >( when - Clock::now() )
     );
 }
 

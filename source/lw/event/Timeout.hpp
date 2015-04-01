@@ -12,6 +12,8 @@ struct uv_timer_s;
 namespace lw {
 namespace event {
 
+LW_DEFINE_EXCEPTION( TimeoutError );
+
 class Timeout {
 public:
     typedef std::chrono::milliseconds resolution;
@@ -71,10 +73,10 @@ Future<> wait( Loop& loop, const Timeout::resolution& delay );
 /// @param when The point in time to wait until.
 ///
 /// @return A future that will be resolved after the given point in time.
-template< class Clock >
+template< class Clock, class Duration >
 Future<> wait_until(
     Loop& loop,
-    const std::chrono::time_point< Clock, Timeout::resolution >& when
+    const std::chrono::time_point< Clock, Duration >& when
 );
 
 // -------------------------------------------------------------------------- //

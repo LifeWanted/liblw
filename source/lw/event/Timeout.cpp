@@ -16,7 +16,7 @@ struct Timeout::_State : public std::enable_shared_from_this< _State >{
     std::atomic_bool triggered;
     uv_timer_s* handle;
     std::shared_ptr< Promise<> > promise;
-    repeat_callback task;
+    std::function< void( bool ) > task;
 };
 
 // -------------------------------------------------------------------------- //
@@ -50,8 +50,15 @@ Timeout::_State::~_State( void ){
 // -------------------------------------------------------------------------- //
 
 Future<> Timeout::start( const resolution& delay ){
-    m_state->task = []( Timeout& timeout ){
-        timeout.m_state->promise->resolve();
+    auto state = m_state;
+    m_state->task = [ state ]( bool cancel ) mutable {
+        if( cancel ){
+            state->promise->reject( TimeoutError( 1, "Timeout cancelled." ) );
+        }
+        else {
+            state->promise->resolve();
+        }
+        state.reset();
     };
     uv_timer_start( m_state->handle, &Timeout::_timer_cb, delay.count(), 0 );
     return m_state->promise->future();
@@ -59,11 +66,34 @@ Future<> Timeout::start( const resolution& delay ){
 
 // -------------------------------------------------------------------------- //
 
+Future<> Timeout::repeat( const resolution& interval, const repeat_callback& cb ){
+    auto state = m_state;
+    m_state->task = [ state, cb ]( bool cancel ) mutable {
+        if( cancel ){
+            state->promise->resolve();
+            state.reset();
+        }
+        else {
+            Timeout timeout( state );
+            cb( timeout );
+        }
+    };
+    uv_timer_start(
+        m_state->handle,
+        &Timeout::_timer_cb,
+        interval.count(),
+        interval.count()
+    );
+    return m_state->promise->future();
+}
+
+// -------------------------------------------------------------------------- //
+
 void Timeout::stop( void ){
     uv_timer_stop( m_state->handle );
-    m_state->task = nullptr;
-    if( !m_state->promise->is_finished() ){
-        m_state->promise->resolve();
+    if( m_state->task ){
+        m_state->task( true ); // true == cancelled
+        m_state->task = nullptr;
     }
 }
 
@@ -72,22 +102,7 @@ void Timeout::stop( void ){
 void Timeout::_timer_cb( uv_timer_t* handle ){
     _State* state = (_State*)handle->data;
     state->triggered = true;
-    Timeout timeout( state->shared_from_this() );
-    state->task( timeout );
-}
-
-// -------------------------------------------------------------------------- //
-
-Future<> Timeout::repeat( const resolution& interval, const repeat_callback& cb ){
-    auto state = m_state;
-    m_state->task = [ state, cb ]( Timeout& timeout){ cb( timeout ); };
-    uv_timer_start(
-        m_state->handle,
-        &Timeout::_timer_cb,
-        interval.count(),
-        interval.count()
-    );
-    return m_state->promise->future();
+    state->task( false ); // false == not cancelled
 }
 
 }
