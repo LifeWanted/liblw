@@ -100,5 +100,62 @@ TEST_F( TimeoutHelperTests, WaitUntilShortDelay ){
     EXPECT_TRUE( resolved );
 }
 
+// -------------------------------------------------------------------------- //
+
+TEST_F( TimeoutHelperTests, Repeat ){
+    time_point start;
+    time_point previous_call;
+    int call_count = 0;
+    bool resolved = false;
+
+    event::repeat( loop, repeat_interval, [&]( event::Timeout& timeout ){
+        ++call_count;
+        time_point call_time = clock::now();
+
+        { // Check the total delay since starting.
+            auto time_passed = call_time - start;
+            EXPECT_LT(
+                time_passed,
+                (repeat_interval + max_discrepancy) * call_count
+            ) << "call_count: " << call_count;
+            EXPECT_GT(
+                time_passed,
+                (repeat_interval - max_discrepancy) * call_count
+            ) << "call_count: " << call_count;
+        }
+
+        // Starting with the second call, start comparing the delay.
+        if( call_count > 1 ){
+            auto time_passed = call_time - previous_call;
+            EXPECT_LT(
+                time_passed,
+                repeat_interval + max_discrepancy
+            ) << "call_count: " << call_count;
+            EXPECT_GT(
+                time_passed,
+                repeat_interval - max_discrepancy
+            ) << "call_count: " << call_count;
+        }
+
+        previous_call = call_time;
+
+        // Stop repeating after 4 calls.
+        ASSERT_LT( call_count, 5 );
+        if( call_count == 4 ){
+            timeout.stop();
+        }
+    }).then([&](){
+        EXPECT_FALSE( resolved );
+        resolved = true;
+    });
+    EXPECT_EQ( 0, call_count );
+    EXPECT_FALSE( resolved );
+
+    start = clock::now();
+    loop.run();
+    EXPECT_EQ( 4, call_count );
+    EXPECT_TRUE( resolved );
+}
+
 }
 }

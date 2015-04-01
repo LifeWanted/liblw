@@ -70,6 +70,7 @@ TEST_F( TimeoutTests, Repeat ){
     time_point start;
     time_point previous_call;
     int call_count = 0;
+    bool resolved = false;
 
     event::Timeout timeout( loop );
     timeout.repeat( repeat_interval, [&]( event::Timeout& repeat_timeout ){
@@ -108,12 +109,17 @@ TEST_F( TimeoutTests, Repeat ){
         if( call_count == 4 ){
             repeat_timeout.stop();
         }
+    }).then([&](){
+        EXPECT_FALSE( resolved );
+        resolved = true;
     });
+    EXPECT_FALSE( resolved );
     EXPECT_EQ( 0, call_count );
 
     start = clock::now();
     loop.run();
     EXPECT_EQ( 4, call_count );
+    EXPECT_TRUE( resolved );
 }
 
 }
