@@ -35,5 +35,10 @@ private:
 #define LW_DEFINE_EXCEPTION( _Type ) \
     LW_DEFINE_EXCEPTION_EX( _Type, ::lw::error, Exception )
 
+// -------------------------------------------------------------------------- //
+
+#define LW_UV_ERROR( _Type, _code ) \
+    _Type( _code, (std::string)uv_err_name( _code ) + ": " + uv_strerror( _code ) )
+
 }
 }
