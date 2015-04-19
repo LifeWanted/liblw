@@ -49,12 +49,45 @@ std::uint64_t Destructor::destruct_count            = 0;
 
 // -------------------------------------------------------------------------- //
 
-struct PromiseDestructionTests : public testing::Test {
+struct PromiseBasicTests : public testing::Test {
 };
 
 // -------------------------------------------------------------------------- //
 
-TEST_F( PromiseDestructionTests, Basic ){
+TEST_F( PromiseBasicTests, ReuseWithReset ){
+    event::Promise<> promise;
+    int firstCallCount  = 0;
+    int secondCallCount = 0;
+
+    promise.future().then([&](){
+        EXPECT_EQ( 0, firstCallCount    );
+        EXPECT_EQ( 0, secondCallCount   );
+        ++firstCallCount;
+    });
+
+    EXPECT_EQ( 0, firstCallCount    );
+    EXPECT_EQ( 0, secondCallCount   );
+    promise.resolve();
+    EXPECT_EQ( 1, firstCallCount    );
+    EXPECT_EQ( 0, secondCallCount   );
+
+    promise.reset();
+    promise.future().then([&](){
+        EXPECT_EQ( 1, firstCallCount    );
+        EXPECT_EQ( 0, secondCallCount   );
+        ++secondCallCount;
+    });
+
+    EXPECT_EQ( 1, firstCallCount    );
+    EXPECT_EQ( 0, secondCallCount   );
+    promise.resolve();
+    EXPECT_EQ( 1, firstCallCount    );
+    EXPECT_EQ( 1, secondCallCount   );
+}
+
+// -------------------------------------------------------------------------- //
+
+TEST_F( PromiseBasicTests, Destruction ){
     auto promise = std::make_shared< event::Promise<> >();
 
     {

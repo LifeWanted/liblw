@@ -63,7 +63,7 @@
             "tests/main.cpp",
 
             "tests/event/LoopBasicTests.cpp",
-            "tests/event/PromiseDestructionTests.cpp",
+            "tests/event/PromiseBasicTests.cpp",
             "tests/event/PromiseIntSynchronousTests.cpp",
             "tests/event/PromiseVoidSynchronousTests.cpp",
             "tests/event/PromiseRejectionTests.cpp",
