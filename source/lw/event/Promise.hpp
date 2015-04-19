@@ -52,6 +52,7 @@ public:
         m_state->resolved   = false;
         m_state->rejected   = false;
         m_state->resolve    = nullptr;
+        m_state->reject     = nullptr;
     }
 
     // ---------------------------------------------------------------------- //
@@ -101,6 +102,21 @@ public:
         else {
             throw err;
         }
+    }
+
+    // ---------------------------------------------------------------------- //
+
+    /// @brief Resets the promise's internal state so that it can be reused.
+    ///
+    /// @throws PromiseError If the promise is in an unfinished state.
+    void reset( void ){
+        if( !is_finished() ){
+            throw PromiseError( 1, "Cannot reset an unfinished promise." );
+        }
+        m_state->resolved   = false;
+        m_state->rejected   = false;
+        m_state->resolve    = nullptr;
+        m_state->reject     = nullptr;
     }
 
     // ---------------------------------------------------------------------- //
