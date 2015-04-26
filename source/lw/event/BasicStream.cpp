@@ -1,6 +1,6 @@
 
 #include <cstdlib>
-#include <uv/uv.h>
+#include <uv.h>
 
 #include "lw/event/BasicStream.hpp"
 #include "lw/event/Promise.impl.hpp"
@@ -28,7 +28,6 @@ BasicStream::BasicStream( uv_stream_s* handle ):
     handle->data            = (void*)m_state.get();
     m_state->handle         = handle;
     m_state->read_count     = 0;
-    m_state->write_count    = 0;
     m_state->read_callback  = nullptr;
 }
 
@@ -36,8 +35,10 @@ BasicStream::BasicStream( uv_stream_s* handle ):
 
 BasicStream::_State::~_State( void ){
     if( handle ){
-        uv_close( handle );
-        std::free( handle );
+        uv_close(
+            (uv_handle_t*)handle,
+            []( uv_handle_t* handle ){ std::free( handle ); }
+        );
     }
 }
 
@@ -56,15 +57,15 @@ void BasicStream::stop_read( void ){
 
 Future< std::size_t > BasicStream::write( buffer_ptr_t buffer ){
     auto write_req = std::make_shared< _details::WriteRequest >();
-    write_req->size = buffer.size();
+    write_req->size = buffer->size();
     uv_buf_t buffers[ 1 ];
-    *buffers = uv_buf_init( buffer->data(), buffer->size() );
+    *buffers = uv_buf_init( (char*)buffer->data(), buffer->size() );
     int res = uv_write(
         &write_req->request,
         m_state->handle,
         buffers, 1,
         []( uv_write_t* req, int status ){
-            auto* write_req = (WriteRequest*)req->data;
+            auto* write_req = (_details::WriteRequest*)req->data;
             auto& promise   = write_req->promise;
             if( status < 0 ){
                 promise.reject( LW_UV_ERROR( StreamError, status ) );
@@ -74,6 +75,10 @@ Future< std::size_t > BasicStream::write( buffer_ptr_t buffer ){
             }
         }
     );
+
+    if( res < 0 ){
+        throw LW_UV_ERROR( StreamError, res );
+    }
 
     auto state = m_state;
     return write_req->promise.future()
@@ -91,22 +96,22 @@ Future< std::size_t > BasicStream::_read( void ){
         []( uv_handle_t* handle, std::size_t size, uv_buf_t* out_buffer ){
             auto state = ((_State*)handle->data)->shared_from_this();
             memory::Buffer& buffer = BasicStream( state )._next_read_buffer();
-            *out_buffer = uv_buf_init( buffer.data(), buffer.size() );
+            *out_buffer = uv_buf_init( (char*)buffer.data(), buffer.size() );
         },
-        []( uv_handle_t* handle, std::size_t size, const uv_buf_t* buffer ){
+        []( uv_stream_t* handle, long int size, const uv_buf_t* buffer ){
             auto state  = ((_State*)handle->data)->shared_from_this();
             auto stream = BasicStream( state );
 
             if( size == UV_EOF ){
                 stream._stop_read();
-                state->reset();
+                state.reset();
             }
             else {
                 state->read_count += size;
                 state->read_callback(
                     stream,
-                    buffer_ptr_r(
-                        new memory::Buffer( buffer->base, size ),
+                    buffer_ptr_t(
+                        new memory::Buffer( (memory::byte*)buffer->base, size ),
                         [ state ]( memory::Buffer* buffer ){
                             BasicStream stream = state;
                             stream._release_read_buffer( buffer->data() );

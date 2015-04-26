@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <list>
 #include <type_traits>
 
 #include "lw/error.hpp"
