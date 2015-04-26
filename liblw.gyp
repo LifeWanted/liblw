@@ -26,6 +26,8 @@
             "source/lw/memory.hpp",
             "source/lw/Singleton.hpp",
 
+            "source/lw/event/BasicStream.cpp",
+            "source/lw/event/BasicStream.hpp",
             "source/lw/event/Idle.cpp",
             "source/lw/event/Idle.hpp",
             "source/lw/event/Loop.cpp",
