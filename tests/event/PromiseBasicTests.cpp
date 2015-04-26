@@ -8,11 +8,11 @@ namespace lw {
 namespace tests {
 
 struct Destructor {
-    static std::uint64_t construct_count;
-    static std::uint64_t default_construct_count;
-    static std::uint64_t move_construct_count;
-    static std::uint64_t copy_construct_count;
-    static std::uint64_t destruct_count;
+    static std::int64_t construct_count;
+    static std::int64_t default_construct_count;
+    static std::int64_t move_construct_count;
+    static std::int64_t copy_construct_count;
+    static std::int64_t destruct_count;
 
     // ---------------------------------------------------------------------- //
 
@@ -41,11 +41,11 @@ struct Destructor {
         ++destruct_count;
     }
 };
-std::uint64_t Destructor::construct_count           = 0;
-std::uint64_t Destructor::default_construct_count   = 0;
-std::uint64_t Destructor::move_construct_count      = 0;
-std::uint64_t Destructor::copy_construct_count      = 0;
-std::uint64_t Destructor::destruct_count            = 0;
+std::int64_t Destructor::construct_count           = 0;
+std::int64_t Destructor::default_construct_count   = 0;
+std::int64_t Destructor::move_construct_count      = 0;
+std::int64_t Destructor::copy_construct_count      = 0;
+std::int64_t Destructor::destruct_count            = 0;
 
 // -------------------------------------------------------------------------- //
 
