@@ -4,7 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "lw/event.hpp"
-#include "lw/fs.hpp"
+#include "lw/io.hpp"
 #include "lw/memory.hpp"
 
 namespace lw {
@@ -30,7 +30,7 @@ struct FileTests : public testing::Test {
 // -------------------------------------------------------------------------- //
 
 TEST_F( FileTests, Open ){
-    fs::File file( loop );
+    io::File file( loop );
     bool started = false;
     bool finished = false;
     bool promise_called = false;
@@ -51,7 +51,7 @@ TEST_F( FileTests, Open ){
 // -------------------------------------------------------------------------- //
 
 TEST_F( FileTests, Close ){
-    fs::File file( loop );
+    io::File file( loop );
 
     file.open( file_name ).then([&](){
         return file.close();
@@ -63,7 +63,7 @@ TEST_F( FileTests, Close ){
 // -------------------------------------------------------------------------- //
 
 TEST_F( FileTests, Write ){
-    fs::File file( loop );
+    io::File file( loop );
 
     file.open( file_name )
         .then([&](){ return file.write( contents ); })
@@ -85,8 +85,8 @@ TEST_F( FileTests, Write ){
 // -------------------------------------------------------------------------- //
 
 TEST_F( FileTests, Read ){
-    fs::File write_file( loop );
-    fs::File read_file( loop );
+    io::File write_file( loop );
+    io::File read_file( loop );
     bool made_it_to_the_end = false;
     write_file
         .open( file_name )

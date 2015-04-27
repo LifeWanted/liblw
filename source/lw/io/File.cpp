@@ -3,10 +3,10 @@
 #include <cstring>
 #include <uv.h>
 
-#include "lw/fs/File.hpp"
+#include "lw/io/File.hpp"
 
 namespace lw {
-namespace fs {
+namespace io {
 
 inline FileError _wrap_uv_error( int err_code ){
     return FileError(

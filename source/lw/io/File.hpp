@@ -13,7 +13,7 @@ struct uv_fs_s;
 struct uv_buf_t;
 
 namespace lw {
-namespace fs {
+namespace io {
 
 LW_DEFINE_EXCEPTION( FileError );
 

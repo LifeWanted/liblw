@@ -39,8 +39,8 @@
             "source/lw/event/Timeout.hpp",
             "source/lw/event/Timeout.impl.hpp",
 
-            "source/lw/fs/File.cpp",
-            "source/lw/fs/File.hpp",
+            "source/lw/io/File.cpp",
+            "source/lw/io/File.hpp",
 
             "source/lw/iter/Iterable.hpp",
             "source/lw/iter/RandomAccessIterator.hpp",
@@ -72,7 +72,7 @@
             "tests/event/TimeoutHelperTests.cpp",
             "tests/event/TimeoutTests.cpp",
 
-            "tests/fs/FileTests.cpp"
+            "tests/io/FileTests.cpp"
         ]
     }]
 }
