@@ -1,5 +1,18 @@
 #! /bin/bash
 
+gypGenerator="make"
+
+# Load command-line arguments.
+while [ "$1" != "" ]; do
+    case $1 in
+        -f | --format )
+            shift
+            gypGenerator=$1
+            ;;
+    esac
+    shift
+done
+
 source scripts/common.sh
 source scripts/install-all.sh
 source scripts/run-gyp.sh
@@ -15,4 +28,4 @@ else
 fi
 
 # And then run gyp
-run_gyp liblw.gyp --depth=. --generator-output=$BUILD_DIR -Goutput_dir=$BUILD_DIR
+run_gyp liblw.gyp --depth=. --format=$gypGenerator --generator-output=$BUILD_DIR -Goutput_dir=$BUILD_DIR

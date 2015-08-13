@@ -3,7 +3,7 @@
         "uv_library": "static_library"
     },
     "target_defaults": {
-        "cflags": ["-Wall", "-fPIC"],
+        "cflags": ["-Wall", "-fPIC"]
     },
     "includes": ["external/libuv/uv.gypi"],
     "targets": [{
@@ -52,6 +52,7 @@
         "target_name": "libgtest",
         "type": "static_library",
         "include_dirs": ["./external/gtest/include"],
+        "cflags": ["-std=c++1y"],
         "direct_dependent_settings": {
             "include_dirs": ["./external/gtest/include"]
         },
