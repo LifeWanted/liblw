@@ -1,23 +1,23 @@
 {
-    "variables" : {
-        "uv_library" : "static_library"
+    "variables": {
+        "uv_library": "static_library"
     },
-    "target_defaults" : {
-        "cflags" : [ "-Wall", "-fPIC" ],
+    "target_defaults": {
+        "cflags": ["-Wall", "-fPIC"],
     },
-    "includes" : [ "external/libuv/uv.gypi" ],
-    "targets" : [{
-        "target_name" : "liblw",
-        "type" : "shared_library",
-        "include_dirs" : [ "./source" ],
-        "dependencies" : [ "libuv" ],
-        "cflags" : [ "-std=c++1y" ],
-        "direct_dependent_settings" : {
-            "include_dirs" : [ "./source" ],
-            "libraries" : [ "-pthread" ],
-            "cflags" : [ "-std=c++1y" ]
+    "includes": ["external/libuv/uv.gypi"],
+    "targets": [{
+        "target_name": "liblw",
+        "type": "shared_library",
+        "include_dirs": ["./source"],
+        "dependencies": ["libuv"],
+        "cflags": ["-std=c++1y"],
+        "direct_dependent_settings": {
+            "include_dirs": ["./source"],
+            "libraries": ["-pthread"],
+            "cflags": ["-std=c++1y"]
         },
-        "sources" : [
+        "sources": [
             "source/lw/Application.cpp",
             "source/lw/Application.hpp",
             "source/lw/event.hpp",
@@ -48,20 +48,20 @@
             "source/lw/memory/Buffer.cpp",
             "source/lw/memory/Buffer.hpp"
         ]
-    },{
-        "target_name" : "libgtest",
-        "type" : "static_library",
-        "include_dirs" : [ "./external/gtest/include" ],
-        "direct_dependent_settings" : {
-            "include_dirs" : [ "./external/gtest/include" ]
+    }, {
+        "target_name": "libgtest",
+        "type": "static_library",
+        "include_dirs": ["./external/gtest/include"],
+        "direct_dependent_settings": {
+            "include_dirs": ["./external/gtest/include"]
         },
-        "sources" : [ "external/gtest/fused-src/gtest/gtest-all.cc" ]
-    },{
-        "target_name" : "liblw-tests",
-        "type" : "executable",
-        "dependencies" : [ "liblw", "libgtest" ],
-        "include_dirs" : [ "./tests" ],
-        "sources" : [
+        "sources": ["external/gtest/fused-src/gtest/gtest-all.cc"]
+    }, {
+        "target_name": "liblw-tests",
+        "type": "executable",
+        "dependencies": ["liblw", "libgtest"],
+        "include_dirs": ["./tests"],
+        "sources": [
             "tests/main.cpp",
 
             "tests/event/LoopBasicTests.cpp",
