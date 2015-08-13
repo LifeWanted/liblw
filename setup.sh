@@ -1,6 +1,6 @@
 #! /bin/bash
 
-gypGenerator="make"
+gypGenerator=
 
 # Load command-line arguments.
 while [ "$1" != "" ]; do
@@ -27,5 +27,11 @@ else
     echo " !! Failed to install required components." 1>&2
 fi
 
+gypArgs="liblw.gyp --depth=. --generator-output=$BUILD_DIR -Goutput_dir=$BUILD_DIR"
+
+if [ "$gypGenerator" != "" ]; then
+    gypArgs="$gypArgs --format=$gypGenerator"
+fi
+
 # And then run gyp
-run_gyp liblw.gyp --depth=. --format=$gypGenerator --generator-output=$BUILD_DIR -Goutput_dir=$BUILD_DIR
+run_gyp $gypArgs
