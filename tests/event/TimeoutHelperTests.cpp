@@ -51,8 +51,8 @@ TEST_F(TimeoutHelperTests, WaitShortDelay){
 
     event::wait(loop, short_delay).then([&](){
         auto time_passed = duration_cast<milliseconds>(clock::now() - start);
-        EXPECT_LT(time_passed, short_delay + max_discrepancy);
-        EXPECT_GT(time_passed, short_delay - max_discrepancy);
+        EXPECT_LE(time_passed, short_delay + max_discrepancy);
+        EXPECT_GE(time_passed, short_delay - max_discrepancy);
 
         resolved = true;
     });
@@ -89,8 +89,8 @@ TEST_F(TimeoutHelperTests, WaitUntilShortDelay){
 
     event::wait_until(loop, clock::now() + short_delay).then([&](){
         auto time_passed = duration_cast<milliseconds>(clock::now() - start);
-        EXPECT_LT(time_passed, short_delay + max_discrepancy);
-        EXPECT_GT(time_passed, short_delay - max_discrepancy);
+        EXPECT_LE(time_passed, short_delay + max_discrepancy);
+        EXPECT_GE(time_passed, short_delay - max_discrepancy);
 
         resolved = true;
     });
