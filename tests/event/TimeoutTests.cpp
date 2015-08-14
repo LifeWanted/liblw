@@ -4,27 +4,28 @@
 
 #include "lw/event.hpp"
 
+using namespace std::chrono;
 using namespace std::chrono_literals;
 
 namespace lw {
 namespace tests {
 
 struct TimeoutTests : public testing::Test {
-    typedef std::chrono::high_resolution_clock clock;
+    typedef high_resolution_clock clock;
     typedef clock::time_point time_point;
 
-    static const std::chrono::milliseconds short_delay;
-    static const std::chrono::milliseconds repeat_interval;
-    static const std::chrono::milliseconds max_discrepancy;
+    static const milliseconds short_delay;
+    static const milliseconds repeat_interval;
+    static const milliseconds max_discrepancy;
 
     event::Loop loop;
 };
 
-const std::chrono::milliseconds TimeoutTests::short_delay       = 25ms;
-const std::chrono::milliseconds TimeoutTests::repeat_interval   =  5ms;
-const std::chrono::milliseconds TimeoutTests::max_discrepancy   =  2ms;
+const milliseconds TimeoutTests::short_delay        = 25ms;
+const milliseconds TimeoutTests::repeat_interval    =  5ms;
+const milliseconds TimeoutTests::max_discrepancy    =  3ms;
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 TEST_F( TimeoutTests, NoDelay ){
     time_point start;
@@ -43,28 +44,28 @@ TEST_F( TimeoutTests, NoDelay ){
     EXPECT_TRUE( resolved );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
-TEST_F( TimeoutTests, ShortDelay ){
+TEST_F(TimeoutTests, ShortDelay){
     time_point start;
     bool resolved = false;
 
-    event::Timeout timeout( loop );
-    timeout.start( short_delay ).then([&](){
-        auto time_passed = clock::now() - start;
-        EXPECT_LT( time_passed, short_delay + max_discrepancy );
-        EXPECT_GT( time_passed, short_delay - max_discrepancy );
+    event::Timeout timeout(loop);
+    timeout.start(short_delay).then([&](){
+        auto time_passed = duration_cast<milliseconds>(clock::now() - start);
+        EXPECT_LT(time_passed, short_delay + max_discrepancy);
+        EXPECT_GT(time_passed, short_delay - max_discrepancy);
 
         resolved = true;
     });
-    EXPECT_FALSE( resolved );
+    EXPECT_FALSE(resolved);
 
     start = clock::now();
     loop.run();
-    EXPECT_TRUE( resolved );
+    EXPECT_TRUE(resolved);
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 TEST_F( TimeoutTests, Repeat ){
     time_point start;
@@ -122,7 +123,7 @@ TEST_F( TimeoutTests, Repeat ){
     EXPECT_TRUE( resolved );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 TEST_F( TimeoutTests, Stop ){
     time_point start;
