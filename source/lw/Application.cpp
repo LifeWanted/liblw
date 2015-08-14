@@ -3,13 +3,13 @@
 
 namespace lw {
 
-LW_DEFINE_SINGLETON_INSTANCE( Application );
+LW_DEFINE_SINGLETON_INSTANCE(Application);
 
-Application::Application( void ):
+Application::Application(void):
     Loop(),
-    Singleton< Application >()
+    Singleton<Application>()
 {}
 
-Application::~Application( void ){}
+Application::~Application(void){}
 
 }
