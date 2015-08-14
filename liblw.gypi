@@ -1,6 +1,6 @@
 {
     "target_defaults": {
-        "cxxflags": ["-Wall", "-std=c++1y", "-fPIC"],
+        "cflags": ["-Wall", "-std=c++1y", "-fPIC"],
         "xcode_settings": {
             "OTHER_CPLUSPLUSFLAGS": ["-std=c++1y", "-Wall"],
             "CLANG_CXX_LANGUAGE_STANDARD": "c++1y"
@@ -11,7 +11,7 @@
         "type": "shared_library",
         "include_dirs": ["./source"],
         "dependencies": ["libuv"],
-        "cxxflags": ["-std=c++1y"],
+        "cflags": ["-std=c++1y"],
         "direct_dependent_settings": {
             "include_dirs": ["./source"],
             "libraries": ["-pthread"],
