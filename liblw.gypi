@@ -39,6 +39,7 @@
             "source/lw/event/Timeout.cpp",
             "source/lw/event/Timeout.hpp",
             "source/lw/event/Timeout.impl.hpp",
+            "source/lw/event/util.hpp",
 
             "source/lw/fs/File.cpp",
             "source/lw/fs/File.hpp",
@@ -86,6 +87,7 @@
             "tests/event/PromiseRejectionTests.cpp",
             "tests/event/TimeoutHelperTests.cpp",
             "tests/event/TimeoutTests.cpp",
+            "tests/event/UtilityTests.cpp",
 
             "tests/fs/FileTests.cpp"
         ]

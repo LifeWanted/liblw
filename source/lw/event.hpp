@@ -6,6 +6,7 @@
 #include "lw/event/Promise.hpp"
 #include "lw/event/Promise.void.hpp"
 #include "lw/event/Timeout.hpp"
+#include "lw/event/util.hpp"
 
 #include "lw/event/Promise.impl.hpp"
 #include "lw/event/Timeout.impl.hpp"

@@ -11,13 +11,13 @@ inline Future< T > Promise< T >::future( void ){
     return Future< T >( m_state );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 inline Future< void > Promise< void >::future( void ){
     return Future< void >( m_state );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename T >
 template< typename Result, typename Resolve, typename Reject, typename >
@@ -51,7 +51,7 @@ Future< Result > Future< T >::_then( Resolve&& resolve, Reject&& reject ){
     return next->future();
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename T >
 template< typename Resolve, typename Reject, typename >
@@ -62,7 +62,7 @@ inline Future<> Future< T >::_then( Resolve&& resolve, Reject&& reject ){
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename T >
 template<
@@ -81,7 +81,7 @@ Future< typename ResolveResult::result_type > Future< T >::_then( Resolve&& reso
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename T >
 template<
@@ -107,7 +107,7 @@ Future< ResolveResult > Future< T >::_then( Resolve&& resolve, Reject&& reject )
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename T >
 template<
@@ -132,7 +132,7 @@ Future<> Future< T >::_then( Resolve&& resolve, Reject&& reject ){
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename T >
 void Future< T >::then( promise_type&& promise ){
@@ -150,7 +150,7 @@ void Future< T >::then( promise_type&& promise ){
     };
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename Result, typename Resolve, typename Reject, typename >
 Future< Result > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
@@ -183,7 +183,7 @@ Future< Result > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
     return next->future();
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template< typename Resolve, typename Reject, typename >
 Future<> Future< void >::_then( Resolve&& resolve, Reject&& reject ){
@@ -193,7 +193,7 @@ Future<> Future< void >::_then( Resolve&& resolve, Reject&& reject ){
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template<
     typename Resolve,
@@ -211,7 +211,7 @@ Future< typename ResolveResult::result_type > Future< void >::_then( Resolve&& r
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template<
     typename Resolve,
@@ -236,7 +236,7 @@ Future< ResolveResult > Future< void >::_then( Resolve&& resolve, Reject&& rejec
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 template<
     typename Resolve,
@@ -260,7 +260,7 @@ Future< void > Future< void >::_then( Resolve&& resolve, Reject&& reject ){
     );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 inline void Future< void >::then( promise_type&& promise ){
     auto next = std::make_shared< promise_type >( std::move( promise ) );
