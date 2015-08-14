@@ -22,7 +22,8 @@
             "source/lw/Application.hpp",
             "source/lw/event.hpp",
             "source/lw/fs.hpp",
-            "source/lw/iter.hpp"
+            "source/lw/iter.hpp",
+            "source/lw/lw.hpp",
             "source/lw/memory.hpp",
             "source/lw/Singleton.hpp",
 
