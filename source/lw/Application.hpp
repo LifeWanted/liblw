@@ -5,10 +5,10 @@
 
 namespace lw {
 
-class Application : public event::Loop, public Singleton< Application >{
+class Application : public event::Loop, public Singleton<Application>{
 public:
-    Application( void );
-    ~Application( void );
+    Application(void);
+    ~Application(void);
 };
 
 }

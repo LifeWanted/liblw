@@ -1,9 +1,15 @@
 language: c++
-sudo: required
 compiler:
     - gcc
 os:
     - linux
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - gcc-4.9
+            - g++-4.9
 install:
     - ./setup.sh
 script:
