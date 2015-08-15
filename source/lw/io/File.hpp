@@ -87,6 +87,13 @@ public:
 
     // ---------------------------------------------------------------------- //
 
+    /// @brief Gives access to the least-abstracted layer.
+    int lowest_layer( void ){
+        return m_file_descriptor;
+    }
+
+    // ---------------------------------------------------------------------- //
+
 private:
     /// @brief Handler for open requests.
     static void _open_cb( uv_fs_s* handle );
