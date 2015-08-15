@@ -68,6 +68,7 @@ event::Future<> Pipe::connect(const std::string& name){
             else {
                 pipe.m_connect_promise.resolve();
             }
+            pipe.m_connect_req.reset();
         }
     );
 
