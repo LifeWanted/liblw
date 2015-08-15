@@ -73,16 +73,15 @@ public:
     ///
     /// @param buffer The data to write.
     ///
-    /// @return A promise to write the data. The value will be the number of
-    ///         bytes written.
+    /// @return A promise to write the data. The value will be the number of bytes written.
     Future< std::size_t > write( buffer_ptr_t buffer );
 
     // ------------------------------------------------------------------------------------------ //
 
 protected:
     /// @brief The internal stream state.
-    struct _State : public std::enable_shared_from_this< _State >{
-        ~_State( void );
+    struct _State : public std::enable_shared_from_this<_State>{
+        ~_State(void);
 
         uv_stream_s*    handle;         ///< The underlying stream handle.
         std::size_t     read_count;     ///< The running tally of bytes read.
@@ -100,16 +99,20 @@ protected:
     /// The provided handle will be freed once the stream is done.
     ///
     /// @param handle The stream handle.
-    BasicStream( uv_stream_s* handle );
+    BasicStream(uv_stream_s* handle);
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @brief Reconstructs a `BasicStream` from its internal state.
     ///
     /// @param state The stream state to wrap up.
-    BasicStream( const std::shared_ptr< _State >& state ):
-        m_state( state )
-    {}
+    BasicStream(const std::shared_ptr<_State>& state):
+        m_state(nullptr)
+    {
+        if (state) {
+            this->state(state);
+        }
+    }
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -135,7 +138,7 @@ protected:
     // ------------------------------------------------------------------------------------------ //
 
 private:
-    std::shared_ptr< _State > m_state; ///< Internal state pointer.
+    std::shared_ptr<_State> m_state; ///< Internal state pointer.
 
     // ------------------------------------------------------------------------------------------ //
 

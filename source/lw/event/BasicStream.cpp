@@ -32,12 +32,9 @@ BasicStream::BasicStream( uv_stream_s* handle ):
 
 // ---------------------------------------------------------------------------------------------- //
 
-BasicStream::_State::~_State( void ){
-    if( handle ){
-        uv_close(
-            (uv_handle_t*)handle,
-            []( uv_handle_t* handle ){ std::free( handle ); }
-        );
+BasicStream::_State::~_State(void){
+    if (handle) {
+        uv_close((uv_handle_t*)handle, [](uv_handle_t* handle){ std::free(handle); });
     }
 }
 
