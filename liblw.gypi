@@ -43,6 +43,8 @@
 
             "source/lw/io/File.cpp",
             "source/lw/io/File.hpp",
+            "source/lw/io/Pipe.cpp",
+            "source/lw/io/Pipe.hpp",
 
             "source/lw/iter/Iterable.hpp",
             "source/lw/iter/RandomAccessIterator.hpp",
