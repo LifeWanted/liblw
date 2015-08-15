@@ -13,35 +13,33 @@ struct uv_stream_s;
 namespace lw {
 namespace event {
 
-LW_DEFINE_EXCEPTION( StreamError );
+LW_DEFINE_EXCEPTION(StreamError);
 
 /// @brief Base class for asynchronous streams.
 class BasicStream {
 public:
     /// @brief With streams, all buffers must be pointers.
-    typedef std::shared_ptr< const memory::Buffer > buffer_ptr_t;
+    typedef std::shared_ptr<const memory::Buffer> buffer_ptr_t;
 
     /// @brief Read callback functor type.
     ///
     /// @param stream   The stream performing the read.
     /// @param buffer   The buffer containing the read data.
-    typedef std::function<
-        void( BasicStream& stream, buffer_ptr_t buffer )
-    > read_callback_t;
+    typedef std::function<void(BasicStream& stream, buffer_ptr_t buffer)> read_callback_t;
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
-    virtual ~BasicStream( void ){}
+    virtual ~BasicStream(void){}
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Starts the stream reading.
     ///
-    /// Once read starts, the stream will continue reading until it reaches the
-    /// end, encounters an error, or is told to stop via `stop_read`.
+    /// Once read starts, the stream will continue reading until it reaches the end, encounters an
+    /// error, or is told to stop via `stop_read`.
     ///
-    /// The returned promise will be resolved if the stream reaches the end or
-    /// if `stop_read` is called. It will be rejected if any error occurs.
+    /// The returned promise will be resolved if the stream reaches the end or if `stop_read` is
+    /// called. It will be rejected if any error occurs.
     ///
     /// @tparam Func A functor matching the `read_callback_t`.
     ///
@@ -64,12 +62,12 @@ public:
         return _read();
     }
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Stops the active read, and resolves the associated promise.
     void stop_read( void );
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Writes the data in the given buffer.
     ///
@@ -79,7 +77,7 @@ public:
     ///         bytes written.
     Future< std::size_t > write( buffer_ptr_t buffer );
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
 protected:
     /// @brief The internal stream state.
@@ -90,21 +88,12 @@ protected:
         std::size_t     read_count;     ///< The running tally of bytes read.
         read_callback_t read_callback;  ///< The functor to call with read data.
 
-        /// @brief The read promise.
-        Promise< std::size_t > read_promise;
-
-        /// @brief List of available read buffers.
-        std::list< memory::Buffer > idle_read_buffers;
-
-        /// @brief List of in-use read buffers.
-        std::list< memory::Buffer > active_read_buffers;
+        Promise<std::size_t> read_promise;              ///< The read promise.
+        std::list<memory::Buffer> idle_read_buffers;    ///< List of available read buffers.
+        std::list<memory::Buffer> active_read_buffers;  ///< List of in-use read buffers.
     };
 
-    // ---------------------------------------------------------------------- //
-
-    std::shared_ptr< _State > m_state; ///< Internal state pointer.
-
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Constructs the stream around the low-level libuv handle.
     ///
@@ -113,41 +102,52 @@ protected:
     /// @param handle The stream handle.
     BasicStream( uv_stream_s* handle );
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Reconstructs a `BasicStream` from its internal state.
     ///
     /// @param state The stream state to wrap up.
-    BasicStream( std::shared_ptr< _State > state ):
+    BasicStream( const std::shared_ptr< _State >& state ):
         m_state( state )
     {}
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Retrieves the stream handle.
     uv_stream_s& handle( void ){
         return *m_state->handle;
     }
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @copydoc BasicStream::handle()
     const uv_stream_s& handle( void ) const {
         return *m_state->handle;
     }
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
+
+    /// @brief Sets the state context for the stream.
+    ///
+    /// @param state The new stream state.
+    void state(const std::shared_ptr<_State>& state);
+
+    // ------------------------------------------------------------------------------------------ //
 
 private:
+    std::shared_ptr< _State > m_state; ///< Internal state pointer.
+
+    // ------------------------------------------------------------------------------------------ //
+
     /// @brief The internal implementation of beginning the read.
     Future< std::size_t > _read( void );
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Resolves the read promise and resets the promise and read count.
     void _stop_read( void );
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Gets an available read buffer.
     ///
@@ -156,7 +156,7 @@ private:
     /// @return A reference to a useable memory buffer.
     memory::Buffer& _next_read_buffer( void );
 
-    // ---------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------------------------ //
 
     /// @brief Releases the given buffer, making it available to read into again.
     ///

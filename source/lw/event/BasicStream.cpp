@@ -20,18 +20,17 @@ namespace _details {
     };
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 BasicStream::BasicStream( uv_stream_s* handle ):
-    m_state( std::make_shared< _State >() )
+    m_state( nullptr )
 {
-    handle->data            = (void*)m_state.get();
-    m_state->handle         = handle;
-    m_state->read_count     = 0;
-    m_state->read_callback  = nullptr;
+    auto state_ptr = std::make_shared< _State >();
+    state_ptr->handle = handle;
+    state( state_ptr );
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 BasicStream::_State::~_State( void ){
     if( handle ){
@@ -42,7 +41,16 @@ BasicStream::_State::~_State( void ){
     }
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
+
+void BasicStream::state(const std::shared_ptr<_State>& state){
+    m_state = state;
+    m_state->handle->data   = (void*)m_state.get();
+    m_state->read_count     = 0;
+    m_state->read_callback  = nullptr;
+}
+
+// ---------------------------------------------------------------------------------------------- //
 
 void BasicStream::stop_read( void ){
     int res = uv_read_stop( m_state->handle );
@@ -53,7 +61,7 @@ void BasicStream::stop_read( void ){
     _stop_read();
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 Future< std::size_t > BasicStream::write( buffer_ptr_t buffer ){
     auto write_req = std::make_shared< _details::WriteRequest >();
@@ -88,7 +96,7 @@ Future< std::size_t > BasicStream::write( buffer_ptr_t buffer ){
     ;
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 Future< std::size_t > BasicStream::_read( void ){
     int res = uv_read_start(
@@ -131,7 +139,7 @@ Future< std::size_t > BasicStream::_read( void ){
     return m_state->read_promise.future();
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 void BasicStream::_stop_read( void ){
     m_state->read_promise.resolve( m_state->read_count );
@@ -139,7 +147,7 @@ void BasicStream::_stop_read( void ){
     m_state->read_count = 0;
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 memory::Buffer& BasicStream::_next_read_buffer( void ){
     if( m_state->idle_read_buffers.size() == 0 ){
@@ -153,7 +161,7 @@ memory::Buffer& BasicStream::_next_read_buffer( void ){
     return m_state->active_read_buffers.back();
 }
 
-// -------------------------------------------------------------------------- //
+// ---------------------------------------------------------------------------------------------- //
 
 void BasicStream::_release_read_buffer( const void* base ){
     for(
