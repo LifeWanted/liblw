@@ -3,6 +3,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <type_traits>
 
 #include "lw/error.hpp"
 
@@ -22,14 +23,39 @@ class Future;
 ///
 /// @tparam T The type to check.
 template<typename T>
-struct IsFuture : public std::integral_constant<bool, false>{};
+struct IsFuture : public std::integral_constant<bool, false> {};
 
 template<typename T>
-struct IsFuture<Future<T>> : public std::integral_constant<bool, true>{};
+struct IsFuture<Future<T>> : public std::integral_constant<bool, true> {};
 
 template<template<typename> class T, typename Value>
 struct IsFuture<T<Value>> :
     public std::integral_constant<bool, std::is_base_of<Future<Value>, T<Value>>::value>
+{};
+
+// ---------------------------------------------------------------------------------------------- //
+
+/// @brief Breaks down a type to the highest non-future layer.
+///
+/// @tparam T The type to break down.
+template<typename T>
+struct UnwrapFuture {
+    typedef T result_type;  ///< The type that will be promised.
+    typedef Future<T> type; ///< The type of a future for this type.
+};
+
+template<typename T>
+struct UnwrapFuture<Future<T>> : public UnwrapFuture<T> {};
+
+// ---------------------------------------------------------------------------------------------- //
+
+/// @brief Determines the result of a function as a future.
+template<typename T>
+struct FutureResultOf;
+
+template<typename F, typename... Args>
+struct FutureResultOf<F(Args...)> :
+    public UnwrapFuture<typename std::result_of<F(Args...)>::type>
 {};
 
 // ---------------------------------------------------------------------------------------------- //
