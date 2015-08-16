@@ -64,7 +64,7 @@ private:
     /// @param ipc  Flag indicating if this pipe will be used to pass handles.
     ///
     /// @return A new shared state for a pipe.
-    static std::shared_ptr<_State> _make_state(event::Loop& loop, const bool ipc);
+    static uv_stream_s* _make_state(event::Loop& loop, const bool ipc);
 
     // ------------------------------------------------------------------------------------------ //
 

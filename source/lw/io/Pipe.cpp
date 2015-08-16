@@ -78,11 +78,10 @@ event::Future<> Pipe::connect(const std::string& name){
 
 // ---------------------------------------------------------------------------------------------- //
 
-std::shared_ptr<event::BasicStream::_State> Pipe::_make_state(event::Loop& loop, const bool ipc){
-    auto state = std::make_shared<_State>();
-    state->handle = (uv_stream_t*)std::malloc(sizeof(uv_pipe_t));
-    uv_pipe_init(loop.lowest_layer(), (uv_pipe_t*)state->handle, ipc);
-    return state;
+uv_stream_s* Pipe::_make_state(event::Loop& loop, const bool ipc){
+    uv_pipe_t* pipe = (uv_pipe_t*)std::malloc(sizeof(uv_pipe_t));
+    uv_pipe_init(loop.lowest_layer(), pipe, ipc);
+    return (uv_stream_s*)pipe;
 }
 
 }
