@@ -95,31 +95,34 @@ Future< std::size_t > BasicStream::write( buffer_ptr_t buffer ){
 
 // ---------------------------------------------------------------------------------------------- //
 
-Future< std::size_t > BasicStream::_read( void ){
+Future<std::size_t> BasicStream::_read(void){
     int res = uv_read_start(
         m_state->handle,
-        []( uv_handle_t* handle, std::size_t size, uv_buf_t* out_buffer ){
+        [](uv_handle_t* handle, std::size_t size, uv_buf_t* out_buffer){
+            // Allocate a buffer for libuv to read into.
             auto state = ((_State*)handle->data)->shared_from_this();
             memory::Buffer& buffer = BasicStream( state )._next_read_buffer();
-            *out_buffer = uv_buf_init( (char*)buffer.data(), buffer.size() );
+            *out_buffer = uv_buf_init((char*)buffer.data(), buffer.size());
         },
-        []( uv_stream_t* handle, long int size, const uv_buf_t* buffer ){
+        [](uv_stream_t* handle, long int size, const uv_buf_t* buffer){
+            // Data has been read, or an error encountered.
             auto state  = ((_State*)handle->data)->shared_from_this();
-            auto stream = BasicStream( state );
+            auto stream = BasicStream(state);
 
-            if( size == UV_EOF ){
+            if (size == UV_EOF) {
+                // End of file, trigger a stop.
                 stream._stop_read();
                 state.reset();
             }
             else {
+                // More data is available, update our state and call back.
                 state->read_count += size;
                 state->read_callback(
-                    stream,
                     buffer_ptr_t(
-                        new memory::Buffer( (memory::byte*)buffer->base, size ),
-                        [ state ]( memory::Buffer* buffer ){
+                        new memory::Buffer((memory::byte*)buffer->base, size),
+                        [state](memory::Buffer* buffer){
                             BasicStream stream = state;
-                            stream._release_read_buffer( buffer->data() );
+                            stream._release_read_buffer(buffer->data());
                             delete buffer;
                         }
                     )
@@ -128,9 +131,9 @@ Future< std::size_t > BasicStream::_read( void ){
         }
     );
 
-    if( res < 0 ){
+    if (res < 0) {
         m_state->read_callback = nullptr;
-        throw LW_UV_ERROR( StreamError, res );
+        throw LW_UV_ERROR(StreamError, res);
     }
 
     return m_state->read_promise.future();

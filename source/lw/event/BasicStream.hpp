@@ -23,9 +23,8 @@ public:
 
     /// @brief Read callback functor type.
     ///
-    /// @param stream   The stream performing the read.
-    /// @param buffer   The buffer containing the read data.
-    typedef std::function<void(BasicStream& stream, buffer_ptr_t buffer)> read_callback_t;
+    /// @param buffer The buffer containing the read data.
+    typedef std::function<void(buffer_ptr_t buffer)> read_callback_t;
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -46,26 +45,21 @@ public:
     /// @param func The functor to call when there is data available.
     ///
     /// @return A promise for the total number of bytes read.
-    template< typename Func >
-    Future< std::size_t > read( Func&& func ){
+    template<typename Func>
+    Future<std::size_t> read(Func&& func){
         static_assert(
-            std::is_convertible< Func, read_callback_t >::value,
+            std::is_convertible<Func, read_callback_t>::value,
             "`Func` must be compatible with `BasicStream::read_callback_t`."
         );
         auto state = m_state;
-        m_state->read_callback = [ state, func ](
-            BasicStream& stream,
-            buffer_ptr_t buffer
-        ){
-            func( stream, buffer );
-        };
+        m_state->read_callback = [state, func](const buffer_ptr_t& buffer){ func(buffer); };
         return _read();
     }
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @brief Stops the active read, and resolves the associated promise.
-    void stop_read( void );
+    void stop_read(void);
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -74,7 +68,7 @@ public:
     /// @param buffer The data to write.
     ///
     /// @return A promise to write the data. The value will be the number of bytes written.
-    Future< std::size_t > write( buffer_ptr_t buffer );
+    Future<std::size_t> write(buffer_ptr_t buffer);
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -107,12 +101,8 @@ protected:
     ///
     /// @param state The stream state to wrap up.
     BasicStream(const std::shared_ptr<_State>& state):
-        m_state(nullptr)
-    {
-        if (state) {
-            this->state(state);
-        }
-    }
+        m_state(state)
+    {}
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -143,7 +133,7 @@ private:
     // ------------------------------------------------------------------------------------------ //
 
     /// @brief The internal implementation of beginning the read.
-    Future< std::size_t > _read( void );
+    Future<std::size_t> _read(void);
 
     // ------------------------------------------------------------------------------------------ //
 
