@@ -91,7 +91,8 @@
             "tests/event/TimeoutTests.cpp",
             "tests/event/UtilityTests.cpp",
 
-            "tests/io/FileTests.cpp"
+            "tests/io/FileTests.cpp",
+            "tests/io/PipeTests.cpp"
         ]
     }]
 }
