@@ -8,7 +8,7 @@
 namespace lw {
 namespace io {
 
-const Pipe::ipc_t Pipe::ipc;
+const Pipe::ipc_t Pipe::ipc{};
 
 // ---------------------------------------------------------------------------------------------- //
 
