@@ -25,10 +25,12 @@
             "source/lw/iter.hpp",
             "source/lw/lw.hpp",
             "source/lw/memory.hpp",
+            "source/lw/pp.hpp",
             "source/lw/Singleton.hpp",
 
             "source/lw/event/BasicStream.cpp",
             "source/lw/event/BasicStream.hpp",
+            "source/lw/event/Emitter.hpp",
             "source/lw/event/Idle.cpp",
             "source/lw/event/Idle.hpp",
             "source/lw/event/Loop.cpp",
@@ -50,7 +52,9 @@
             "source/lw/iter/RandomAccessIterator.hpp",
 
             "source/lw/memory/Buffer.cpp",
-            "source/lw/memory/Buffer.hpp"
+            "source/lw/memory/Buffer.hpp",
+
+            "source/lw/pp/for_each.hpp"
         ],
         "conditions": [
             ["OS=='mac'", {
@@ -82,6 +86,7 @@
         "sources": [
             "tests/main.cpp",
 
+            "tests/event/EmitterTests.cpp",
             "tests/event/LoopBasicTests.cpp",
             "tests/event/PromiseBasicTests.cpp",
             "tests/event/PromiseIntSynchronousTests.cpp",

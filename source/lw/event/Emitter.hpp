@@ -13,29 +13,21 @@
 namespace lw {
 namespace event {
 
-/// @brief Implementation details for event emitters.
+// Implementation details for event emitters.
 namespace _details {
     template<
         std::size_t I,
         typename EventId,
         typename Event,
-        typename OtherEvents...,
-        typename = typename std::enable_if<
-            !std::is_same<EventId, typename Event::event_id_type>::value
-        >::type
+        typename... OtherEvents
     >
-    struct EventIndexImpl : public EventIndexImpl<I + 1, EventId, OtherEvents...> {};
-
-    template<
-        std::size_t I,
-        typename EventId,
-        typename Event,
-        typename OtherEvents...,
-        typename = typename std::enable_if<
-            std::is_same<EventId, typename Event::event_id_type>::value
+    struct EventIndexImpl :
+        public std::conditional<
+            std::is_same<EventId, typename Event::event_id_type>::value,
+            std::integral_constant<std::size_t, I>,
+            EventIndexImpl<I + 1, EventId, OtherEvents...>
         >::type
-    >
-    struct EventIndexImpl : public std::integral_constant<std::size_t, I> {};
+    {};
 
     template<typename EventId, typename... Events>
     struct EventIndex : public EventIndexImpl<0, EventId, Events...> {};
@@ -55,11 +47,19 @@ namespace _details {
         }
     };
 
-    template<typename Func, typename Args>
+    template<typename T>
+    using VoidType = void;
+
+    template<typename T, typename Enable = void>
     struct IsCallable : public std::false_type {};
 
-    template<typename Func, typename... Args, typename = typename std::result_of<Func(Args&&...)>::type>
-    struct IsCallback<Func, std::tuple<Args...>> : public std::true_type {};
+    template<typename Func, typename... Args>
+    struct IsCallable<Func(Args...), VoidType<typename std::result_of<Func(Args...)>::type>> :
+        public std::true_type
+    {};
+
+    template<typename Func, typename... Args>
+    struct IsCallable<Func, std::tuple<Args...>> : public IsCallable<Func(Args...)> {};
 
     template<typename Listener, typename Event>
     struct EventListenerCallable : public IsCallable<Listener, typename Event::event_argument_types> {};
@@ -146,13 +146,16 @@ private:
     std::list<listener_type> m_listeners; ///< The list of event listeners.
 };
 
+template<typename T>
+class IdEvent;
+
 /// @brief Adds a type-safe method for identifying events.
 ///
 /// These are the event types used by the `Emitter` class.
 ///
 /// @tparam EventId The type used to identify this event.
 template<typename EventId, typename... EventArgs>
-class IdEvent : public Event<EventArgs...> {
+class IdEvent<EventId(EventArgs...)> : public Event<EventArgs...> {
 public:
     typedef EventId event_id_type; ///< The event Id type.
 };
@@ -171,7 +174,7 @@ public:
         typename Listener,
         typename = typename std::enable_if<
             _details::EventListenerCallable<
-                Listener, typename _details::GetEvent<EventId, Events...>::type
+                Listener, typename _details::GetEvent<EventId, Events...>::event_type
             >::value
         >::type
     >
@@ -190,7 +193,7 @@ public:
         typename Listener,
         typename = typename std::enable_if<
             _details::EventListenerCallable<
-                Listener, typename _details::GetEvent<EventId, Events...>::type
+                Listener, typename _details::GetEvent<EventId, Events...>::event_type
             >::value
         >::type
     >
@@ -215,31 +218,30 @@ public:
         _details::GetEvent<EventId, Events...>::from(m_events).remove_all();
     }
 
-    void remove_all(const EventId&){
-        ....???
-    }
+    // void remove_all(void){
+    //     ....???
+    // }
 
     template<typename EventId>
     void clear(const EventId&){
         _details::GetEvent<EventId, Events...>::from(m_events).clear();
     }
 
-    void clear(void){
-        ....???
-    }
-
-    bool empty(void) const {
-        ....???
-    }
+    // void clear(void){
+    //     ....???
+    // }
+    //
+    // bool empty(void) const {
+    //     ....???
+    // }
 
     template<typename EventId>
     std::size_t count(const EventId&) const {
         return _details::GetEvent<EventId, Events...>::from(m_events).count();
     }
 
-protected:
     template<typename EventId, typename... Args>
-    void emit(const EventId&, Args&&...){
+    void emit(const EventId&, Args&&... args){
         _details::GetEvent<EventId, Events...>::from(m_events)(std::forward<Args>(args)...);
     }
 
@@ -253,21 +255,18 @@ private:
 #define LW_DECLARE_EVENT(_event_name) struct LW_CONCAT(_event_name, _t) {};
 #define LW_DECLARE_EVENTS(...) LW_FOR_EACH(LW_DECLARE_EVENT, __VA_ARGS__)
 
-// Defines a single event type.
-#define LW_DEFINE_EVENT(_event_name, ...) \
-    typedef ::lw::event::Event<LW_CONCAT(_event_name, _t), __VA_ARGS__> LW_CONCAT(_event_name, _event_t);
-#define LW_DEFINE_EVENTS(...) LW_FOR_EACH(LW_DEFINE_EVENT, __VA_ARGS__)
-
 // Creates an event emitter class using the given events.
-#define _LW_EVENT_TYPE(_event_name, ...) ::lw::event::IdEvent<LW_CONCAT(_event_name, _t), __VA_ARGS__>,
-#define _LW_IMPORT_EVENT(_event_name, ...) static constexpr LW_CONCAT(_event_name, _t) _event_name{};
-#define LW_DEFINE_EMITTER(_emitter_name, ...)                                           \
-    class _emitter_name :                                                               \
-        public ::lw::event::Emitter<LW_FOR_EACH(_LW_EVENT_TYPE, __VA_ARGS__) nullptr_t> \
-    {                                                                                   \
-    public:                                                                             \
-        struct event { LW_FOR_EACH(_LW_IMPORT_EVENT, __VA_ARGS__) };                    \
-    };
+#define _LW_EVENT_TYPE_IMPL(_event_name, ...) ::lw::event::IdEvent<LW_CONCAT(_event_name, _t)(__VA_ARGS__)>,
+#define _LW_EVENT_TYPE(x) _LW_EVENT_TYPE_IMPL x
+#define _LW_IMPORT_EVENT_IMPL(_event_name, ...) static constexpr LW_CONCAT(_event_name, _t) _event_name{};
+#define _LW_IMPORT_EVENT(x) _LW_IMPORT_EVENT_IMPL x
+#define LW_DEFINE_EMITTER(_emitter_name, ...)                                                   \
+    class _emitter_name :                                                                       \
+        public ::lw::event::Emitter<LW_FOR_EACH(_LW_EVENT_TYPE, __VA_ARGS__) std::nullptr_t>    \
+    {                                                                                           \
+    public:                                                                                     \
+        struct event { LW_FOR_EACH(_LW_IMPORT_EVENT, __VA_ARGS__) };                            \
+    }
 
 }
 }
