@@ -20,7 +20,10 @@ namespace _details {
 // ---------------------------------------------------------------------------------------------- //
 
 struct EmitterTests : public testing::Test {
-    class MyEmitter : public _details::TestEmitter {};
+    class MyEmitter : public _details::TestEmitter {
+    public:
+        using _details::TestEmitter::event;
+    };
 
     MyEmitter emitter;
 };
