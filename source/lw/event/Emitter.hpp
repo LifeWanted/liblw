@@ -258,14 +258,14 @@ private:
 // Creates an event emitter class using the given events.
 #define _LW_EVENT_TYPE_IMPL(_event_name, ...) ::lw::event::IdEvent<LW_CONCAT(_event_name, _t)(__VA_ARGS__)>,
 #define _LW_EVENT_TYPE(x) _LW_EVENT_TYPE_IMPL x
-#define _LW_IMPORT_EVENT_IMPL(_event_name, ...) static constexpr LW_CONCAT(_event_name, _t) _event_name{};
+#define _LW_IMPORT_EVENT_IMPL(_event_name, ...) const LW_CONCAT(_event_name, _t) LW_CONCAT(_event_name, _event){};
 #define _LW_IMPORT_EVENT(x) _LW_IMPORT_EVENT_IMPL x
 #define LW_DEFINE_EMITTER(_emitter_name, ...)                                                   \
     class _emitter_name :                                                                       \
         public ::lw::event::Emitter<LW_FOR_EACH(_LW_EVENT_TYPE, __VA_ARGS__) std::nullptr_t>    \
     {                                                                                           \
     public:                                                                                     \
-        struct event { LW_FOR_EACH(_LW_IMPORT_EVENT, __VA_ARGS__) };                            \
+        LW_FOR_EACH(_LW_IMPORT_EVENT, __VA_ARGS__);                                             \
     }
 
 }

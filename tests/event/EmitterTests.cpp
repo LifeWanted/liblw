@@ -20,10 +20,7 @@ namespace _details {
 // ---------------------------------------------------------------------------------------------- //
 
 struct EmitterTests : public testing::Test {
-    class MyEmitter : public _details::TestEmitter {
-    public:
-        using _details::TestEmitter::event;
-    };
+    class MyEmitter : public _details::TestEmitter {};
 
     MyEmitter emitter;
 };
@@ -32,10 +29,10 @@ struct EmitterTests : public testing::Test {
 
 TEST_F(EmitterTests, EmitVoidEvent){
     bool emitterCalled = false;
-    emitter.on(MyEmitter::event::test, [&](){ emitterCalled = true; });
+    emitter.on(emitter.test_event, [&](){ emitterCalled = true; });
     EXPECT_FALSE(emitterCalled);
 
-    emitter.emit(MyEmitter::event::test);
+    emitter.emit(emitter.test_event);
     EXPECT_TRUE(emitterCalled);
 }
 
@@ -43,9 +40,10 @@ TEST_F(EmitterTests, EmitVoidEvent){
 
 TEST_F(EmitterTests, EmitValueEvent){
     std::string value = "initial value";
-    emitter.on(MyEmitter::event::foobar, [&](const std::string& val){ value = val; });
+    emitter.on(emitter.foobar_event, [&](const std::string& val){ value = val; });
+    EXPECT_EQ("initial value", value);
 
-    emitter.emit(MyEmitter::event::foobar, "fizz bang");
+    emitter.emit(emitter.foobar_event, "fizz bang");
     EXPECT_EQ("fizz bang", value);
 }
 
