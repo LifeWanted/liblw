@@ -47,6 +47,8 @@ function install_gcc_homebrew(){
 }
 
 function install_gcc_yum(){
+    CC=gcc
+    CXX=g++
     if ! has_gcc; then
         sudo yum install gcc gcc-c++
     fi
