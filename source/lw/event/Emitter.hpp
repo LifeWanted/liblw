@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "lw/pp.hpp"
+#include "lw/trait/function.hpp"
 
 namespace lw {
 namespace event {
@@ -21,48 +22,36 @@ namespace _details {
         typename Event,
         typename... OtherEvents
     >
-    struct EventIndexImpl :
+    struct event_index_impl :
         public std::conditional<
             std::is_same<EventId, typename Event::event_id_type>::value,
             std::integral_constant<std::size_t, I>,
-            EventIndexImpl<I + 1, EventId, OtherEvents...>
+            event_index_impl<I + 1, EventId, OtherEvents...>
         >::type
     {};
 
     template<typename EventId, typename... Events>
-    struct EventIndex : public EventIndexImpl<0, EventId, Events...> {};
+    struct event_index : public event_index_impl<0, EventId, Events...> {};
 
     template<typename EventId, typename... Events>
-    struct GetEvent {
-        typedef EventIndex<EventId, Events...> event_idx_type;
-        typedef std::tuple<Events...> event_tuple_type;
-        typedef typename std::tuple_element<event_idx_type::value, event_tuple_type>::type event_type;
+    struct get_event {
+        typedef event_index<EventId, Events...> event_index;
+        typedef std::tuple<Events...> event_tuple;
+        typedef typename std::tuple_element<event_index::value, event_tuple>::type event_type;
 
-        static event_type& from(event_tuple_type& events){
-            return std::get<event_idx_type::value>(events);
+        static event_type& from(event_tuple& events){
+            return std::get<event_index::value>(events);
         }
 
-        static const event_type& from(const event_tuple_type& events){
-            return std::get<event_idx_type::value>(events);
+        static const event_type& from(const event_tuple& events){
+            return std::get<event_index::value>(events);
         }
     };
 
-    template<typename T>
-    using VoidType = void;
-
-    template<typename T, typename Enable = void>
-    struct IsCallable : public std::false_type {};
-
-    template<typename Func, typename... Args>
-    struct IsCallable<Func(Args...), VoidType<typename std::result_of<Func(Args...)>::type>> :
-        public std::true_type
-    {};
-
-    template<typename Func, typename... Args>
-    struct IsCallable<Func, std::tuple<Args...>> : public IsCallable<Func(Args...)> {};
-
     template<typename Listener, typename Event>
-    struct EventListenerCallable : public IsCallable<Listener, typename Event::event_argument_types> {};
+    struct listener_matches_event :
+        public trait::is_tuple_callable<Listener, typename Event::event_argument_types>
+    {};
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -173,13 +162,13 @@ public:
         typename EventId,
         typename Listener,
         typename = typename std::enable_if<
-            _details::EventListenerCallable<
-                Listener, typename _details::GetEvent<EventId, Events...>::event_type
+            _details::listener_matches_event<
+                Listener, typename _details::get_event<EventId, Events...>::event_type
             >::value
         >::type
     >
     void on(const EventId&, Listener&& listener){
-        _details::GetEvent<EventId, Events...>::from(m_events)
+        _details::get_event<EventId, Events...>::from(m_events)
             .emplace_back(std::forward<Listener>(listener));
     }
 
@@ -192,30 +181,30 @@ public:
         typename EventId,
         typename Listener,
         typename = typename std::enable_if<
-            _details::EventListenerCallable<
-                Listener, typename _details::GetEvent<EventId, Events...>::event_type
+            _details::listener_matches_event<
+                Listener, typename _details::get_event<EventId, Events...>::event_type
             >::value
         >::type
     >
     void insert(const EventId&, Listener&& listener){
-        _details::GetEvent<EventId, Events...>::from(m_events)
+        _details::get_event<EventId, Events...>::from(m_events)
             .push_back(std::forward<Listener>(listener));
     }
 
     template<typename EventId, typename Pred>
     void remove_if(const EventId&, Pred&& pred){
-        _details::GetEvent<EventId, Events...>::from(m_events).remove_if(std::forward<Pred>(pred));
+        _details::get_event<EventId, Events...>::from(m_events).remove_if(std::forward<Pred>(pred));
     }
 
     template<typename EventId, typename Listener>
     void remove(const EventId&, Listener&& listener){
-        _details::GetEvent<EventId, Events...>::from(m_events)
+        _details::get_event<EventId, Events...>::from(m_events)
             .remove(std::forward<Listener>(listener));
     }
 
     template<typename EventId>
     void remove_all(const EventId&){
-        _details::GetEvent<EventId, Events...>::from(m_events).remove_all();
+        _details::get_event<EventId, Events...>::from(m_events).remove_all();
     }
 
     // void remove_all(void){
@@ -224,7 +213,7 @@ public:
 
     template<typename EventId>
     void clear(const EventId&){
-        _details::GetEvent<EventId, Events...>::from(m_events).clear();
+        _details::get_event<EventId, Events...>::from(m_events).clear();
     }
 
     // void clear(void){
@@ -237,12 +226,12 @@ public:
 
     template<typename EventId>
     std::size_t count(const EventId&) const {
-        return _details::GetEvent<EventId, Events...>::from(m_events).count();
+        return _details::get_event<EventId, Events...>::from(m_events).count();
     }
 
     template<typename EventId, typename... Args>
     void emit(const EventId&, Args&&... args){
-        _details::GetEvent<EventId, Events...>::from(m_events)(std::forward<Args>(args)...);
+        _details::get_event<EventId, Events...>::from(m_events)(std::forward<Args>(args)...);
     }
 
 private:
@@ -256,9 +245,11 @@ private:
 #define LW_DECLARE_EVENTS(...) LW_FOR_EACH(LW_DECLARE_EVENT, __VA_ARGS__)
 
 // Creates an event emitter class using the given events.
-#define _LW_EVENT_TYPE_IMPL(_event_name, ...) ::lw::event::IdEvent<LW_CONCAT(_event_name, _t)(__VA_ARGS__)>,
+#define _LW_EVENT_TYPE_IMPL(_event_name, ...) \
+    ::lw::event::IdEvent<LW_CONCAT(_event_name, _t)(__VA_ARGS__)>,
 #define _LW_EVENT_TYPE(x) _LW_EVENT_TYPE_IMPL x
-#define _LW_IMPORT_EVENT_IMPL(_event_name, ...) const LW_CONCAT(_event_name, _t) LW_CONCAT(_event_name, _event){};
+#define _LW_IMPORT_EVENT_IMPL(_event_name, ...) \
+    const LW_CONCAT(_event_name, _t) LW_CONCAT(_event_name, _event){};
 #define _LW_IMPORT_EVENT(x) _LW_IMPORT_EVENT_IMPL x
 #define LW_DEFINE_EMITTER(_emitter_name, ...)                                                   \
     class _emitter_name :                                                                       \
