@@ -3,6 +3,8 @@ compiler:
     - gcc
 os:
     - linux
+env:
+    - CFLAGS=-fprofile-arcs -ftestcoverage
 addons:
     apt:
         sources:
@@ -11,8 +13,11 @@ addons:
             - gcc-4.9
             - g++-4.9
 install:
+    - pip install cpp-coveralls
     - ./setup.sh
 script:
     - cd build
     - make -j2 liblw-tests
     - Default/liblw-tests
+after_success:
+    - coveralls --exclude tests --exclude external
