@@ -4,7 +4,7 @@ compiler:
 os:
     - linux
 env:
-    - CFLAGS=-fprofile-arcs -ftestcoverage
+    - CFLAGS="-coverage -g -O0"
 addons:
     apt:
         sources:
@@ -13,7 +13,8 @@ addons:
             - gcc-4.9
             - g++-4.9
 install:
-    - pip install cpp-coveralls
+    - export PATH=$HOME/.local/bin:$PATH
+    - pip install cpp-coveralls --user `whoami`
     - ./setup.sh
 script:
     - cd build
