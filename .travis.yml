@@ -12,6 +12,7 @@ addons:
         packages:
             - gcc-4.9
             - g++-4.9
+            - lcov
 install:
     - export PATH=$HOME/.local/bin:$PATH
     - pip install cpp-coveralls --user `whoami`
