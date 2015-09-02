@@ -6,6 +6,7 @@
 #include "lw/iter.hpp"
 #include "lw/memory.hpp"
 #include "lw/pp.hpp"
+#include "lw/trait.hpp"
 
 #include "lw/Application.hpp"
 #include "lw/Singleton.hpp"

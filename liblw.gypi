@@ -27,6 +27,7 @@
             "source/lw/memory.hpp",
             "source/lw/pp.hpp",
             "source/lw/Singleton.hpp",
+            "source/lw/trait.hpp",
 
             "source/lw/event/BasicStream.cpp",
             "source/lw/event/BasicStream.hpp",
@@ -54,7 +55,9 @@
             "source/lw/memory/Buffer.cpp",
             "source/lw/memory/Buffer.hpp",
 
-            "source/lw/pp/for_each.hpp"
+            "source/lw/pp/for_each.hpp",
+
+            "source/trait/function.hpp"
         ],
         "conditions": [
             ["OS=='mac'", {

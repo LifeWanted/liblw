@@ -35,16 +35,16 @@ namespace _details {
 
     template<typename EventId, typename... Events>
     struct get_event {
-        typedef event_index<EventId, Events...> event_index;
-        typedef std::tuple<Events...> event_tuple;
-        typedef typename std::tuple_element<event_index::value, event_tuple>::type event_type;
+        typedef event_index<EventId, Events...> event_index_type;
+        typedef std::tuple<Events...> event_tuple_type;
+        typedef typename std::tuple_element<event_index_type::value, event_tuple_type>::type event_type;
 
-        static event_type& from(event_tuple& events){
-            return std::get<event_index::value>(events);
+        static event_type& from(event_tuple_type& events){
+            return std::get<event_index_type::value>(events);
         }
 
-        static const event_type& from(const event_tuple& events){
-            return std::get<event_index::value>(events);
+        static const event_type& from(const event_tuple_type& events){
+            return std::get<event_index_type::value>(events);
         }
     };
 
