@@ -1,4 +1,4 @@
-# liblw [![Build Status][1]][2]
+# liblw [![Build Status][1]][2] [![Coverage Status][3]][4]
 
 An asynchronous application framework built on [libuv](https://github.com/libuv/libuv)
 using [q](https://www.npmjs.com/package/q)-style promises and the latest features
@@ -49,3 +49,5 @@ Loop completed.
 
 [1]: https://travis-ci.org/LifeWanted/liblw.svg?branch=master
 [2]: https://travis-ci.org/LifeWanted/liblw
+[3]: https://coveralls.io/repos/LifeWanted/liblw/badge.svg?branch=master&service=github
+[4]: https://coveralls.io/github/LifeWanted/liblw?branch=master
