@@ -3,13 +3,12 @@ compiler:
     - gcc
 os:
     - linux
-env:
-    - CFLAGS="-coverage -g -O0"
 addons:
     apt:
         sources:
             - ubuntu-toolchain-r-test
         packages:
+            - binutils
             - gcc-4.9
             - g++-4.9
             - lcov

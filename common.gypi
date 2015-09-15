@@ -18,6 +18,7 @@
                 "defines": [
                     "DEBUG"
                 ],
+                "cflags": ["-O0", "-g"]
                 "xcode_settings": {
                     "GCC_OPTIMIZATION_LEVEL": "0",
                     "GCC_GENERATE_DEBUGGING_SYMBOLS": "YES",
@@ -37,6 +38,7 @@
                 "defines": [
                     "NDEBUG"
                 ],
+                "cflags": ["-03"]
                 "xcode_settings": {
                     "GCC_OPTIMIZATION_LEVEL": "3",
                     "GCC_GENERATE_DEBUGGING_SYMBOLS": "NO",
