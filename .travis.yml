@@ -22,4 +22,4 @@ script:
     - Debug/liblw-tests
 after_success:
     - cd $TRAVIS_BUILD_DIR
-    - coveralls --exclude tests --exclude external --gcov gcov-4.9 --gcov-options '\-lp'
+    - coveralls --exclude tests --exclude external --root $TRAVIS_BUILD_DIR --build-root $TRAVIS_BUILD_DIR/build --gcov gcov-4.9 --gcov-options '\-lp'
