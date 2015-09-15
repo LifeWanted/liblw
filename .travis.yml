@@ -16,7 +16,7 @@ addons:
 install:
     - export PATH=$HOME/.local/bin:$PATH
     - pip install cpp-coveralls --user `whoami`
-    - ./setup.sh
+    - ./setup.sh --coverage
 script:
     - cd build
     - make -j2 liblw-tests
