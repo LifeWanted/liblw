@@ -1,6 +1,7 @@
 #! /bin/bash
 
 gypGenerator=
+ENABLE_COVERAGE=${ENABLE_COVERAGE:=false}
 
 # Load command-line arguments.
 while [ "$1" != "" ]; do
@@ -9,6 +10,10 @@ while [ "$1" != "" ]; do
             shift
             gypGenerator=$1
             ;;
+
+        --coverage )
+            shift
+            ENABLE_COVERAGE=true
     esac
     shift
 done
@@ -31,6 +36,10 @@ gypArgs="liblw.gyp --depth=. --generator-output=$BUILD_DIR -Goutput_dir=$BUILD_D
 
 if [ "$gypGenerator" != "" ]; then
     gypArgs="$gypArgs --format=$gypGenerator"
+fi
+
+if $ENABLE_COVERAGE; then
+    gypArgs="$gypArgs -D coverage=1"
 fi
 
 # And then run gyp

@@ -1,4 +1,7 @@
 {
+    "includes": [
+        "common.gypi"
+    ],
     "target_defaults": {
         "cflags": ["-Wall", "-std=c++1y", "-fPIC"],
         "xcode_settings": {
