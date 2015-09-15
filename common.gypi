@@ -6,6 +6,7 @@
         "default_configuration": "Debug",
         "conditions": [
             ["coverage", {
+                "libraries": ["-lgcov"],
                 "cflags": ["--coverage"],
                 "xcode_settings": {
                     "OTHER_CPLUSPLUSFLAGS": ["--coverage"]
