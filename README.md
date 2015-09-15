@@ -46,7 +46,6 @@ Read: Hello, World!
 Loop completed.
 ```
 
-
 [1]: https://travis-ci.org/LifeWanted/liblw.svg?branch=master
 [2]: https://travis-ci.org/LifeWanted/liblw
 [3]: https://coveralls.io/repos/LifeWanted/liblw/badge.svg?branch=master&service=github
