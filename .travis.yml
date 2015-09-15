@@ -14,7 +14,7 @@ addons:
             - lcov
 install:
     - export PATH=$HOME/.local/bin:$PATH
-    - pip install cpp-coveralls pyyaml --user `whoami`
+    - pip install cpp-coveralls pyyaml requests[security] --user `whoami`
     - ./setup.sh --coverage
 script:
     - cd build
