@@ -106,7 +106,8 @@
             "tests/io/FileTests.cpp",
             "tests/io/PipeTests.cpp",
 
-            "tests/trait/FunctionTests.cpp"
+            "tests/trait/FunctionTests.cpp",
+            "tests/trait/TupleTests.cpp"
         ]
     }]
 }
