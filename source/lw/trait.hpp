@@ -1,3 +1,4 @@
 #pragma once
 
-#include "lw/trait/functional.hpp"
+#include "lw/trait/function.hpp"
+#include "lw/trait/tuple.hpp"

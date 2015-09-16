@@ -60,7 +60,8 @@
 
             "source/lw/pp/for_each.hpp",
 
-            "source/trait/function.hpp"
+            "source/trait/function.hpp",
+            "source/trait/tuple.hpp"
         ],
         "conditions": [
             ["OS=='mac'", {
@@ -103,7 +104,9 @@
             "tests/event/UtilityTests.cpp",
 
             "tests/io/FileTests.cpp",
-            "tests/io/PipeTests.cpp"
+            "tests/io/PipeTests.cpp",
+
+            "tests/trait/FunctionTests.cpp"
         ]
     }]
 }
