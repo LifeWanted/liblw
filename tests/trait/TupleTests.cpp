@@ -36,15 +36,15 @@ TEST_F(TupleTests, ForEach){
         ++call_count;
         EXPECT_LT(call_count, 4);
         if (call_count == 1) {
-            EXPECT_EQ("double", get_type(val)) << "On iteration " << call_count;
+            EXPECT_EQ("double", this->get_type(val)) << "On iteration " << call_count;
         }
         else if (call_count == 2) {
-            EXPECT_EQ("int", get_type(val)) << "On iteration " << call_count;
+            EXPECT_EQ("int", this->get_type(val)) << "On iteration " << call_count;
         }
         else if (call_count == 3) {
-            EXPECT_EQ("string", get_type(val)) << "On iteration " << call_count;
+            EXPECT_EQ("string", this->get_type(val)) << "On iteration " << call_count;
         }
-        EXPECT_TRUE(check_value(val)) << "On iteration " << call_count;
+        EXPECT_TRUE(this->check_value(val)) << "On iteration " << call_count;
     });
 }
 
@@ -56,15 +56,15 @@ TEST_F(TupleTests, ConstForEach){
         ++call_count;
         EXPECT_LT(call_count, 4);
         if (call_count == 1) {
-            EXPECT_EQ("double", get_type(val)) << "On iteration " << call_count;
+            EXPECT_EQ("double", this->get_type(val)) << "On iteration " << call_count;
         }
         else if (call_count == 2) {
-            EXPECT_EQ("int", get_type(val)) << "On iteration " << call_count;
+            EXPECT_EQ("int", this->get_type(val)) << "On iteration " << call_count;
         }
         else if (call_count == 3) {
-            EXPECT_EQ("string", get_type(val)) << "On iteration " << call_count;
+            EXPECT_EQ("string", this->get_type(val)) << "On iteration " << call_count;
         }
-        EXPECT_TRUE(check_value(val)) << "On iteration " << call_count;
+        EXPECT_TRUE(this->check_value(val)) << "On iteration " << call_count;
     });
 }
 
