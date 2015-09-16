@@ -50,7 +50,7 @@ namespace _details {
 
     template<typename Listener, typename Event>
     struct listener_matches_event :
-        public trait::is_tuple_callable<Listener, typename Event::event_argument_types>
+        public trait::is_tuple_callable<Listener(typename Event::event_argument_types)>
     {};
 }
 
@@ -157,7 +157,12 @@ class Emitter {
 public:
     typedef std::tuple<Events...> event_types; ///< The events supported by the emitter.
 
-    /// @brief
+    /// @brief Adds a new listener for an event.
+    ///
+    /// @tparam EventId     The ID of the event this listener handles.
+    /// @tparam Listener    A functor type that matches the event's call requirements.
+    ///
+    /// @param listener The functor to emplace in the back of the listeners for the event.
     template<
         typename EventId,
         typename Listener,
@@ -172,11 +177,18 @@ public:
             .emplace_back(std::forward<Listener>(listener));
     }
 
+    /// @copydoc lw::event::Emitter::on
     template<typename EventId, typename Listener>
     void emplace(const EventId& e, Listener&& listener){
         on(e, std::forward<Listener>(listener));
     }
 
+    /// @brief Adds a new listener for an event.
+    ///
+    /// @tparam EventId     The ID of the event this listener handles.
+    /// @tparam Listener    A functor type that matches the event's call requirements.
+    ///
+    /// @param listener The functor to insert in the back of the listeners for the event.
     template<
         typename EventId,
         typename Listener,
@@ -191,26 +203,35 @@ public:
             .push_back(std::forward<Listener>(listener));
     }
 
+    /// @brief Removes any listeners from the specified event for which the predicate returns true.
+    ///
+    /// @tparam EventId
+    ///     The ID of the event to remove listeners from.
+    /// @tparam Pred
+    ///     A functor type taking a const reference to a std::function for the listener and
+    ///     returning a boolean value.
+    ///
+    /// @param pred The functor to test every listener with.
     template<typename EventId, typename Pred>
     void remove_if(const EventId&, Pred&& pred){
         _details::get_event<EventId, Events...>::from(m_events).remove_if(std::forward<Pred>(pred));
     }
 
+    /// @brief Removes a single listener which matches the one provided.
+    ///
+    /// @tparam EventId     The ID of the event to remove the listener from.
+    /// @tparam Listener    The type of the listener to remove.
+    ///
+    /// @param listener The listener to remove from the event.
     template<typename EventId, typename Listener>
     void remove(const EventId&, Listener&& listener){
         _details::get_event<EventId, Events...>::from(m_events)
             .remove(std::forward<Listener>(listener));
     }
 
-    template<typename EventId>
-    void remove_all(const EventId&){
-        _details::get_event<EventId, Events...>::from(m_events).remove_all();
-    }
-
-    // void remove_all(void){
-    //     ....???
-    // }
-
+    /// @brief Removes all listeners for the given event.
+    ///
+    /// @tparam EventId The ID of the event to remove all listeners from.
     template<typename EventId>
     void clear(const EventId&){
         _details::get_event<EventId, Events...>::from(m_events).clear();
@@ -224,18 +245,26 @@ public:
     //     ....???
     // }
 
+    /// @brief Gets the number of listeners bound to given event.
+    ///
+    /// @return The number of events bound to the specified event.
     template<typename EventId>
     std::size_t count(const EventId&) const {
         return _details::get_event<EventId, Events...>::from(m_events).count();
     }
 
+    /// @brief Calls all listeners bound to the given event.
+    ///
+    /// @tparam Args Types that are convertable to the events expecte argument types.
+    ///
+    /// @param args The event values being emitted.
     template<typename EventId, typename... Args>
     void emit(const EventId&, Args&&... args){
         _details::get_event<EventId, Events...>::from(m_events)(std::forward<Args>(args)...);
     }
 
 private:
-    event_types m_events;
+    event_types m_events; ///< The events.
 };
 
 // ---------------------------------------------------------------------------------------------- //
