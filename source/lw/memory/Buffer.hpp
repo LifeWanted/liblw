@@ -81,7 +81,7 @@ public:
     ///
     /// @param other    The buffer to move the ownership from.
     /// @param size     The new size to report with.
-    Buffer( Buffer&& other, const std::size_t size ):
+    Buffer(Buffer&& other, const std::size_t size):
         m_capacity( size            ),
         m_data(     other.m_data    ),
         m_ownData(  other.m_ownData )
@@ -94,7 +94,7 @@ public:
     /// @brief Create a buffer which allocates its own memory.
     ///
     /// @param size The number of bytes to allocate.
-    explicit Buffer( const size_type& size ):
+    explicit Buffer(const size_type& size):
         m_capacity( size                ),
         m_data(     new byte[ size ]    ),
         m_ownData(  true                )
@@ -113,18 +113,18 @@ public:
     ///
     /// @param begin    The iterator to begin the copy from.
     /// @param end      An iterator just past the end of the data.
-    template< typename InputIterator >
-    Buffer( InputIterator begin, const InputIterator& end ):
-        Buffer( (size_type)(end - begin) )
+    template<typename InputIterator>
+    Buffer(InputIterator begin, const InputIterator& end):
+        Buffer((size_type)(end - begin))
     {
-        std::copy( begin, end, m_data );
+        std::copy(begin, end, m_data);
     }
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @brief ~Destructor will free the memory if it is owned by this `Buffer`.
-    virtual ~Buffer( void ){
-        if( m_ownData && m_data ){
+    virtual ~Buffer(void){
+        if (m_ownData && m_data) {
             delete[] m_data;
         }
     }
@@ -134,7 +134,7 @@ public:
     /// @brief Accesses the capacity of the buffer.
     ///
     /// @return The size in bytes of the buffer.
-    size_type capacity( void ) const {
+    size_type capacity(void) const {
         return m_capacity;
     }
 
