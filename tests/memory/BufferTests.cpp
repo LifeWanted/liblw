@@ -16,7 +16,7 @@ struct BufferTests : public testing::Test {};
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, DefaultConstructor){
+TEST_F (BufferTests, DefaultConstructor) {
     memory::Buffer buffer;
     EXPECT_EQ(0, buffer.capacity());
     EXPECT_EQ(0, buffer.size());
@@ -25,7 +25,7 @@ TEST_F(BufferTests, DefaultConstructor){
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, WrapConstructor){
+TEST_F (BufferTests, WrapConstructor) {
     char data[] = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\0'};
     const std::size_t size = sizeof(data);
     memory::Buffer buffer((memory::byte*)data, size);
@@ -41,7 +41,7 @@ TEST_F(BufferTests, WrapConstructor){
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, MoveConstructor){
+TEST_F (BufferTests, MoveConstructor) {
     char data[] = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\0'};
     const std::size_t size = sizeof(data);
     memory::Buffer *buffer = new memory::Buffer((memory::byte*)data, size);
@@ -60,7 +60,7 @@ TEST_F(BufferTests, MoveConstructor){
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, MoveOwnedConstructor){
+TEST_F (BufferTests, MoveOwnedConstructor) {
     const char* str = "Hello, World!";
     const std::size_t size = std::strlen(str);
     char* data = new char[50];
@@ -81,7 +81,7 @@ TEST_F(BufferTests, MoveOwnedConstructor){
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, MoveResizeConstructor){
+TEST_F (BufferTests, MoveResizeConstructor) {
     char data[] = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\0'};
     const std::size_t size = sizeof(data);
     memory::Buffer *buffer = new memory::Buffer((memory::byte*)data, size);
@@ -100,14 +100,14 @@ TEST_F(BufferTests, MoveResizeConstructor){
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, SizedAllocationConstructor){
+TEST_F (BufferTests, SizedAllocationConstructor) {
     memory::Buffer buffer(25);
     EXPECT_EQ(25, buffer.size());
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, IterableCopyConstructor){
+TEST_F (BufferTests, IterableCopyConstructor) {
     char data[] = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\0'};
     memory::Buffer buffer(std::begin(data), std::end(data));
 
@@ -135,7 +135,7 @@ TEST_F(BufferTests, IterableCopyConstructor){
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, Destructor){
+TEST_F (BufferTests, Destructor) {
     memory::byte* data = new memory::byte[25];
     memory::Buffer* buffer = new memory::Buffer(data, 25);
 
@@ -146,13 +146,96 @@ TEST_F(BufferTests, Destructor){
 
 // ---------------------------------------------------------------------------------------------- //
 
-TEST_F(BufferTests, OwnedDataDestructor){
+TEST_F (BufferTests, OwnedDataDestructor) {
     memory::byte* data = new memory::byte[25];
     memory::Buffer* buffer = new memory::Buffer(data, 25, true);
 
     // Should delete the associated data when told to own it.
     EXPECT_NO_THROW({ delete buffer; });
     EXPECT_DEATH({ delete data; }, "pointer being freed was not allocated");
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F (BufferTests, SetMemory) {
+    memory::Buffer buffer(25);
+    buffer.set_memory((memory::byte)'a');
+    for (const auto& c : buffer) {
+        EXPECT_EQ((memory::byte)'a', c);
+    }
+
+    buffer.set_memory((memory::byte)'f');
+    for (const auto& c : buffer) {
+        EXPECT_EQ((memory::byte)'f', c);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F (BufferTests, BeginEndCopy) {
+    const memory::byte* bufferValue = (memory::byte*)"Hello\0\0\0\0\0";
+    char data[] = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\0'};
+    memory::Buffer buffer(10);
+    memory::Buffer buffer2(bufferValue, bufferValue + 10);
+    buffer.set_memory(0);
+
+    buffer.copy((memory::byte*)data, (memory::byte*)data + 5);
+    EXPECT_EQ(buffer2, buffer);
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F (BufferTests, SizedCopy) {
+    const memory::byte* bufferValue = (memory::byte*)"Hello\0\0\0\0\0";
+    char data[] = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\0'};
+    memory::Buffer buffer(10);
+    memory::Buffer buffer2(bufferValue, bufferValue + 10);
+    buffer.set_memory(0);
+
+    buffer.copy((memory::byte*)data, 5);
+    EXPECT_EQ(buffer2, buffer);
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F (BufferTests, MoveOperator) {
+    char data[] = {'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', '\0'};
+    const std::size_t size = sizeof(data);
+    memory::Buffer *buffer = new memory::Buffer((memory::byte*)data, size);
+    memory::Buffer *buffer2 = new memory::Buffer();
+    *buffer2 = std::move(*buffer);
+
+    EXPECT_EQ(size, buffer2->size());
+    EXPECT_EQ((memory::byte*)data, buffer2->data());
+
+    EXPECT_NO_THROW({ delete buffer; });
+
+    EXPECT_EQ(size, buffer2->size());
+    EXPECT_EQ((memory::byte*)data, buffer2->data());
+
+    EXPECT_NO_THROW({ delete buffer2; });
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F (BufferTests, MoveOwnedOperator) {
+    const char* str = "Hello, World!";
+    const std::size_t size = std::strlen(str);
+    char* data = new char[50];
+    std::copy(str, str + size, data );
+    memory::Buffer *buffer = new memory::Buffer((memory::byte*)data, size, true); // Own it!
+    memory::Buffer *buffer2 = new memory::Buffer();
+    *buffer2 = std::move(*buffer);
+
+    EXPECT_EQ(size, buffer2->size());
+    EXPECT_EQ((memory::byte*)data, buffer2->data());
+
+    EXPECT_NO_THROW({ delete buffer; });
+
+    EXPECT_EQ(size, buffer2->size());
+    EXPECT_EQ((memory::byte*)data, buffer2->data());
+
+    EXPECT_NO_THROW({ delete buffer2; });
 }
 
 }

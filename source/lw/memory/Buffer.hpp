@@ -31,7 +31,7 @@ public:
     Buffer(void):
         m_capacity( 0       ),
         m_data(     nullptr ),
-        m_ownData(  false   )
+        m_own_data( false   )
     {}
 
     // ------------------------------------------------------------------------------------------ //
@@ -42,11 +42,11 @@ public:
     ///
     /// @param buffer   A pointer to the beginning of the buffer.
     /// @param capacity The size of the buffer in bytes.
-    /// @param ownData  Flag indicating if this `Buffer` should take ownership of the memory.
-    Buffer(byte* buffer, const size_type& capacity, const bool ownData = false):
+    /// @param own_data Flag indicating if this `Buffer` should take ownership of the memory.
+    Buffer(byte* buffer, const size_type& capacity, const bool own_data = false):
         m_capacity( capacity        ),
         m_data(     (byte*)buffer   ),
-        m_ownData(  ownData         )
+        m_own_data( own_data        )
     {}
 
     // ------------------------------------------------------------------------------------------ //
@@ -67,9 +67,9 @@ public:
     Buffer(Buffer&& other):
         m_capacity( other.m_capacity    ),
         m_data(     other.m_data        ),
-        m_ownData(  other.m_ownData     )
+        m_own_data( other.m_own_data     )
     {
-        other.m_ownData = false;
+        other.m_own_data = false;
     }
 
     // ------------------------------------------------------------------------------------------ //
@@ -84,9 +84,9 @@ public:
     Buffer(Buffer&& other, const std::size_t size):
         m_capacity( size            ),
         m_data(     other.m_data    ),
-        m_ownData(  other.m_ownData )
+        m_own_data( other.m_own_data )
     {
-        other.m_ownData = false;
+        other.m_own_data = false;
     }
 
     // ------------------------------------------------------------------------------------------ //
@@ -95,9 +95,9 @@ public:
     ///
     /// @param size The number of bytes to allocate.
     explicit Buffer(const size_type& size):
-        m_capacity( size                ),
-        m_data(     new byte[ size ]    ),
-        m_ownData(  true                )
+        m_capacity( size            ),
+        m_data(     new byte[size]  ),
+        m_own_data( true            )
     {}
 
     // ------------------------------------------------------------------------------------------ //
@@ -124,7 +124,7 @@ public:
 
     /// @brief ~Destructor will free the memory if it is owned by this `Buffer`.
     virtual ~Buffer(void){
-        if (m_ownData && m_data) {
+        if (m_own_data && m_data) {
             delete[] m_data;
         }
     }
@@ -141,7 +141,7 @@ public:
     // ------------------------------------------------------------------------------------------ //
 
     /// @copydoc pl::memory::Buffer::capacity
-    size_type size( void ) const {
+    size_type size(void) const {
         return capacity();
     }
 
@@ -150,14 +150,14 @@ public:
     /// @brief Gets the beginning of the buffer's data.
     ///
     /// @return A pointer to the first byte of the buffer.
-    pointer data( void ){
+    pointer data(void){
         return m_data;
     }
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @copydoc pl::memory::Buffer::data()
-    const_pointer data( void ) const {
+    const_pointer data(void) const {
         return m_data;
     }
 
@@ -168,15 +168,15 @@ public:
     /// @param i The number of bytes into the buffer to look.
     ///
     /// @return A reference to the byte at index `i`.
-    byte& operator[]( const size_type i ){
-        return m_data[ i ];
+    byte& operator[](const size_type i){
+        return m_data[i];
     }
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @copydoc pl::memory::Buffer::operator[](const size_type&)
-    const byte& operator[]( const size_type i ) const {
-        return m_data[ i ];
+    const byte& operator[](const size_type i) const {
+        return m_data[i];
     }
 
     // ------------------------------------------------------------------------------------------ //
@@ -184,8 +184,8 @@ public:
     /// @brief Sets all the bytes in the buffer to `val`.
     ///
     /// @param val The byte value to set for all bytes in the buffer.
-    void setMemory( const byte val ){
-        std::memset( m_data, val, m_capacity );
+    void set_memory(const byte val){
+        std::memset(m_data, val, m_capacity);
     }
 
     // ------------------------------------------------------------------------------------------ //
@@ -196,10 +196,10 @@ public:
     ///
     /// @param begin    The iterator to start from.
     /// @param end      The iterator one past the end.
-    template< typename InputIterator >
-    void copy( InputIterator begin, const InputIterator& end ){
-        for( size_type i = 0; i < size() && begin != end; ++i, ++begin ){
-            m_data[ i ] = *begin;
+    template<typename InputIterator>
+    void copy(InputIterator begin, const InputIterator& end){
+        for (size_type i = 0; i < size() && begin != end; ++i, ++begin) {
+            m_data[i] = *begin;
         }
     }
 
@@ -211,15 +211,15 @@ public:
     ///
     /// @param begin The iterator to start from.
     /// @param count The number of bytes to copy.
-    template< typename InputIterator >
-    void copy( InputIterator begin, const size_type count ){
-        std::copy_n( begin, std::min( count, size() ), m_data );
+    template<typename InputIterator>
+    void copy(InputIterator begin, const size_type count){
+        std::copy_n(begin, std::min(count, size()), m_data);
     }
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @brief No copy operator.
-    Buffer& operator=( const Buffer& other ) = delete;
+    Buffer& operator=(const Buffer& other) = delete;
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -288,7 +288,7 @@ public:
 private:
     size_type   m_capacity; ///< The capacity of the buffer in bytes.
     byte*       m_data;     ///< The data wrapped by the buffer.
-    bool        m_ownData;  ///< Flag indicating if the buffer owns the memory.
+    bool        m_own_data; ///< Flag indicating if the buffer owns the memory.
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -319,7 +319,7 @@ public:
     StackBuffer( const byte val ):
         Buffer( m_data, Capacity, false )
     {
-        setMemory( val );
+        set_memory( val );
     }
 
     // ------------------------------------------------------------------------------------------ //
@@ -339,8 +339,8 @@ public:
     StackBuffer( InputIterator begin, const InputIterator& end ):
         StackBuffer()
     {
-        const size_type copySize = std::min( Capacity, (size_type)(end - begin) );
-        std::copy_n( begin, copySize, m_data );
+        const size_type copy_size = std::min( Capacity, (size_type)(end - begin) );
+        std::copy_n( begin, copy_size, m_data );
     }
 
     // ------------------------------------------------------------------------------------------ //
