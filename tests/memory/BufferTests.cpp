@@ -238,5 +238,25 @@ TEST_F (BufferTests, MoveOwnedOperator) {
     EXPECT_NO_THROW({ delete buffer2; });
 }
 
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F (BufferTests, EqualityOperator) {
+    memory::Buffer b1(10);
+    memory::Buffer b2(10);
+    memory::Buffer b3(10);
+    memory::Buffer b4(20);
+    memory::Buffer b5(b1.data(), b1.size());
+
+    b1.set_memory('a');
+    b2.set_memory('a');
+    b3.set_memory('f');
+    b4.set_memory('a');
+
+    EXPECT_EQ(b1, b2);
+    EXPECT_NE(b1, b3);
+    EXPECT_NE(b1, b4);
+    EXPECT_EQ(b1, b5);
+}
+
 }
 }

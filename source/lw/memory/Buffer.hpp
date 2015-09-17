@@ -233,7 +233,7 @@ public:
     /// @param other The buffer to move the control from.
     ///
     /// @return A reference to this buffer.
-    Buffer& operator=( Buffer&& other );
+    Buffer& operator=(Buffer&& other);
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -245,7 +245,7 @@ public:
     /// @param other The other `Buffer` to compare this one to.
     ///
     /// @return True if the two buffers are the same size and contain the same data.
-    bool operator==( const Buffer& other ) const;
+    bool operator==(const Buffer& other) const;
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -257,7 +257,7 @@ public:
     /// @param other The other `Buffer` to compare this one to.
     ///
     /// @return False if the two buffers are the same size and contain the same data.
-    bool operator!=( const Buffer& other ) const {
+    bool operator!=(const Buffer& other) const {
         return !(*this == other);
     }
 
@@ -270,7 +270,7 @@ public:
     /// @param other The buffer to combine with this one.
     ///
     /// @return A reference to this buffer.
-    Buffer& operator^=( const Buffer& other );
+    Buffer& operator^=(const Buffer& other);
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -281,7 +281,7 @@ public:
     /// @param other The buffer to combine with this one.
     ///
     /// @return A new buffer containing the combined data.
-    Buffer operator^( const Buffer& other ) const;
+    Buffer operator^(const Buffer& other) const;
 
     // ------------------------------------------------------------------------------------------ //
 
@@ -297,7 +297,7 @@ private:
     /// @param lhs Buffer on the left-hand-side of the XOR.
     /// @param rhs Buffer ont he right-hand-side of the XOR.
     /// @param out Buffer to assign the results of the XOR to.
-    static void _xor( const Buffer& lhs, const Buffer& rhs, Buffer& out );
+    static void _xor(const Buffer& lhs, const Buffer& rhs, Buffer& out);
 };
 
 // ---------------------------------------------------------------------------------------------- //
@@ -309,17 +309,17 @@ template< std::size_t Capacity >
 class StackBuffer : public Buffer {
 public:
     /// @brief Constructor has no options.
-    StackBuffer( void ): Buffer( m_data, Capacity, false ){}
+    StackBuffer(void): Buffer(m_data, Capacity, false){}
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @brief Value-initialized buffer.
     ///
     /// @param val The byte value to initialize the buffer with.
-    StackBuffer( const byte val ):
-        Buffer( m_data, Capacity, false )
+    StackBuffer(const byte val):
+        Buffer(m_data, Capacity, false)
     {
-        set_memory( val );
+        set_memory(val);
     }
 
     // ------------------------------------------------------------------------------------------ //
@@ -335,23 +335,23 @@ public:
     ///
     /// @param begin    The iterator to begin the copy from.
     /// @param end      An iterator just past the end of the data.
-    template< typename InputIterator >
-    StackBuffer( InputIterator begin, const InputIterator& end ):
+    template<typename InputIterator>
+    StackBuffer(InputIterator begin, const InputIterator& end):
         StackBuffer()
     {
-        const size_type copy_size = std::min( Capacity, (size_type)(end - begin) );
-        std::copy_n( begin, copy_size, m_data );
+        const size_type copy_size = std::min(Capacity, (size_type)(end - begin));
+        std::copy_n(begin, copy_size, m_data);
     }
 
     // ------------------------------------------------------------------------------------------ //
 
     /// @brief ~Destructor.
-    ~StackBuffer( void ){}
+    ~StackBuffer(void){}
 
     // ------------------------------------------------------------------------------------------ //
 
 private:
-    byte m_data[ Capacity ]; ///< Internal buffer, allocated on the stack.
+    byte m_data[Capacity]; ///< Internal buffer, allocated on the stack.
 };
 
 }
