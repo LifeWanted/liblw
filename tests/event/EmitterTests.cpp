@@ -118,5 +118,35 @@ TEST_F(EmitterTests, AllEmpty){
     EXPECT_TRUE(emitter.empty());
 }
 
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F(EmitterTests, Size){
+    EXPECT_EQ(0, emitter.size(emitter.test_event));
+    EXPECT_EQ(0, emitter.size(emitter.foobar_event));
+
+    emitter.on(emitter.test_event, [&](){});
+    EXPECT_EQ(1, emitter.size(emitter.test_event));
+    EXPECT_EQ(0, emitter.size(emitter.foobar_event));
+
+    emitter.clear(emitter.test_event);
+    EXPECT_EQ(0, emitter.size(emitter.test_event));
+    EXPECT_EQ(0, emitter.size(emitter.foobar_event));
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F(EmitterTests, FullSize){
+    EXPECT_EQ(0, emitter.size());
+
+    emitter.on(emitter.test_event, [&](){});
+    EXPECT_EQ(1, emitter.size());
+
+    emitter.on(emitter.foobar_event, [&](const std::string&){});
+    EXPECT_EQ(2, emitter.size());
+
+    emitter.clear();
+    EXPECT_EQ(0, emitter.size());
+}
+
 }
 }

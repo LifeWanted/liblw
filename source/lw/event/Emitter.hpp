@@ -128,8 +128,8 @@ public:
     }
 
     /// @brief Returns the number of listeners bound to this event.
-    std::size_t count(void) const {
-        return m_listeners.count();
+    std::size_t size(void) const {
+        return m_listeners.size();
     }
 
     /// @brief Returns true if no listeners are bound to this event.
@@ -274,17 +274,17 @@ public:
     ///
     /// @return The number of events bound to the specified event.
     template<typename EventId>
-    std::size_t count(const EventId&) const {
-        return _details::get_event<EventId, Events...>::from(m_events).count();
+    std::size_t size(const EventId&) const {
+        return _details::get_event<EventId, Events...>::from(m_events).size();
     }
 
     /// @brief Gets the number of listeners bound all of the events.
     ///
     /// @return The number of events bound to all the events.
-    std::size_t count(void) const {
-        std::size_t count = 0;
-        trait::for_each(m_events, [&count](const auto& event){ count += event.count(); });
-        return count;
+    std::size_t size(void) const {
+        std::size_t size = 0;
+        trait::for_each(m_events, [&size](const auto& event){ size += event.size(); });
+        return size;
     }
 
     /// @brief Calls all listeners bound to the given event.
