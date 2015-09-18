@@ -257,7 +257,7 @@ public:
     ///
     /// @return True if the event has no listeners, otherwise false.
     template<typename EventId>
-    void empty(const EventId&){
+    bool empty(const EventId&){
         return _details::get_event<EventId, Events...>::from(m_events).empty();
     }
 

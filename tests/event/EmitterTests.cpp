@@ -91,5 +91,32 @@ TEST_F(EmitterTests, ClearAllEvents){
     EXPECT_EQ(1, foobar_call_count);
 }
 
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F(EmitterTests, Empty){
+    EXPECT_TRUE(emitter.empty(emitter.test_event));
+    EXPECT_TRUE(emitter.empty(emitter.foobar_event));
+
+    emitter.on(emitter.test_event, [&](){});
+    EXPECT_FALSE(emitter.empty(emitter.test_event));
+    EXPECT_TRUE(emitter.empty(emitter.foobar_event));
+
+    emitter.clear(emitter.test_event);
+    EXPECT_TRUE(emitter.empty(emitter.test_event));
+    EXPECT_TRUE(emitter.empty(emitter.foobar_event));
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+TEST_F(EmitterTests, AllEmpty){
+    EXPECT_TRUE(emitter.empty());
+
+    emitter.on(emitter.test_event, [&](){});
+    EXPECT_FALSE(emitter.empty());
+
+    emitter.clear();
+    EXPECT_TRUE(emitter.empty());
+}
+
 }
 }
