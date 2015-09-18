@@ -63,5 +63,49 @@ void for_each(const std::tuple<Types...>& tup, F&& func){
     _details::for_each_impl<0, sizeof...(Types), Types...>::exec(tup, std::forward<F>(func));
 }
 
+// ---------------------------------------------------------------------------------------------- //
+
+namespace _details {
+    /// @internal
+    /// @brief Iterates over the `DirtyTuple`, copying types over to the `CleanTuple`.
+    ///
+    /// @tparam CleanTuple  The tuple to fill with the clean types.
+    /// @tparam Remove      The type to remove from `DirtyTuple`.
+    /// @tparam DirtyTuple  The tuple to remove the type from.
+    template<typename CleanTuple, typename Remove, typename DirtyTuple>
+    struct remove_type_impl;
+
+    template<typename... CleanTypes, typename Remove, typename T, typename... Types>
+    struct remove_type_impl<std::tuple<CleanTypes...>, Remove, std::tuple<T, Types...>> :
+        public remove_type_impl<std::tuple<CleanTypes..., T>, Remove, std::tuple<Types...>>
+    {};
+
+    template<typename... CleanTypes, typename Remove, typename... Types>
+    struct remove_type_impl<std::tuple<CleanTypes...>, Remove, std::tuple<Remove, Types...>> :
+        public remove_type_impl<std::tuple<CleanTypes...>, Remove, std::tuple<Types...>>
+    {};
+
+    template<typename... CleanTypes, typename Remove>
+    struct remove_type_impl<std::tuple<CleanTypes...>, Remove, std::tuple<>> {
+        typedef std::tuple<CleanTypes...> type;
+    };
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+/// @brief Removes all instances of a given type from a tuple.
+///
+/// @par Example
+/// @code{.cpp}
+///     typedef std::tuple<float, int, float, std::string, float> my_tuple_type;
+///     typedef typename lw::trait::remove_type<float, my_tuple_type>::type cleaned_tuple_type;
+///     std::is_same<std::tuple<int, std::string>, cleaned_tuple_type>::value == true;
+/// @endcode
+///
+/// @tparam Remove  The type to remove from the tuple.
+/// @tparam Tuple   The tuple type to clean.
+template<typename Remove, typename Tuple>
+struct remove_type : public _details::remove_type_impl<std::tuple<>, Remove, Tuple> {};
+
 }
 }
