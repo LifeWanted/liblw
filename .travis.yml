@@ -8,11 +8,18 @@ addons:
         sources:
             - ubuntu-toolchain-r-test
         packages:
-            - gcc-4.9
-            - g++-4.9
+            - binutils
+            - gcc-5
+            - g++-5
+            - lcov
 install:
-    - ./setup.sh
+    - export PATH=$HOME/.local/bin:$PATH
+    - pip install cpp-coveralls pyyaml requests[security] --user `whoami`
+    - ./setup.sh --coverage
 script:
     - cd build
     - make -j2 liblw-tests
-    - Default/liblw-tests
+    - Debug/liblw-tests
+after_success:
+    - cd $TRAVIS_BUILD_DIR
+    - coveralls --exclude external --exclude tests --root $TRAVIS_BUILD_DIR --build-root $TRAVIS_BUILD_DIR/build --gcov gcov-5 --gcov-options '\-lp'

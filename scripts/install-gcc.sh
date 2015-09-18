@@ -1,15 +1,15 @@
 
 source scripts/common.sh
 
-CC=gcc-4.9
-CXX=g++-4.9
+CC=gcc-5
+CXX=g++-5
 
 function has_gcc(){
     exe_exists $CC && exe_exists $CXX
 }
 
 function has_right_gcc_version(){
-    local gcc_49x=`$CC --version | head -1 | grep '4\.9\.[[:digit:]]'`
+    local gcc_5x=`$CC --version | head -1 | grep '5\.0\.[[:digit:]]'`
     if [ "$gcc_49x" ]; then
         return 0
     else
@@ -33,9 +33,9 @@ function install_gcc_apt(){
 
         sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install --yes gcc-4.9 g++-4.9
+        sudo apt-get install --yes gcc-5 g++-5
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$gcc_version 40 --slave /usr/bin/g++ g++ /usr/bin/g++-$gcc_version
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5
         sudo update-alternatives --auto gcc
     fi
 }
@@ -47,12 +47,14 @@ function install_gcc_homebrew(){
 }
 
 function install_gcc_yum(){
+    CC=gcc
+    CXX=g++
     if ! has_gcc; then
         sudo yum install gcc gcc-c++
     fi
 
     if ! has_right_gcc_version; then
-        echo " !! Cannot install gcc 4.9 on this platform (do not know how)" >&2
+        echo " !! Cannot install gcc 5 on this platform (do not know how)" >&2
         exit 1
     fi
 }
