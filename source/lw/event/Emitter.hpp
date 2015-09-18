@@ -9,29 +9,35 @@
 #include <utility>
 
 #include "lw/pp.hpp"
-#include "lw/trait/function.hpp"
+#include "lw/trait.hpp"
 
 namespace lw {
 namespace event {
 
 // Implementation details for event emitters.
 namespace _details {
+    template<std::size_t I, typename EventId, typename EventsTuple>
+    struct event_index_impl;
+
     template<
         std::size_t I,
         typename EventId,
         typename Event,
         typename... OtherEvents
     >
-    struct event_index_impl :
+    struct event_index_impl<I, EventId, std::tuple<Event, OtherEvents...>> :
         public std::conditional<
             std::is_same<EventId, typename Event::event_id_type>::value,
             std::integral_constant<std::size_t, I>,
-            event_index_impl<I + 1, EventId, OtherEvents...>
+            event_index_impl<I + 1, EventId, std::tuple<OtherEvents...>>
         >::type
     {};
 
+    template<std::size_t I, typename EventId>
+    struct event_index_impl<I, EventId, std::tuple<>> {};
+
     template<typename EventId, typename... Events>
-    struct event_index : public event_index_impl<0, EventId, Events...> {};
+    struct event_index : public event_index_impl<0, EventId, std::tuple<Events...>> {};
 
     template<typename EventId, typename... Events>
     struct get_event {
@@ -149,11 +155,14 @@ public:
     typedef EventId event_id_type; ///< The event Id type.
 };
 
+template<typename Events>
+class Emitter;
+
 /// @brief A class which can emit several different event types.
 ///
 /// @tparam Events All the events this emitter will support. Must be derived from `IdEvent`.
 template<typename... Events>
-class Emitter {
+class Emitter<std::tuple<Events...>> {
 public:
     typedef std::tuple<Events...> event_types; ///< The events supported by the emitter.
 
@@ -237,13 +246,29 @@ public:
         _details::get_event<EventId, Events...>::from(m_events).clear();
     }
 
-    // void clear(void){
-    //     ....???
-    // }
-    //
-    // bool empty(void) const {
-    //     ....???
-    // }
+    /// @brief Removes all event listeners from all events.
+    void clear(void){
+        trait::for_each(m_events, [](auto& event){ event.clear(); });
+    }
+
+    /// @brief Checks if the given event has any listeners.
+    ///
+    /// @tparam EventId The ID of the event to check for listeners on.
+    ///
+    /// @return True if the event has no listeners, otherwise false.
+    template<typename EventId>
+    void empty(const EventId&){
+        return _details::get_event<EventId, Events...>::from(m_events).empty();
+    }
+
+    /// @brief Checks if any event has any event listeners.
+    ///
+    /// @return True if there are no event listeners on any event, otherwise false.
+    bool empty(void) const {
+        bool empty = true;
+        trait::for_each(m_events, [&empty](const auto& event){ empty = empty && event.empty(); });
+        return empty;
+    }
 
     /// @brief Gets the number of listeners bound to given event.
     ///
@@ -251,6 +276,15 @@ public:
     template<typename EventId>
     std::size_t count(const EventId&) const {
         return _details::get_event<EventId, Events...>::from(m_events).count();
+    }
+
+    /// @brief Gets the number of listeners bound all of the events.
+    ///
+    /// @return The number of events bound to all the events.
+    std::size_t count(void) const {
+        std::size_t count = 0;
+        trait::for_each(m_events, [&count](const auto& event){ count += event.count(); });
+        return count;
     }
 
     /// @brief Calls all listeners bound to the given event.
@@ -280,12 +314,17 @@ private:
 #define _LW_IMPORT_EVENT_IMPL(_event_name, ...) \
     const LW_CONCAT(_event_name, _t) LW_CONCAT(_event_name, _event){};
 #define _LW_IMPORT_EVENT(x) _LW_IMPORT_EVENT_IMPL x
-#define LW_DEFINE_EMITTER(_emitter_name, ...)                                                   \
-    class _emitter_name :                                                                       \
-        public ::lw::event::Emitter<LW_FOR_EACH(_LW_EVENT_TYPE, __VA_ARGS__) std::nullptr_t>    \
-    {                                                                                           \
-    public:                                                                                     \
-        LW_FOR_EACH(_LW_IMPORT_EVENT, __VA_ARGS__);                                             \
+#define LW_DEFINE_EMITTER(_emitter_name, ...)                                       \
+    class _emitter_name :                                                           \
+        public ::lw::event::Emitter<                                                \
+            trait::remove_type<                                                     \
+                std::nullptr_t,                                                     \
+                std::tuple<LW_FOR_EACH(_LW_EVENT_TYPE, __VA_ARGS__) std::nullptr_t> \
+            >::type                                                                 \
+        >                                                                           \
+    {                                                                               \
+    public:                                                                         \
+        LW_FOR_EACH(_LW_IMPORT_EVENT, __VA_ARGS__);                                 \
     }
 
 }
