@@ -1,0 +1,15 @@
+
+cc_library(
+  name = "buffer",
+  hdrs = ["buffer.h"],
+  srcs = ["buffer.cpp"]
+)
+
+cc_test(
+  name = "buffer_test",
+  srcs = ["buffer_test.cpp"],
+  deps = [
+    ":buffer",
+    "@gtest//:gtest_main",
+  ]
+)
