@@ -1,0 +1,37 @@
+
+cc_library(
+  name = "err",
+  visibility = ["//visibility:public"],
+  hdrs = [
+    "cannonical.h",
+    "macros.h",
+  ],
+  deps = [":error"]
+)
+
+cc_test(
+  name = "err_test",
+  srcs = ["macros_test.cpp"],
+  deps = [
+    ":err",
+    "@gtest//:gtest_main",
+  ]
+)
+
+cc_library(
+  name = "error",
+  hdrs = ["error.h"],
+  srcs = ["error.cpp"],
+  deps = [
+    "//lw/io/stream:buffer",
+  ]
+)
+
+cc_test(
+  name = "error_test",
+  srcs = ["error_test.cpp"],
+  deps = [
+    ":error",
+    "@gtest//:gtest_main",
+  ]
+)

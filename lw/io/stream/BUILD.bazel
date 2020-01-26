@@ -1,6 +1,7 @@
 
 cc_library(
   name = "buffer",
+  visibility = ["//visibility:public"],
   hdrs = ["buffer.h"],
   srcs = ["buffer.cpp"]
 )
