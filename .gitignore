@@ -26,6 +26,7 @@ build/
 
 # Fortran module files
 *.mod
+*.smod
 
 # Compiled Static libraries
 *.lai
@@ -37,3 +38,6 @@ build/
 *.exe
 *.out
 *.app
+
+# Bazel files
+bazel-*
