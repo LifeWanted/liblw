@@ -18,7 +18,9 @@ namespace lw {
     {}                                                \
   }
 
+_LW_DEFINE_ERROR(AlreadyExists);
 _LW_DEFINE_ERROR(InvalidArgument);
+_LW_DEFINE_ERROR(NotFound);
 
 #undef _LW_DEFINE_ERROR
 
