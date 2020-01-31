@@ -3,7 +3,7 @@ cc_library(
   name = "err",
   visibility = ["//visibility:public"],
   hdrs = [
-    "cannonical.h",
+    "canonical.h",
     "macros.h",
   ],
   deps = [":error"]

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lw/err/cannonical.h"
+#include "lw/err/canonical.h"
 
 #define LW_CHECK_NULL(arg)  \
   if ((arg) == nullptr)     \

@@ -2,7 +2,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "lw/err/cannonical.h"
+#include "lw/err/canonical.h"
 
 namespace lw {
 namespace {
