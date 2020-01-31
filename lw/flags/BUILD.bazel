@@ -1,0 +1,17 @@
+
+cc_library(
+  name = "flags",
+  visibility = ["//visibility:public"],
+  hdrs = ["flags.h"],
+  srcs = ["flags.cpp"],
+  deps = ["//lw/err"]
+)
+
+cc_test(
+  name = "flags_test",
+  srcs = ["flags_test.cpp"],
+  deps = [
+    ":flags",
+    "@gtest//:gtest_main",
+  ]
+)
