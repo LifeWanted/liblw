@@ -1,25 +1,24 @@
 language: c++
 compiler:
-    - gcc
+  - gcc
 os:
-    - linux
+  - linux
+dist: bionic
 addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-        packages:
-            - binutils
-            - gcc-5
-            - g++-5
-            - lcov
+  apt:
+    packages:
+      - binutils
+      - lcov
 install:
-    - export PATH=$HOME/.local/bin:$PATH
-    - pip install cpp-coveralls pyyaml requests[security] --user `whoami`
-    - ./setup.sh --coverage
+  - curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
+  - echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get -qq update
+  - sudo apt-get -y install gcc-9 g++-9 openjdk-8-jdk bazel
+  - sudo update-alternatives --install /usr/bin/g++ g++ `which g++-9` 30
+  - sudo update-alternatives --install /usr/bin/gcc gcc `which gcc-9` 30
 script:
-    - cd build
-    - make -j2 liblw-tests
-    - Debug/liblw-tests
-after_success:
-    - cd $TRAVIS_BUILD_DIR
-    - coveralls --exclude external --exclude tests --root $TRAVIS_BUILD_DIR --build-root $TRAVIS_BUILD_DIR/build --gcov gcov-5 --gcov-options '\-lp'
+  - bazel test //...
+# after_success:
+#   - cd $TRAVIS_BUILD_DIR
+#   - coveralls --exclude external --exclude tests --root $TRAVIS_BUILD_DIR --build-root $TRAVIS_BUILD_DIR/build --gcov gcov-5 --gcov-options '\-lp'

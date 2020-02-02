@@ -4,5 +4,5 @@ git_repository(
   name = "gtest",
   commit = "703bd9caab50b139428cea1aaff9974ebee5742e",
   shallow_since = "1570114335 -0400",
-  remote = "git@github.com:google/googletest"
+  remote = "https://github.com/google/googletest.git",
 )
