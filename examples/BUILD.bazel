@@ -1,0 +1,11 @@
+
+cc_binary(
+  name = "echo-server",
+  srcs = ["echo-server.cpp"],
+  deps = [
+    "//lw/base",
+    "//lw/flags",
+    "//lw/net:server",
+    "//lw/net:http",
+  ]
+)
