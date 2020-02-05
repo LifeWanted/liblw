@@ -1,0 +1,16 @@
+
+cc_library(
+  name = "future",
+  hdrs = ["future.h"],
+  visibility = ["//visibility:public"],
+)
+
+cc_test(
+  name = "future_test",
+  srcs = ["future_test.cpp"],
+  deps = [
+    ":future",
+    "@gtest//:gtest_main",
+    "//lw/err",
+  ]
+)
