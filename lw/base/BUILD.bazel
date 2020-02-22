@@ -24,3 +24,21 @@ cc_test(
     "@gtest//:gtest_main",
   ]
 )
+
+cc_library(
+  name = "strings",
+  visibility = ["//visibility:public"],
+  hdrs = ["strings.h"],
+  deps = [
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "strings_test",
+  srcs = ["strings_test.cpp"],
+  deps = [
+    ":strings",
+    "@gtest//:gtest_main",
+  ]
+)
