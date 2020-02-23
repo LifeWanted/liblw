@@ -1,0 +1,53 @@
+
+cc_library(
+  name = "server",
+  visibility = ["//visibility:public"],
+  hdrs = ["server.h"],
+  srcs = ["server.cpp"],
+  deps = [
+    ":router",
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "server_test",
+  srcs = ["server_test.cpp"],
+  deps = [
+    ":server",
+    "@gtest//:gtest_main",
+  ]
+)
+
+cc_library(
+  name = "router",
+  visibility = ["//visibility:public"],
+  hdrs = ["router.h"],
+  srcs = ["router.cpp"],
+  deps = [
+    "//lw/co:future",
+    "//lw/err"
+  ]
+)
+
+cc_library(
+  name = "http",
+  visibility = ["//visibility:public"],
+  hdrs = ["http.h"],
+  srcs = ["http.cpp"],
+  deps = [
+    # ":router",
+    "//lw/base:strings",
+    "//lw/co:future",
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "http_test",
+  srcs = ["http_test.cpp"],
+  deps = [
+    ":http",
+    "@gtest//:gtest_main"
+  ]
+)
