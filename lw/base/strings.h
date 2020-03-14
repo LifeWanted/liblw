@@ -11,10 +11,10 @@
 
 namespace lw {
 
-template <typename StringT>
 class CaseInsensitiveHash {
 public:
-  std::size_t operator()(const StringT& str) const {
+  using is_transparent = void;
+  std::size_t operator()(std::string_view str) const {
     const std::size_t prime = 251;  // Prime around the size of character set.
     const std::size_t modulus = std::numeric_limits<std::size_t>::max();
     std::size_t multiplier = 1;
@@ -30,33 +30,12 @@ public:
   }
 };
 
-template <>
-class CaseInsensitiveHash<const char*> {
-public:
-  std::size_t operator()(const char* str) const {
-    LW_CHECK_NULL(str);
-
-    const std::size_t prime = 251;  // Prime around the size of character set.
-    const std::size_t modulus = std::numeric_limits<std::size_t>::max();
-    std::size_t multiplier = 1;
-    std::size_t hash = 0;
-
-    for (const char* c = str; *c; ++c) {
-      auto upper = std::toupper(*c);
-      hash = (hash + ((upper + 1) * multiplier)) % modulus;
-      multiplier = (multiplier * prime) % modulus;
-    }
-
-    return hash;
-  }
-};
-
 // -------------------------------------------------------------------------- //
 
-template <typename StringT>
 class CaseInsensitiveEqual {
 public:
-  bool operator()(const StringT& lhs, const StringT& rhs) const {
+  using is_transparent = void;
+  bool operator()(std::string_view lhs, std::string_view rhs) const {
     if (std::size(lhs) != std::size(rhs)) return false;
 
     const std::size_t length = std::size(lhs);
@@ -67,17 +46,31 @@ public:
   }
 };
 
-template <>
-class CaseInsensitiveEqual<const char*> {
-public:
-  bool operator()(const char* lhs, const char* rhs) const {
-    LW_CHECK_NULL(lhs);
-    LW_CHECK_NULL(rhs);
+// -------------------------------------------------------------------------- //
 
-    for (; *lhs && *rhs; ++lhs, ++rhs) {
-      if (std::toupper(*lhs) != std::toupper(*rhs))  return false;
+class CaseInsensitiveCompare {
+public:
+  using is_transparent = void;
+  int operator()(std::string_view lhs, std::string_view rhs) const {
+    if (lhs.empty() && rhs.empty()) return 0;
+
+    std::size_t i;
+    for (i = 0; i < lhs.size() && i < rhs.size(); ++i) {
+      const auto l_up = std::toupper(lhs[i]);
+      const auto r_up = std::toupper(rhs[i]);
+      if (l_up != r_up) return l_up - r_up;
     }
-    return *lhs == *rhs; // Both reached the end at the same time.
+    return lhs.size() - rhs.size();
+  }
+};
+
+// -------------------------------------------------------------------------- //
+
+class CaseInsensitiveLess {
+public:
+  using is_transparent = void;
+  bool operator()(std::string_view lhs, std::string_view rhs) const {
+    return CaseInsensitiveCompare()(lhs, rhs) < 0;
   }
 };
 
