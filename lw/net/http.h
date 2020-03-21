@@ -20,10 +20,12 @@
  */
 
 #include <future>
+#include <istream>
+#include <map>
 #include <regex>
 #include <string>
 #include <string_view>
-#include <unordered_map>
+#include <ostream>
 
 #include "lw/base/strings.h"
 #include "lw/co/future.h"
@@ -34,12 +36,13 @@
 namespace lw::net {
 namespace http {
 
-typedef std::unordered_map<
+typedef std::map<
   std::string_view,
   std::string_view,
-  CaseInsensitiveHash<std::string_view>,
-  CaseInsensitiveEqual<std::string_view>
-> KeyValuePairs;
+  CaseInsensitiveLess
+> KeyValueViewPairs;
+
+typedef std::map<std::string, std::string, CaseInsensitiveLess> KeyValuePairs;
 
 }
 
@@ -89,10 +92,58 @@ private:
   std::string_view _path;
   std::string_view _raw_path;
 
-  http::KeyValuePairs _headers;
-  http::KeyValuePairs _query_params;
+  http::KeyValueViewPairs _headers;
+  http::KeyValueViewPairs _query_params;
 
   std::int64_t _content_length = -1;
 };
+
+class HttpResponse {
+public:
+  // TODO: Turn this into a more advanced class capable of handling streams and
+  // serializing based on MIME type.
+  typedef std::string Body;
+
+  int status() const { return _status_code; }
+
+  void status(int code) {
+    _status_code = code;
+    _status_message.clear();
+  }
+
+  void status(int code, std::string_view message) {
+    _status_code = code;
+    _status_message = message;
+  }
+
+  void status(int code, std::string&& message) {
+    _status_code = code;
+    _status_message = std::move(message);
+  }
+
+  std::string_view status_message() const;
+
+  bool has_header(std::string_view header_name) const {
+    return _headers.contains(header_name);
+  }
+
+  const std::string& header(std::string_view header_name) const;
+
+  void header(std::string_view header_name, std::string_view value);
+
+  const http::KeyValuePairs& headers() const { return _headers; }
+
+  void body(const Body& b) { _body = b; }
+  void body(Body&& b) { _body = std::move(b); }
+  const Body& body() const { return _body; }
+
+private:
+  int _status_code = 0;
+  std::string _status_message;
+  http::KeyValuePairs _headers;
+  Body _body;
+};
+
+std::ostream& operator<<(std::ostream& stream, const HttpResponse& response);
 
 }
