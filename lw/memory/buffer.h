@@ -116,6 +116,18 @@ public:
   const std::uint8_t& back() const;
 
   /**
+   * Returns a new buffer starting `n` bytes after this one and with `n` bytes
+   * lower capacity.
+   */
+  Buffer trim_prefix(std::size_t n) const;
+
+  /**
+   * Returns a new buffer starting at the same byte as this one but with `n`
+   * bytes lower capacity.
+   */
+  Buffer trim_suffix(std::size_t n) const;
+
+  /**
    * Sets all the bytes in the buffer to `val`.
    *
    * @param val

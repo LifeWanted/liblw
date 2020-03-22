@@ -59,6 +59,7 @@ std::uint8_t& Buffer::front() {
   LW_CHECK_NULL(_data) << "Buffer does not contain any data.";
   return *_data;
 }
+
 const std::uint8_t& Buffer::front() const {
   LW_CHECK_NULL(_data) << "Buffer does not contain any data.";
   return *_data;
@@ -68,10 +69,28 @@ std::uint8_t& Buffer::back() {
   LW_CHECK_NULL(_data) << "Buffer does not contain any data.";
   return *(_capacity ? _data + _capacity - 1 : _data);
 }
+
 const std::uint8_t& Buffer::back() const {
   LW_CHECK_NULL(_data) << "Buffer does not contain any data.";
   return *(_capacity ? _data + _capacity - 1 : _data);
 }
 
+Buffer Buffer::trim_prefix(std::size_t n) const {
+  if (n >= _capacity) {
+    throw InvalidArgument()
+      << "Cannot trim " << n << " bytes from buffer with " << _capacity
+      << " bytes.";
+  }
+  return Buffer{_data + n, _capacity - n};
+}
+
+Buffer Buffer::trim_suffix(std::size_t n) const {
+  if (n >= _capacity) {
+    throw InvalidArgument()
+      << "Cannot trim " << n << " bytes from buffer with " << _capacity
+      << " bytes.";
+  }
+  return Buffer{_data, _capacity - n};
+}
 
 }

@@ -211,5 +211,27 @@ TEST(Buffer, EqualityOperator) {
   EXPECT_EQ(b1, b5);
 }
 
+TEST(Buffer, TrimPrefix) {
+  char data[] = "Hello World!";
+  const std::size_t size = sizeof(data);
+  const Buffer buffer(reinterpret_cast<std::uint8_t*>(data), size);
+
+  const Buffer trimmed{buffer.trim_prefix(6)};
+  EXPECT_EQ(trimmed.size(), 7);
+  EXPECT_EQ(trimmed.front(), 'W');
+  EXPECT_EQ(trimmed[5], '!');
+}
+
+TEST(Buffer, TrimSuffix) {
+  char data[] = "Hello World!";
+  const std::size_t size = sizeof(data);
+  const Buffer buffer(reinterpret_cast<std::uint8_t*>(data), size);
+
+  const Buffer trimmed{buffer.trim_suffix(8)};
+  EXPECT_EQ(trimmed.size(), 5);
+  EXPECT_EQ(trimmed.front(), 'H');
+  EXPECT_EQ(trimmed[4], 'o');
+}
+
 }
 }
