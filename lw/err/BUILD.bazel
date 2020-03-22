@@ -35,3 +35,11 @@ cc_test(
     "@gtest//:gtest_main",
   ]
 )
+
+cc_library(
+  name = "system",
+  visibility = ["//visibility:public"],
+  hdrs = ["system.h"],
+  srcs = ["system.cpp"],
+  deps = [":err"]
+)
