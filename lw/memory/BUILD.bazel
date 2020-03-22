@@ -1,0 +1,19 @@
+
+cc_library(
+  name = "buffer",
+  visibility = ["//visibility:public"],
+  hdrs = ["buffer.h"],
+  srcs = ["buffer.cpp"],
+  deps = [
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "buffer_test",
+  srcs = ["buffer_test.cpp"],
+  deps = [
+    ":buffer",
+    "@gtest//:gtest_main",
+  ]
+)
