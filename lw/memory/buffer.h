@@ -58,7 +58,7 @@ public:
    *
    * @param size The number of bytes to allocate.
    */
-  explicit Buffer(const std::size_t& size):
+  explicit Buffer(std::size_t size):
     _capacity{size},
     _data{new std::uint8_t[size]},
     _own_data{true}

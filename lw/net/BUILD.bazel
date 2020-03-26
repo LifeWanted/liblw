@@ -26,7 +26,7 @@ cc_library(
   srcs = ["router.cpp"],
   deps = [
     "//lw/co:future",
-    "//lw/err"
+    "//lw/err",
   ]
 )
 
@@ -48,6 +48,28 @@ cc_test(
   srcs = ["http_test.cpp"],
   deps = [
     ":http",
-    "@gtest//:gtest_main"
+    "@gtest//:gtest_main",
+  ]
+)
+
+cc_library(
+  name = "socket",
+  hdrs = ["socket.h"],
+  srcs = ["socket.cpp"],
+  deps = [
+    "//lw/err",
+    "//lw/err:system",
+    "//lw/memory:buffer",
+  ]
+)
+
+cc_test(
+  name = "socket_test",
+  srcs = ["socket_test.cpp"],
+  deps = [
+    ":socket",
+    "@gtest//:gtest_main",
+    "//lw/err",
+    "//lw/memory:buffer",
   ]
 )
