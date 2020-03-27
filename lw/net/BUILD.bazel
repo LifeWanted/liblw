@@ -59,6 +59,7 @@ cc_library(
   deps = [
     "//lw/err",
     "//lw/err:system",
+    "//lw/flags",
     "//lw/memory:buffer",
   ]
 )

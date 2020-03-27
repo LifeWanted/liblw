@@ -1,5 +1,6 @@
 #include "lw/net/socket.h"
 
+#include <chrono>
 #include <iterator>
 
 #include "gtest/gtest.h"
@@ -46,6 +47,31 @@ TEST(Socket, SendAndReceive) {
 
   std::string res{reinterpret_cast<const char*>(receive_buff.data()), 15};
   EXPECT_EQ(res, "HTTP/1.1 200 OK");
+}
+
+TEST(Socket, AcceptConnection) {
+  Socket server;
+  server.listen({.hostname="localhost", .service="8080"}).get();
+
+  auto&& future_conn = server.accept();
+
+  Socket client;
+  client.connect({.hostname="localhost", .service="8080"}).get();
+
+  ASSERT_EQ(
+    future_conn.wait_for(std::chrono::milliseconds(25)),
+    std::future_status::ready
+  );
+  Socket server_conn = future_conn.get();
+
+  Buffer send_buff{14};
+  send_buff.copy("Hello, World!", 14);
+  EXPECT_EQ(client.send(send_buff).get(), send_buff.size());
+
+  Buffer receive_buff{send_buff.size()};
+  EXPECT_EQ(server_conn.receive(&receive_buff).get(), send_buff.size());
+
+  EXPECT_EQ(send_buff, receive_buff);
 }
 
 }

@@ -9,7 +9,7 @@ namespace lw::io::stream {
  * A buffer built on `std::string` that provides copy-free access to the
  * underlying string.
  */
-class StringBuffer : public std::streambuf {
+class StringBuffer: public std::streambuf {
 public:
   StringBuffer();
   StringBuffer(StringBuffer&&);

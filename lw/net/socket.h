@@ -16,7 +16,9 @@ class Socket {
 public:
   Socket() = default;
   Socket(Socket&& other);
+  Socket& operator=(Socket&& other);
   Socket(const Socket&) = delete;
+  Socket& operator=(const Socket&) = delete;
   ~Socket();
 
   bool is_open() const { return _socket_fd > 0; }
@@ -53,7 +55,24 @@ public:
    */
   [[nodiscard]] std::future<std::size_t> receive(Buffer* buff);
 
+  /**
+   * Binds this socket to the given address and starts listening for
+   * connections. Upon successful resolution, users may `accept()` new
+   * connections.
+   */
+  [[nodiscard]] std::future<void> listen(const Address& addr);
+
+  /**
+   * Waits for a new connection to come in.
+   *
+   * @return
+   *  A future that will resolve to a new Socket if a connection comes in.
+   */
+  [[nodiscard]] std::future<Socket> accept();
+
 private:
+  explicit Socket(int socket_fd): _socket_fd{socket_fd} {}
+
   std::size_t do_send(const Buffer& data, int flags);
 
   int _socket_fd = 0;

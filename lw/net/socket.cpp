@@ -11,6 +11,12 @@
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
 #include "lw/err/system.h"
+#include "lw/flags/flags.h"
+
+LW_FLAG(
+  int, connection_backlog_limit, 10,
+  "Maximum pending connections in socket accept queue."
+);
 
 namespace lw::net {
 namespace {
@@ -65,10 +71,28 @@ void check_gai_error(
   }
 }
 
+void enable_socket_reuse(int sock) {
+  int set_true = 1;
+  if (
+    ::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &set_true, sizeof(set_true)) ==
+    -1
+  ) {
+    check_system_error();
+    throw Internal() << "Unknown system error in setsockopt.";
+  }
+}
+
 }
 
 Socket::Socket(Socket&& other): _socket_fd{other._socket_fd} {
   other._socket_fd = 0;
+}
+
+Socket& Socket::operator=(Socket&& other) {
+  if (is_open()) close();
+  _socket_fd = other._socket_fd;
+  other._socket_fd = 0;
+  return *this;
 }
 
 Socket::~Socket() {
@@ -88,6 +112,10 @@ void Socket::close() {
 
 std::future<void> Socket::connect(const Address& addr) {
   return std::async(std::launch::async, [this, addr]() -> void {
+    if (is_open()) {
+      throw FailedPrecondition() << "Socket is already open before connecting.";
+    }
+
     ::addrinfo* addresses;
     ::addrinfo hints{
       .ai_family = AF_UNSPEC,
@@ -127,7 +155,7 @@ std::future<void> Socket::connect(const Address& addr) {
 
 std::future<std::size_t> Socket::send(const Buffer& data) {
   return std::async(std::launch::async, [&]() -> std::size_t {
-    if (!_socket_fd) {
+    if (!is_open()) {
       throw FailedPrecondition() << "Socket is not open before sending.";
     }
     LW_CHECK_NULL(data.data());
@@ -162,7 +190,7 @@ std::size_t Socket::do_send(const Buffer& data, int flags) {
 
 std::future<std::size_t> Socket::receive(Buffer* buff) {
   return std::async(std::launch::async, [this, buff]() -> std::size_t {
-    if (!_socket_fd) {
+    if (!is_open()) {
       throw FailedPrecondition() << "Socket is not open before receiving.";
     }
     LW_CHECK_NULL(buff);
@@ -180,6 +208,80 @@ std::future<std::size_t> Socket::receive(Buffer* buff) {
       this->close();
     }
     return bytes_received;
+  });
+}
+
+std::future<void> Socket::listen(const Address& addr) {
+  return std::async(std::launch::async, [this, addr]() -> void {
+    if (is_open()) {
+      throw FailedPrecondition() << "Socket is already open before listening.";
+    }
+
+    ::addrinfo* addresses;
+    ::addrinfo hints{
+      .ai_flags = AI_PASSIVE,
+      .ai_family = AF_UNSPEC,
+      .ai_socktype = SOCK_STREAM
+    };
+
+    int err = ::getaddrinfo(
+      addr.hostname.size() ? addr.hostname.data() : nullptr,
+      addr.service.data(),
+      &hints,
+      &addresses
+    );
+    check_gai_error(err);
+
+    ::addrinfo* mvr = addresses;
+    for (; mvr != nullptr; mvr = mvr->ai_next) {
+      int sock = ::socket(mvr->ai_family, mvr->ai_socktype, mvr->ai_protocol);
+      if (sock <= 0) continue;
+
+      enable_socket_reuse(sock);
+      if (::bind(sock, mvr->ai_addr, mvr->ai_addrlen) == -1) {
+        ::close(sock);
+        continue;
+      }
+
+      _socket_fd = sock;
+      break;
+    }
+    ::freeaddrinfo(addresses);
+
+    if (!is_open()) {
+      throw Unavailable()
+        << "Unable to bind to address \"" << addr.hostname << "\" for service "
+        << addr.service;
+    }
+
+    if (::listen(_socket_fd, flags::connection_backlog_limit) == -1) {
+      check_system_error();
+      throw Internal() << "Unknown system error in listen.";
+    }
+  });
+}
+
+std::future<Socket> Socket::accept() {
+  return std::async(std::launch::async, [this]() -> Socket {
+    if (!is_open()) {
+      throw FailedPrecondition()
+        << "Socket is not open before accepting new connections.";
+    }
+
+    ::sockaddr_storage remote_addr;
+    socklen_t socket_size = sizeof(remote_addr);
+    int new_sock = ::accept(
+      _socket_fd,
+      reinterpret_cast<::sockaddr*>(&remote_addr),
+      &socket_size
+    );
+
+    if (new_sock < 0) {
+      check_system_error();
+      throw Internal() << "Unknown system error in accept.";
+    }
+
+    return Socket{new_sock};
   });
 }
 
