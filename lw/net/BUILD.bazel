@@ -25,8 +25,18 @@ cc_library(
   hdrs = ["router.h"],
   srcs = ["router.cpp"],
   deps = [
+    ":socket",
     "//lw/co:future",
     "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "router_test",
+  srcs = ["router_test.cpp"],
+  deps = [
+    ":router",
+    "@gtest//:gtest_main",
   ]
 )
 
