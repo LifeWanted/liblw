@@ -21,8 +21,8 @@
 
 #include <future>
 #include <istream>
+#include <list>
 #include <map>
-#include <regex>
 #include <string>
 #include <string_view>
 #include <ostream>
@@ -31,7 +31,7 @@
 #include "lw/co/future.h"
 
 #define LW_REGISTER_HTTP_HANDLER(HandlerClass, method, route) \
-  ::lw::net::HttpRoute<HandlerClass> _http_handler_ ## HandlerClass{method, route};
+  ::lw::net::HttpRoute<HandlerClass> http_route_ ## HandlerClass{method, route};
 
 namespace lw::net {
 namespace http {
@@ -44,8 +44,62 @@ typedef std::map<
 
 typedef std::map<std::string, std::string, CaseInsensitiveLess> KeyValuePairs;
 
+class MountPath;
+
+class PathPart {
+public:
+  PathPart(std::string_view name, bool is_exact):
+    _name{name}, _is_exact{is_exact}
+  {}
+
+  std::string_view get_match_at_start(std::string_view path);
+
+private:
+  std::string_view _name;
+  bool _is_exact;
+  std::list<PathPart> _children;
+};
 }
 
+class HttpRouter;
+
+class HttpRouteBase: public RouteBase {
+public:
+  HttpRouteBase(std::string_view method, std::string_view endpoint):
+    _method{method},
+    _endpoint{endpoint}
+  {
+    ::lw::net::register_route<HttpRouter>(this);
+  }
+
+  virtual ~HttpRouteBase() = default;
+
+  std::string_view method() const { return _method; }
+  std::string_view endpoint() const { return _endpoint; }
+
+  virtual std::unique_ptr<HttpHandler> make_handler() = 0;
+
+private:
+  std::string_view _method;
+  std::string_view _endpoint;
+};
+
+template <typename HttpRouteHandler>
+class HttpRoute: public HttpRouteBase {
+public:
+  HttpRoute(std::string_view method, std::string_view endpoint):
+    HttpRouteBase{method, endpoint}
+  {}
+  ~HttpRoute() = default;
+
+  std::unique_ptr<HttpHandler> make_handler() override {
+    return std::make_unique<HttpRouteHandler>();
+  }
+};
+
+/**
+ *
+ */
 class HttpRequest {
 public:
   explicit HttpRequest(std::istream* connection);
@@ -145,5 +199,44 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& stream, const HttpResponse& response);
+
+// /**
+//  * Base class for HTTP request handlers. A new instance is created for each
+//  * request, so instance members should be used for per-request state.
+//  */
+// class HttpHandler: public HandlerBase {
+// public:
+//   virtual std::future<HttpResponse::Body> run() = 0;
+//
+//   const HttpRequest& request() const { return _request; }
+//   const HttpResponse& response() const { return _response; }
+//   HttpResponse& response() { return _response; }
+//
+//   template <typename... Args>
+//   std::future<HttpResponse::Body> future_response_body(Args&&... args) const {
+//     return co::make_future(HttpResponse::Body{std::forward<Args>(args)...});
+//   }
+//
+// protected:
+//   std::future<void> raw_run() override;
+//
+// private:
+//   HttpRequest _request;
+//   HttpResponse _response;
+// };
+//
+// class HttpRoute: public Route<HttpRouter, HttpResponse> {
+//
+// };
+
+class HttpRouter: public Router {
+public:
+  void attach_routes() override;
+  [[nodiscard]] std::future<void> run(Socket* conn) override;
+
+private:
+  void mount_route(const http::MountPath& path, HttpRoute* route);
+
+};
 
 }

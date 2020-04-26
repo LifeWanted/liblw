@@ -4,6 +4,7 @@ cc_binary(
   srcs = ["echo-server.cpp"],
   deps = [
     "//lw/base",
+    "//lw/co:future",
     "//lw/flags",
     "//lw/net:server",
     "//lw/net:http",

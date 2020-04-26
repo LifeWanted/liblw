@@ -15,6 +15,12 @@ std::future<T> make_future(T&& value) {
   return promise.get_future();
 }
 
+inline std::future<void> make_future() {
+  std::promise<void> promise;
+  promise.set_value();
+  return promise.get_future();
+}
+
 /**
  * Create a future that is rejected with the given exception.
  */

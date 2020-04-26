@@ -427,4 +427,35 @@ std::ostream& operator<<(std::ostream& stream, const HttpResponse& res) {
   return stream;
 }
 
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+//
+//                  ####    ###   #   # ##### ####   ####
+//                  #   #  #   #  #   #   #   #      #   #
+//                  ####   #   #  #   #   #   ###    ####
+//                  #   #  #   #  #   #   #   #      #   #
+//                  #   #   ###    ###    #   #####  #   #
+//
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+
+void HttpRouter::attach_routes() {
+  for (RouteBase* base_route : get_registered_routes()) {
+    auto* route = dynamic_cast<HttpRouteBase*>(base_route);
+    LW_CHECK_NULL(route);
+    http::MountPath path = parse_endpoint(route->endpoint());
+
+  }
+}
+
+std::future<void> HttpRouter::run(Socket* conn) {
+
+}
+
+void HttpRouter::mount_route(const http::MountPath& path, HttpRoute* route) {
+  PathPart*
+  for (const auto& part : path) {
+  }
+}
+
 }

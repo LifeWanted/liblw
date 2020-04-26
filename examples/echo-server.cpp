@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include "lw/base/base.h"
+#include "lw/co/future.h"
 #include "lw/flags/flags.h"
 #include "lw/net/server.h"
 #include "lw/net/http.h"
@@ -22,7 +23,7 @@ public:
     if (request().has_header("content-length")) {
       response().header("content-length", request().header("content-length"));
     }
-    return lw::co::make_future<lw::net::HttpResponse::Body>(request().body());
+    return future_response_body(request().body());
   }
 };
 LW_REGISTER_HTTP_HANDLER(EchoHandler, "POST", "/echo");
@@ -40,7 +41,7 @@ int main(int argc, char** argv) {
 
     server.listen();
     std::cout << "Server is listening on port " << lw::flags::port << std::endl;
-    server.run().wait();
+    server.run().get();
   } catch (const std::runtime_error& err) {
     std::cerr << err.what() << std::endl;
     return -1;

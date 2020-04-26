@@ -14,8 +14,11 @@ cc_test(
   name = "server_test",
   srcs = ["server_test.cpp"],
   deps = [
+    ":router",
     ":server",
+    ":socket",
     "@gtest//:gtest_main",
+    "//lw/co:future",
   ]
 )
 
