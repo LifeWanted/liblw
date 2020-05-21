@@ -3,6 +3,7 @@
 *.target.mk
 Makefile
 .c9
+.vscode
 
 # Dependencies
 external/
