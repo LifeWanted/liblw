@@ -23,7 +23,7 @@ LW_FLAG(std::string, change_me_str, "", "This value will be changed by tests.");
 // LW_FLAG(int*, ptr_not_allowed, nullptr, "Flag types must not be pointers.");
 // LW_FLAG(std::string_view, no_str_view, "", "Strings must use std::string.");
 
-namespace lw {
+namespace lw::cli {
 namespace {
 
 TEST(FlagsExists, FalseForFlagsThatAreNotRegistered) {

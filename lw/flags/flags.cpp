@@ -7,7 +7,7 @@
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
 
-namespace lw {
+namespace lw::cli {
 namespace {
 
 std::unordered_map<std::size_t, FlagBase*>& get_flag_map() {
@@ -79,6 +79,5 @@ FlagBase::FlagBase(
 {
   flags_register(this);
 }
-
 
 }

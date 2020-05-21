@@ -67,11 +67,11 @@ bool init(int* argc, const char** argv) {
   const char** mvr = argv + 1;
   const char** back_fill = mvr;
   for (int i = 1; i < original_count; ++i, ++mvr) {
-    const int remaining_count = original_count - i;
+    const int remaining_count = original_count - i - 1;
     auto&& [flag_name, opt_value] = parse_flag(*mvr);
     // TODO: Convert `_` in name to `-` in flag and vice-versa.
-    if (flag_name && flags_exists(*flag_name)) {
-      if (flags_cli_set(*flag_name, opt_value, mvr + 1, remaining_count - 1)) {
+    if (flag_name && cli::flags_exists(*flag_name)) {
+      if (cli::flags_cli_set(*flag_name, opt_value, mvr + 1, remaining_count)) {
         // Setting the flag used the next argument, so move past it.
         --*argc;
         ++mvr;

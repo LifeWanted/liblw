@@ -1,4 +1,19 @@
 #pragma once
+/**
+ * @file
+ * Define a new command-line flag. The value will be stored as a `Flag<type>`
+ * in the namespace `lw::flags`.
+ *
+ * Example:
+ * ```cpp
+ * LW_FLAG(int, max_foo, 1, "Maximum foo to bar.");
+ *
+ * int main() {
+ *   const int FOO_LIMIT = lw::flags::max_foo;
+ *   std::cout << FOO_LIMIT << std::endl;
+ * }
+ * ```
+ */
 
 #include <cstdlib>
 #include <optional>
@@ -8,101 +23,17 @@
 #include <type_traits>
 
 #include "lw/err/canonical.h"
+#include "lw/flags/format.h"
 
-#define LW_FLAG(type, name, default_value, description)               \
-  namespace lw::flags {                                               \
-    ::lw::Flag<type> name{#type, #name, default_value, description};  \
-  }                                                                   \
+#define LW_FLAG(type, name, default_value, description)                   \
+  namespace lw::flags {                                                   \
+    ::lw::cli::Flag<type> name{#type, #name, default_value, description}; \
+  }                                                                       \
 
 #define LW_DECLARE_FLAG(type, name) \
-  namespace lw::flags { extern ::lw::Flag<type> name; }
+  namespace lw::flags { extern ::lw::cli::Flag<type> name; }
 
-namespace lw {
-namespace impl {
-
-template <typename T>
-inline constexpr bool is_bool = std::is_same_v<T, bool>;
-
-template <typename T>
-inline constexpr bool is_integer = std::is_integral_v<T> && !is_bool<T>;
-
-template <typename T>
-inline constexpr bool is_float = std::is_floating_point_v<T>;
-
-template <typename T>
-inline constexpr bool is_string = std::is_same_v<T, std::string>;
-
-struct FlagHelper {
-  template <typename Bool, std::enable_if_t<is_bool<Bool>>* = nullptr>
-  static std::string format(bool value) { return value ? "true" : "false"; }
-
-  template <typename Bool, std::enable_if_t<is_bool<Bool>>* = nullptr>
-  static bool parse(std::string_view value) {
-    if (
-      value == "y" || value == "Y" || value == "yes" ||
-      value == "t" || value == "T" || value == "true" ||
-      value == "1"
-    ) {
-      return true;
-    }
-    if (
-      value == "n" || value == "N" || value == "no" ||
-      value == "f" || value == "F" || value == "false" ||
-      value == "0"
-    ) {
-      return false;
-    }
-    throw InvalidArgument() << "Invalid boolean argument value: " << value;
-  }
-
-  // ------------------------------------------------------------------------ //
-
-  template <typename Integer, std::enable_if_t<is_integer<Integer>>* = nullptr>
-  static std::string format(Integer value) { return std::to_string(value); }
-
-  template <typename Integer, std::enable_if_t<is_integer<Integer>>* = nullptr>
-  static Integer parse(std::string_view value) {
-    if constexpr (std::is_unsigned<Integer>::value) {
-      return std::strtoull(value.begin(), nullptr, 10);
-    } else {
-      return std::strtoll(value.begin(), nullptr, 10);
-    }
-  }
-
-  // ------------------------------------------------------------------------ //
-
-  template <typename Float, std::enable_if_t<is_float<Float>>* = nullptr>
-  static std::string format(Float value) { return std::to_string(value); }
-
-  template <typename Float, std::enable_if_t<is_float<Float>>* = nullptr>
-  static Float parse(std::string_view value) {
-    if constexpr (std::is_same<Float, float>::value) {
-      return std::strtof(value.begin(), nullptr);
-    } else if constexpr (std::is_same<Float, double>::value) {
-      return std::strtod(value.begin(), nullptr);
-    } else {
-      return std::strtold(value.begin(), nullptr);
-    }
-  }
-
-  // ------------------------------------------------------------------------ //
-
-  // TODO: Wrap value in quotes and escape internal quotes.
-  template <typename String, std::enable_if_t<is_string<String>>* = nullptr>
-  static std::string format(const String& value) { return value; }
-
-  template <typename String, std::enable_if_t<is_string<String>>* = nullptr>
-  static String parse(std::string_view value) {
-    return {value.begin(), value.end()};
-  }
-};
-
-}
-
-// -------------------------------------------------------------------------- //
-
-
-class FlagBase;
+namespace lw::cli {
 
 /**
  * Returns true if a flag with the name given has been defined by the
@@ -197,11 +128,11 @@ public:
   }
 
   std::string default_value_string() const override {
-    return ::lw::impl::FlagHelper::format<T>(_default);
+    return format(_default);
   }
 
   void parse_value(std::string_view value_str) override {
-    set_value(::lw::impl::FlagHelper::parse<T>(value_str));
+    set_value(parse<T>(value_str));
   }
 
   template<typename U>
@@ -220,10 +151,10 @@ private:
   std::optional<T> _value;
 };
 
+}
+
 /**
  * This namespace is reserved for registered flags. Flags defined with `LW_FLAG`
  * or declared with `LW_DECLARE_FLAG` show up in the `lw::flags` namespace.
  */
-namespace flags {}
-
-}
+namespace lw::flags {}
