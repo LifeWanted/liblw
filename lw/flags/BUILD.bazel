@@ -15,3 +15,22 @@ cc_test(
     "@gtest//:gtest_main",
   ]
 )
+
+cc_library(
+  name = "format",
+  visibility = ["//visibility:public"],
+  hdrs = ["format.h"],
+  srcs = ["format.cpp"],
+  deps = [
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "format_test",
+  srcs = ["format_test.cpp"],
+  deps = [
+    ":format",
+    "@gtest//:gtest_main",
+  ]
+)
