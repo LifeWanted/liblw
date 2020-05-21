@@ -1,5 +1,8 @@
 #include "lw/flags/format.h"
 
+#include <chrono>
+#include <string>
+
 #include "gtest/gtest.h"
 #include "lw/err/canonical.h"
 
@@ -78,6 +81,35 @@ TEST(FlagCli, ParseString) {
   EXPECT_EQ(parse<std::string>("foobar"), "foobar");
   EXPECT_EQ(parse<std::string>("fizz\\\\bang"), "fizz\\bang");
   EXPECT_EQ(parse<std::string>("gleep\\\"glorp"), "gleep\"glorp");
+}
+
+// -------------------------------------------------------------------------- //
+
+TEST(FlagCli, FormatDuration) {
+  using namespace std::chrono;
+  EXPECT_EQ(format(nanoseconds(1234)), "1234ns");
+  EXPECT_EQ(format(milliseconds(15)), "15ms");
+  EXPECT_EQ(format(milliseconds(1000 * 60)), "1m");
+  EXPECT_EQ(format(seconds(17)), "17s");
+  EXPECT_EQ(format(seconds(60)), "1m");
+  EXPECT_EQ(format(hours(48)), "2d");
+
+  // Year is ~25 seconds longer than 365 days.
+  EXPECT_EQ(format(days(365)), "365d");
+  EXPECT_EQ(format(days(366)), "366d");
+  EXPECT_EQ(format(years(9001)), "9001y");
+}
+
+TEST(FlagCli, ParseDuration) {
+  using namespace std::chrono;
+  EXPECT_EQ(parse<nanoseconds>("3y"), years(3));
+  EXPECT_EQ(parse<nanoseconds>("365d"), days(365));
+  EXPECT_EQ(parse<nanoseconds>("24h"), hours(24));
+  EXPECT_EQ(parse<nanoseconds>("60m"), minutes(60));
+  EXPECT_EQ(parse<nanoseconds>("60s"), seconds(60));
+  EXPECT_EQ(parse<nanoseconds>("1000ms"), milliseconds(1000));
+  EXPECT_EQ(parse<nanoseconds>("123us"), microseconds(123));
+  EXPECT_EQ(parse<nanoseconds>("15ns"), nanoseconds(15));
 }
 
 }

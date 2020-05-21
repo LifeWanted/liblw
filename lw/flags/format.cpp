@@ -3,8 +3,10 @@
 #include <cmath>
 #include <cstdlib>
 #include <charconv>
+#include <chrono>
 #include <string>
 #include <string_view>
+#include <system_error>
 
 #include "lw/err/canonical.h"
 
@@ -136,6 +138,48 @@ std::string parse<std::string>(std::string_view value) {
     out.push_back(c);
   }
   return out;
+}
+
+// -------------------------------------------------------------------------- //
+
+template <>
+std::chrono::nanoseconds parse<std::chrono::nanoseconds>(
+  std::string_view value
+) {
+  std::chrono::nanoseconds::rep count;
+  const auto [num_end, ec] = std::from_chars(value.begin(), value.end(), count);
+  if (num_end == value.end()) {
+    throw InvalidArgument()
+      << "Duration value \"" << value << "\" missing time unit suffix.";
+  } else if (num_end == value.begin() || ec == std::errc::invalid_argument) {
+    throw InvalidArgument()
+      << "Duration value \"" << value << "\" could not be parsed.";
+  } else if (ec == std::errc::result_out_of_range) {
+    throw InvalidArgument()
+      << "Duration value \"" << value << "\" too large to be represented.";
+  }
+
+  std::string_view units{num_end, static_cast<uint64_t>(value.end() - num_end)};
+  if (units == "y") {
+    return std::chrono::years(count);
+  } else if (units == "d") {
+    return std::chrono::days(count);
+  } else if (units == "h") {
+    return std::chrono::hours(count);
+  } else if (units == "m") {
+    return std::chrono::minutes(count);
+  } else if (units == "s") {
+    return std::chrono::seconds(count);
+  } else if (units == "ms") {
+    return std::chrono::milliseconds(count);
+  } else if (units == "us") {
+    return std::chrono::microseconds(count);
+  } else if (units == "ns") {
+    return std::chrono::nanoseconds(count);
+  } else {
+    throw InvalidArgument()
+      << "Unknown time units \"" << units << "\" in value " << value;
+  }
 }
 
 }
