@@ -12,5 +12,36 @@ cc_test(
     ":future",
     "@gtest//:gtest_main",
     "//lw/err",
-  ]
+  ],
+)
+
+cc_library(
+  name = "generator",
+  hdrs = ["generator.h"],
+  visibility = ["//visibility:public"],
+)
+
+cc_test(
+  name = "generator_test",
+  srcs = ["generator_test.cpp"],
+  deps = [
+    ":generator",
+    "@gtest//:gtest_main",
+  ],
+)
+
+cc_library(
+  name = "sequences",
+  hdrs = ["sequences.h"],
+  visibility = ["//visibility:public"],
+  deps = [":generator"],
+)
+
+cc_test(
+  name = "sequences_test",
+  srcs = ["sequences_test.cpp"],
+  deps = [
+    ":sequences",
+    "@gtest//:gtest_main",
+  ],
 )
