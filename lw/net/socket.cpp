@@ -8,6 +8,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+
+#include <iostream>
+
+
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
 #include "lw/err/system.h"
@@ -110,8 +114,8 @@ void Socket::close() {
   _socket_fd = 0;
 }
 
-std::future<void> Socket::connect(const Address& addr) {
-  return std::async(std::launch::async, [this, addr]() -> void {
+std::future<void> Socket::connect(Address addr) {
+  return std::async(std::launch::async, [this, addr{std::move(addr)}]() {
     if (is_open()) {
       throw FailedPrecondition() << "Socket is already open before connecting.";
     }
@@ -211,8 +215,8 @@ std::future<std::size_t> Socket::receive(Buffer* buff) {
   });
 }
 
-std::future<void> Socket::listen(const Address& addr) {
-  return std::async(std::launch::async, [this, addr]() -> void {
+std::future<void> Socket::listen(Address addr) {
+  return std::async(std::launch::async, [this, addr{std::move(addr)}]() {
     if (is_open()) {
       throw FailedPrecondition() << "Socket is already open before listening.";
     }
@@ -261,12 +265,14 @@ std::future<void> Socket::listen(const Address& addr) {
   });
 }
 
-std::future<Socket> Socket::accept() {
+std::future<Socket> Socket::accept() const {
   return std::async(std::launch::async, [this]() -> Socket {
     if (!is_open()) {
       throw FailedPrecondition()
         << "Socket is not open before accepting new connections.";
     }
+
+    std::cout << "Accepting on " << _socket_fd << std::endl;
 
     ::sockaddr_storage remote_addr;
     socklen_t socket_size = sizeof(remote_addr);

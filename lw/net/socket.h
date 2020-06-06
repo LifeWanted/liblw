@@ -8,8 +8,8 @@
 namespace lw::net {
 
 struct Address {
-  std::string_view hostname;
-  std::string_view service;
+  std::string hostname;
+  std::string service;
 };
 
 class Socket {
@@ -29,7 +29,7 @@ public:
    *
    * The returned future is resolved when the connection is opened.
    */
-  [[nodiscard]] std::future<void> connect(const Address& addr);
+  [[nodiscard]] std::future<void> connect(Address addr);
 
   /**
    * Sends the given buffer over the socket.
@@ -60,7 +60,7 @@ public:
    * connections. Upon successful resolution, users may `accept()` new
    * connections.
    */
-  [[nodiscard]] std::future<void> listen(const Address& addr);
+  [[nodiscard]] std::future<void> listen(Address addr);
 
   /**
    * Waits for a new connection to come in.
@@ -68,7 +68,7 @@ public:
    * @return
    *  A future that will resolve to a new Socket if a connection comes in.
    */
-  [[nodiscard]] std::future<Socket> accept();
+  [[nodiscard]] std::future<Socket> accept() const;
 
 private:
   explicit Socket(int socket_fd): _socket_fd{socket_fd} {}

@@ -13,7 +13,7 @@ namespace {
 TEST(Socket, ConnectToHostAndPort) {
   Socket sock;
   ASSERT_FALSE(sock.is_open());
-  sock.connect({.hostname = "www.google.com", .service="80"}).get();
+  sock.connect({.hostname = "www.google.com", .service = "80"}).get();
   ASSERT_TRUE(sock.is_open());
   sock.close();
   ASSERT_FALSE(sock.is_open());
@@ -22,7 +22,7 @@ TEST(Socket, ConnectToHostAndPort) {
 TEST(Socket, ConnectToHostAndServiceName) {
   Socket sock;
   ASSERT_FALSE(sock.is_open());
-  sock.connect({.hostname = "www.google.com", .service="http"}).get();
+  sock.connect({.hostname = "www.google.com", .service = "http"}).get();
   ASSERT_TRUE(sock.is_open());
   sock.close();
   ASSERT_FALSE(sock.is_open());
@@ -30,7 +30,7 @@ TEST(Socket, ConnectToHostAndServiceName) {
 
 TEST(Socket, SendAndReceive) {
   Socket sock;
-  sock.connect({.hostname = "www.google.com", .service="80"}).get();
+  sock.connect({.hostname = "www.google.com", .service = "80"}).get();
 
   const char request[] =
     "GET / HTTP/1.1\r\n"
@@ -51,12 +51,12 @@ TEST(Socket, SendAndReceive) {
 
 TEST(Socket, AcceptConnection) {
   Socket server;
-  server.listen({.hostname="localhost", .service="8080"}).get();
+  server.listen({.hostname = "localhost", .service = "8080"}).get();
 
   auto&& future_conn = server.accept();
 
   Socket client;
-  client.connect({.hostname="localhost", .service="8080"}).get();
+  client.connect({.hostname = "localhost", .service = "8080"}).get();
 
   ASSERT_EQ(
     future_conn.wait_for(std::chrono::milliseconds(25)),

@@ -16,13 +16,17 @@ public:
     routes_attached = true;
   }
 
-  std::future<void> run(Socket* conn) override {
-    connection = conn;
+  std::future<void> run(std::unique_ptr<Socket> conn) override {
+    connection = std::move(conn);
     return co::make_future();
   }
 
+  std::size_t connection_count() const override {
+    return connection ? 1 : 0;
+  }
+
   bool routes_attached = false;
-  Socket* connection = nullptr;
+  std::unique_ptr<Socket> connection = nullptr;
 };
 
 TEST(Server, RoutersAttachRoutes) {
@@ -36,7 +40,18 @@ TEST(Server, RoutersAttachRoutes) {
 }
 
 TEST(Server, SendsRequestsToRouter) {
+  TestRouter router;
+  Server server;
+  server.attach_router(8080, &router);
+  server.listen().get();
+  auto running = server.run();
 
+  Socket sock;
+  sock.connect({.hostname = "localhost", .service = "8080"}).get();
+  EXPECT_NE(router.connection, nullptr);
+  sock.close();
+  server.force_close();
+  running.get();
 }
 
 }
