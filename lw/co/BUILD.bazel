@@ -45,3 +45,40 @@ cc_test(
     "@gtest//:gtest_main",
   ],
 )
+
+cc_library(
+  name = "task",
+  hdrs = ["task.h"],
+  visibility = ["//visibility:public"],
+  deps = [
+    "//lw/err",
+  ],
+)
+
+cc_test(
+  name = "task_test",
+  srcs = ["task_test.cpp"],
+  deps = [
+    ":task",
+    "@gtest//:gtest_main",
+  ],
+)
+
+cc_library(
+  name = "time",
+  hdrs = ["time.h"],
+  visibility = ["//visibility:public"],
+  deps = [
+    ":task",
+  ],
+)
+
+cc_test(
+  name = "time_test",
+  srcs = ["time_test.cpp"],
+  deps = [
+    ":task",
+    ":time",
+    "@gtest//:gtest_main",
+  ],
+)

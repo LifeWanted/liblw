@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coroutine>
-#include <cstdlib>
+#include <exception>
 #include <utility>
 
 namespace lw::co {
@@ -72,7 +72,7 @@ public:
   }
 
   void unhandled_exception() {
-    std::exit(1);
+    std::terminate();
   }
 
 private:
