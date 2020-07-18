@@ -4,9 +4,32 @@
 #include <coroutine>
 #include <thread>
 
-#include "lw/co/task.h"
+#include "lw/co/scheduler.h"
 
 namespace lw::co {
+namespace internal {
+
+enum ClockType {
+  STEADY,
+  SYSTEM
+};
+
+template <typename Clock>
+constexpr ClockType get_clock_type();
+
+template <>
+constexpr ClockType get_clock_type<std::chrono::steady_clock>() {
+  return ClockType::STEADY;
+}
+
+template <>
+constexpr ClockType get_clock_type<std::chrono::system_clock>() {
+  return ClockType::SYSTEM;
+}
+
+Handle create_timerfd(ClockType type, std::chrono::nanoseconds expiration);
+
+}
 
 template <typename TimePoint>
 class SuspendUntil {
