@@ -14,6 +14,11 @@ using ::std::chrono::steady_clock;
 
 static std::unordered_map<std::thread::id, Scheduler*> thread_schedulers;
 
+internal::EPoll& get_epoll() {
+  static thread_local internal::EPoll epoll;
+  return epoll;
+}
+
 }
 
 Scheduler::Scheduler() {
@@ -37,7 +42,7 @@ Scheduler& Scheduler::for_thread(std::thread::id thread_id) {
   return *itr->second;
 }
 
-void Scheduler::_schedule(delayed_task task) {
+void Scheduler::schedule() {
   _delayed_tasks.push(std::move(task));
 
 }

@@ -5,20 +5,11 @@
 #include <functional>
 #include <queue>
 #include <thread>
-#include <type_traits>
 #include <vector>
 
+#include "lw/co/concepts.h"
+
 namespace lw::co {
-
-template <typename T>
-concept BooleanTestable = std::is_convertible_v<T, bool>;
-
-template <typename T>
-concept Awaitable = requires(T a) {
-  { a.await_ready() } -> BooleanTestable;
-  { a.await_suspend() };
-  { a.await_resume() };
-};
 
 enum class Event {
   READABLE      = 0b0000000000000001,
@@ -73,8 +64,10 @@ public:
   static Scheduler& this_thread();
   static Scheduler& for_thread(std::thread::id thread_id);
 
-  template <Awaitable A>
-  void schedule(Handle handle, A awaitable, Event events);
+  template <Awaitable Awaiter>
+  void schedule(Handle handle, Event events, const Awaiter& awaitable) {
+    _schedule(handle, events, [&])
+  }
 
 private:
   Scheduler();
