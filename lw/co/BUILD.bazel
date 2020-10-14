@@ -1,5 +1,16 @@
 
 cc_library(
+  name = "concepts",
+  hdrs = ["concepts.h"],
+)
+
+cc_library(
+  name = "events",
+  hdrs = ["events.h"],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
   name = "future",
   hdrs = ["future.h"],
   visibility = ["//visibility:public"],
@@ -26,6 +37,22 @@ cc_test(
   srcs = ["generator_test.cpp"],
   deps = [
     ":generator",
+    "@gtest//:gtest_main",
+  ],
+)
+
+cc_library(
+  name = "scheduler",
+  hdrs = ["scheduler.h"],
+  srcs = ["schedulers.cpp"],
+  deps = ["//lw/co/systems:epoll"],
+)
+
+cc_test(
+  name = "scheduler_test",
+  srcs = ["scheduler_test.cpp"],
+  deps = [
+    ":scheduler",
     "@gtest//:gtest_main",
   ],
 )
