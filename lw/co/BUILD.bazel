@@ -44,16 +44,22 @@ cc_test(
 cc_library(
   name = "scheduler",
   hdrs = ["scheduler.h"],
-  srcs = ["schedulers.cpp"],
-  deps = ["//lw/co/systems:epoll"],
+  srcs = ["scheduler.cpp"],
+  deps = [
+    ":concepts",
+    ":events",
+    "//lw/co/systems:epoll"
+  ],
 )
 
 cc_test(
   name = "scheduler_test",
   srcs = ["scheduler_test.cpp"],
   deps = [
+    ":events",
     ":scheduler",
     "@gtest//:gtest_main",
+    "//lw/co/testing:destroy_scheduler",
   ],
 )
 

@@ -12,26 +12,38 @@ namespace {
 
 using ::std::chrono::steady_clock;
 
-static std::unordered_map<std::thread::id, Scheduler*> thread_schedulers;
+static std::unordered_map<
+  std::thread::id,
+  std::unique_ptr<Scheduler>
+> thread_schedulers;
 
-internal::EPoll& get_epoll() {
-  static thread_local internal::EPoll epoll;
-  return epoll;
+}
+namespace testing {
+
+void destroy_scheduler(std::thread::id thread_id) {
+  thread_schedulers.erase(thread_id);
 }
 
 }
 
-Scheduler::Scheduler() {
+Scheduler::Scheduler(): _epoll{std::make_unique<internal::EPoll>()} {
   if (thread_schedulers.contains(std::this_thread::get_id())) {
     throw FailedPrecondition()
       << "Thread " << std::this_thread::get_id() << " already has a scheduler.";
   }
-  thread_schedulers.insert({std::this_thread::get_id(), this});
 }
 
 Scheduler& Scheduler::this_thread() {
-  static thread_local Scheduler instance;
-  return instance;
+  auto itr = thread_schedulers.find(std::this_thread::get_id());
+  if (itr == thread_schedulers.end()) {
+    auto [new_itr, existed] = thread_schedulers.insert({
+      std::this_thread::get_id(),
+      std::unique_ptr<Scheduler>{new Scheduler()}
+    });
+    itr = new_itr;
+  }
+
+  return *itr->second;
 }
 
 Scheduler& Scheduler::for_thread(std::thread::id thread_id) {
@@ -42,9 +54,23 @@ Scheduler& Scheduler::for_thread(std::thread::id thread_id) {
   return *itr->second;
 }
 
-void Scheduler::schedule() {
-  _delayed_tasks.push(std::move(task));
+void Scheduler::run() {
+  auto itr = thread_schedulers.find(std::this_thread::get_id());
+  if (itr == thread_schedulers.end() || itr->second.get() != this) {
+    throw FailedPrecondition()
+      << "Cannot call Scheduler::run from a thread other than the one that "
+         "created it.";
+  }
 
+  while (_epoll->has_pending_items()) _epoll->wait();
+}
+
+void Scheduler::_schedule(
+  Handle handle,
+  Event events,
+  std::function<void()> func
+) {
+  _epoll->add(handle, events, std::move(func));
 }
 
 }
