@@ -38,6 +38,11 @@ public:
   void remove(int fd);
 
   /**
+   * Returns true if there are any pending callbacks.
+   */
+  bool has_pending_items() const { return !_callbacks.empty(); }
+
+  /**
    * Wait indefinitely for an event to trigger.
    *
    * @return

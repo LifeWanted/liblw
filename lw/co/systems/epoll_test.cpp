@@ -20,7 +20,7 @@ TEST(EPoll, EmptyTryWaitShouldNotBlock) {
   EXPECT_EQ(epoll.try_wait(), 0);
   auto end = high_resolution_clock::now();
 
-  EXPECT_LT(end - start, milliseconds(5));
+  EXPECT_LT(end - start, milliseconds(1));
 }
 
 TEST(EPoll, TimerFd) {
@@ -58,6 +58,19 @@ TEST(EPoll, CheckTimeoutDurationBounds) {
     ),
     InvalidArgument
   );
+}
+
+TEST(EPoll, RejectAlreadyAddedFileDescriptors) {
+  int timer = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
+  EPoll epoll;
+  epoll.add(timer, Event::READABLE, []() {});
+  EXPECT_THROW(epoll.add(timer, Event::READABLE, []() {}), AlreadyExists);
+}
+
+TEST(EPoll, RejectUnknownFileDescriptorsOnRemoval) {
+  int fd = 123;
+  EPoll epoll;
+  EXPECT_THROW(epoll.remove(fd), FailedPrecondition);
 }
 
 }

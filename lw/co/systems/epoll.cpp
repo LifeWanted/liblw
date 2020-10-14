@@ -49,7 +49,7 @@ EPoll::~EPoll() {
 
 void EPoll::add(int fd, Event events, callback_type callback) {
   if (_callbacks.contains(fd)) {
-    throw FailedPrecondition() << "Handle already registered with epoll.";
+    throw AlreadyExists() << "Handle already registered with epoll.";
   }
 
   // Register to event with epoll.
