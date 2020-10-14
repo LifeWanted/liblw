@@ -1,10 +1,12 @@
 #include "lw/co/systems/epoll.h"
 
 #include <chrono>
+#include <limits>
 #include <sys/timerfd.h>
 
 #include "gtest/gtest.h"
 #include "lw/co/events.h"
+#include "lw/err/canonical.h"
 
 namespace lw::co::internal {
 namespace {
@@ -33,18 +35,29 @@ TEST(EPoll, TimerFd) {
 
   EPoll epoll;
   bool called = false;
-  epoll.add(timer, Event::READABLE, [&]() { called = true; });
+  epoll.add(timer, Event::READABLE | Event::ONE_SHOT, [&]() { called = true; });
 
   EXPECT_FALSE(called);
-  epoll.try_wait();
+  EXPECT_EQ(epoll.try_wait(), 0);
   ASSERT_LT(high_resolution_clock::now() - start, milliseconds(15));
   EXPECT_FALSE(called);
-  epoll.wait_for(milliseconds(5));
+  EXPECT_EQ(epoll.wait_for(milliseconds(5)), 0);
   ASSERT_LT(high_resolution_clock::now() - start, milliseconds(15));
   EXPECT_FALSE(called);
-  epoll.wait();
+  EXPECT_EQ(epoll.wait(), 1);
   EXPECT_GE(high_resolution_clock::now() - start, milliseconds(15));
   EXPECT_TRUE(called);
+}
+
+TEST(EPoll, CheckTimeoutDurationBounds) {
+  EPoll epoll;
+  EXPECT_THROW(epoll.wait_for(milliseconds(-1)), InvalidArgument);
+  EXPECT_THROW(
+    epoll.wait_for(
+      milliseconds(std::numeric_limits<milliseconds::rep>::max())
+    ),
+    InvalidArgument
+  );
 }
 
 }

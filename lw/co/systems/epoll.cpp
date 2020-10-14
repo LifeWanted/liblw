@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <exception>
+#include <limits>
 #include <sys/epoll.h>
 #include <unistd.h>
 
@@ -80,6 +81,10 @@ std::size_t EPoll::wait_for(std::chrono::steady_clock::duration timeout) {
     std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
   if (timeout_ms <= 0) {
     throw InvalidArgument() << "Timeout must be a positive duration.";
+  } else if (timeout_ms > std::numeric_limits<int>::max()) {
+    throw InvalidArgument()
+      << "Timeout can be no longer than " << std::numeric_limits<int>::max()
+      << " milliseconds.";
   }
   return _wait(static_cast<int>(timeout_ms));
 }
