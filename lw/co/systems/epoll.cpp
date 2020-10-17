@@ -118,8 +118,13 @@ std::size_t EPoll::_wait(int timeout_ms) {
     }
     auto& [callback, one_shot] = _callbacks[event.data.fd];
     try {
-      callback();
-      if (one_shot) _callbacks.erase(event.data.fd);
+      if (one_shot) {
+        auto callback_move = std::move(callback);
+        _callbacks.erase(event.data.fd);
+        callback_move();
+      } else {
+        callback();
+      }
     } catch (const std::exception& err) {
       // TODO: handle this error more gracefully and reject the associated
       // promise higher up.

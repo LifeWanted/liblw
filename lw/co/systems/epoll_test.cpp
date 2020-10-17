@@ -31,7 +31,7 @@ TEST(EPoll, TimerFd) {
     .it_value = {.tv_sec = 0, .tv_nsec = 15 * 1000000} // 15ms
   };
   auto start = high_resolution_clock::now();
-  ASSERT_EQ(::timerfd_settime(timer, 0, &spec, nullptr), 0);
+  ASSERT_EQ(::timerfd_settime(timer, /*flags=*/0, &spec, nullptr), 0);
 
   EPoll epoll;
   bool called = false;
