@@ -120,7 +120,7 @@ std::size_t EPoll::_wait(int timeout_ms) {
     try {
       if (one_shot) {
         auto callback_move = std::move(callback);
-        _callbacks.erase(event.data.fd);
+        remove(event.data.fd);
         callback_move();
       } else {
         callback();
