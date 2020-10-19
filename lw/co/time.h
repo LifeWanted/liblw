@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef __cpp_impl_coroutine
-#define __cpp_impl_coroutine 1
-#endif
-
 #include <chrono>
 #include <coroutine>
 #include <thread>

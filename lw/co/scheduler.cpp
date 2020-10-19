@@ -106,7 +106,7 @@ Scheduler& Scheduler::for_thread(std::thread::id thread_id) {
 
 void Scheduler::schedule(Handle handle, Event events) {
   if (_active_task == nullptr) {
-    throw lw::FailedPrecondition()
+    throw FailedPrecondition()
       << "Cannot schedule event resumption outside the context of a task.";
   }
   _schedule(

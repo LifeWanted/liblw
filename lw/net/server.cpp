@@ -6,10 +6,6 @@
 #include <utility>
 #include <vector>
 
-
-#include <iostream>
-
-
 #include "lw/co/future.h"
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
@@ -185,7 +181,6 @@ void Server::do_run_one() {
   Router& router = router_sock.router;
   const Socket& socket = *router_sock.socket;
   while (_running) {
-    std::cout << "Accepting on port " << port << std::endl;
     router.run(std::make_unique<Socket>(socket.accept().get()));
   }
 }

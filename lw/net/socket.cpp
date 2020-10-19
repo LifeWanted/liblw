@@ -8,10 +8,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-
-#include <iostream>
-
-
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
 #include "lw/err/system.h"
@@ -271,8 +267,6 @@ std::future<Socket> Socket::accept() const {
       throw FailedPrecondition()
         << "Socket is not open before accepting new connections.";
     }
-
-    std::cout << "Accepting on " << _socket_fd << std::endl;
 
     ::sockaddr_storage remote_addr;
     socklen_t socket_size = sizeof(remote_addr);

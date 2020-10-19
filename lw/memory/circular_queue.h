@@ -4,10 +4,6 @@
 #include <type_traits>
 #include <vector>
 
-
-#include <iostream>
-
-
 #include "lw/err/canonical.h"
 
 namespace lw {
