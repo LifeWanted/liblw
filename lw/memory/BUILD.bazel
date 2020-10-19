@@ -17,3 +17,22 @@ cc_test(
     "@gtest//:gtest_main",
   ]
 )
+
+cc_library(
+  name = "circular_queue",
+  visibility = ["//visibility:public"],
+  hdrs = ["circular_queue.h"],
+  deps = [
+    "//lw/err",
+  ],
+)
+
+cc_test(
+  name = "circular_queue_test",
+  srcs = ["circular_queue_test.cpp"],
+  deps = [
+    ":circular_queue",
+    "@gtest//:gtest_main",
+    "//lw/err",
+  ],
+)
