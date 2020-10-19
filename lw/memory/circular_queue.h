@@ -26,6 +26,9 @@ concept Moveable =
 template <Moveable T>
 class CircularQueue {
 public:
+  /**
+   * Create a queue qith `capacity` slots.
+   */
   explicit CircularQueue(std::size_t capacity):
     _capacity{capacity}
   {
@@ -62,7 +65,6 @@ public:
   ~CircularQueue() = default;
 
   std::size_t size() const { return _size; }
-
   bool empty() const { return size() == 0; }
   bool full() const { return size() == _capacity; }
 
@@ -76,6 +78,10 @@ public:
     return std::move(_buffer[old_tail]);
   }
 
+  /**
+   * Attempts to add `value` to the queue. Returns `true` if successful,
+   * otherwise returns `false`.
+   */
   bool try_push_back(T value) {
     if (full()) {
       return false;

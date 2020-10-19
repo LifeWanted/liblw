@@ -57,6 +57,8 @@ TEST(CircularQueue, PushPop) {
   EXPECT_EQ(q.size(), 0);
   EXPECT_TRUE(q.empty());
   EXPECT_FALSE(q.full());
+
+  EXPECT_THROW(q.pop_front(), FailedPrecondition);
 }
 
 }
