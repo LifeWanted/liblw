@@ -1,0 +1,7 @@
+
+cc_library(
+  name = "destroy_scheduler",
+  hdrs = ["destroy_scheduler.h"],
+  testonly = True,
+  visibility = ["//visibility:public"],
+)

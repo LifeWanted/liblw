@@ -1,5 +1,16 @@
 
 cc_library(
+  name = "concepts",
+  hdrs = ["concepts.h"],
+)
+
+cc_library(
+  name = "events",
+  hdrs = ["events.h"],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
   name = "future",
   hdrs = ["future.h"],
   visibility = ["//visibility:public"],
@@ -12,5 +23,102 @@ cc_test(
     ":future",
     "@gtest//:gtest_main",
     "//lw/err",
-  ]
+  ],
+)
+
+cc_library(
+  name = "generator",
+  hdrs = ["generator.h"],
+  visibility = ["//visibility:public"],
+)
+
+cc_test(
+  name = "generator_test",
+  srcs = ["generator_test.cpp"],
+  deps = [
+    ":generator",
+    "@gtest//:gtest_main",
+  ],
+)
+
+cc_library(
+  name = "scheduler",
+  hdrs = ["scheduler.h"],
+  srcs = ["scheduler.cpp"],
+  deps = [
+    ":concepts",
+    ":events",
+    ":task",
+    "//lw/co/systems:epoll",
+    "//lw/err",
+    "//lw/flags",
+    "//lw/memory:circular_queue",
+  ],
+)
+
+cc_test(
+  name = "scheduler_test",
+  srcs = ["scheduler_test.cpp"],
+  deps = [
+    ":events",
+    ":scheduler",
+    "@gtest//:gtest_main",
+    "//lw/co/testing:destroy_scheduler",
+  ],
+)
+
+cc_library(
+  name = "sequences",
+  hdrs = ["sequences.h"],
+  visibility = ["//visibility:public"],
+  deps = [":generator"],
+)
+
+cc_test(
+  name = "sequences_test",
+  srcs = ["sequences_test.cpp"],
+  deps = [
+    ":sequences",
+    "@gtest//:gtest_main",
+  ],
+)
+
+cc_library(
+  name = "task",
+  hdrs = ["task.h"],
+  visibility = ["//visibility:public"],
+  deps = [
+    "//lw/err",
+  ],
+)
+
+cc_test(
+  name = "task_test",
+  srcs = ["task_test.cpp"],
+  deps = [
+    ":task",
+    "@gtest//:gtest_main",
+  ],
+)
+
+cc_library(
+  name = "time",
+  hdrs = ["time.h"],
+  srcs = ["time.cpp"],
+  visibility = ["//visibility:public"],
+  deps = [
+    ":scheduler",
+    ":task",
+  ],
+)
+
+cc_test(
+  name = "time_test",
+  srcs = ["time_test.cpp"],
+  deps = [
+    ":scheduler",
+    ":task",
+    ":time",
+    "@gtest//:gtest_main",
+  ],
 )

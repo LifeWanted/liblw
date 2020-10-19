@@ -1,0 +1,25 @@
+# System-specific implementations of scheduling services. For use with the
+# coroutine scheduler class only.
+package(default_visibility = ["//lw/co:__subpackages__"])
+
+cc_library(
+  name = "epoll",
+  hdrs = ["epoll.h"],
+  srcs = ["epoll.cpp"],
+  deps = [
+    "//lw/co:events",
+    "//lw/err",
+    "//lw/err:system",
+    "//lw/flags",
+  ],
+)
+
+cc_test(
+  name = "epoll_test",
+  srcs = ["epoll_test.cpp"],
+  deps = [
+    ":epoll",
+    "@gtest//:gtest_main",
+    "//lw/err",
+  ],
+)
