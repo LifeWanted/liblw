@@ -48,7 +48,11 @@ cc_library(
   deps = [
     ":concepts",
     ":events",
-    "//lw/co/systems:epoll"
+    ":task",
+    "//lw/co/systems:epoll",
+    "//lw/err",
+    "//lw/flags",
+    "//lw/memory:circular_queue",
   ],
 )
 
@@ -100,8 +104,10 @@ cc_test(
 cc_library(
   name = "time",
   hdrs = ["time.h"],
+  srcs = ["time.cpp"],
   visibility = ["//visibility:public"],
   deps = [
+    ":scheduler",
     ":task",
   ],
 )
@@ -110,6 +116,7 @@ cc_test(
   name = "time_test",
   srcs = ["time_test.cpp"],
   deps = [
+    ":scheduler",
     ":task",
     ":time",
     "@gtest//:gtest_main",

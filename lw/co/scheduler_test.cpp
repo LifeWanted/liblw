@@ -6,65 +6,65 @@
 #include "lw/co/events.h"
 #include "lw/co/testing/destroy_scheduler.h"
 
-
 namespace lw::co {
 namespace {
-
-struct AwaitableObserver {
-  bool ready_called = false;
-  bool suspend_called = false;
-  bool resume_called = false;
-};
-
-class TestAwaitable {
-public:
-  TestAwaitable(AwaitableObserver& observer): _observer{observer} {}
-
-  bool await_ready() {
-    _observer.ready_called = true;
-    return false;
-  }
-
-  void await_suspend() {
-    _observer.suspend_called = true;
-  }
-
-  void await_resume() {
-    _observer.resume_called = true;
-  }
-
-private:
-  AwaitableObserver& _observer;
-};
-
-// -------------------------------------------------------------------------- //
 
 class SchedulerTest : public ::testing::Test {
 protected:
   SchedulerTest() {}
   ~SchedulerTest() {
-    testing::destroy_this_scheduler();
+    testing::destroy_all_schedulers();
+  }
+
+  Task<void> test_task(int& counter) {
+    ++counter;
+    co_await Scheduler::this_thread().next_tick();
+    ++counter;
+  }
+
+  template <typename Func>
+  Task<void> observe(Func&& f) {
+    f();
+    co_return;
+  }
+
+  template <typename Func>
+  Task<void> observe_next_tick(Func&& f) {
+    co_await Scheduler::this_thread().next_tick();
+    f();
   }
 };
 
-TEST_F(SchedulerTest, ScheduleAndRun) {
-  int timer = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
-  ASSERT_GT(timer, 0) << "Timer file descripter.";
-  ::itimerspec spec{
-    .it_interval = {0},
-    .it_value = {.tv_sec = 0, .tv_nsec = 15 * 1000000} // 15ms
-  };
-  ASSERT_EQ(::timerfd_settime(timer, 0, &spec, nullptr), 0);
-
-  AwaitableObserver observer;
-  TestAwaitable awaitable{observer};
-
-  Scheduler::this_thread()
-    .schedule(timer, Event::READABLE | Event::ONE_SHOT, std::move(awaitable));
-
-  EXPECT_FALSE(observer.resume_called);
+TEST_F(SchedulerTest, RunATask) {
+  int counter = 0;
+  {
+    auto task = test_task(counter);
+    EXPECT_EQ(counter, 0);
+    Scheduler::this_thread().schedule(std::move(task));
+  }
   Scheduler::this_thread().run();
-  EXPECT_TRUE(observer.resume_called);
+  EXPECT_EQ(counter, 2);
+}
+
+TEST_F(SchedulerTest, RunMultipleTasks) {
+  int counter = 0;
+  {
+    auto task = test_task(counter);
+    EXPECT_EQ(counter, 0);
+    Scheduler::this_thread().schedule(std::move(task));
+  }
+  Scheduler::this_thread().schedule(observe([&]() {
+    // This should execute when `test_task` suspends for next tick.
+    EXPECT_EQ(counter, 1);
+    ++counter;
+  }));
+  Scheduler::this_thread().schedule(observe_next_tick([&]() {
+    // This should execute after `test_task` resumes its next tick.
+    EXPECT_EQ(counter, 3);
+    ++counter;
+  }));
+  Scheduler::this_thread().run();
+  EXPECT_EQ(counter, 4);
 }
 
 }

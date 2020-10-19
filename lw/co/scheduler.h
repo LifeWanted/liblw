@@ -9,6 +9,8 @@
 
 #include "lw/co/concepts.h"
 #include "lw/co/events.h"
+#include "lw/co/task.h"
+#include "lw/memory/circular_queue.h"
 
 namespace lw::co {
 namespace internal {
@@ -25,7 +27,7 @@ typedef int Handle;
  */
 class Scheduler {
 public:
-  ~Scheduler() = default;
+  ~Scheduler();
 
   Scheduler(Scheduler&&) = delete;
   Scheduler& operator=(Scheduler&&) = delete;
@@ -43,27 +45,44 @@ public:
   static Scheduler& for_thread(std::thread::id thread_id);
 
   /**
-   * Adds an awaitable which will be resumed when any of the given events
-   * trigger on the handle.
+   * Suspends the calling task, to be resumed on the next tick.
+   *
+   * Only call this on the `this_thread` scheduler.
+   *
+   * TODO(alaina): Add thread-checking enforcement.
+   */
+  auto next_tick() {
+    _add_to_queue(_active_task);
+    return std::suspend_always{};
+  }
+
+  /**
+   * Resumes the task on the scheduler's thread.
+   *
+   * TODO(alaina): Make this thread safe.
+   */
+  void schedule(Task<void> task) {
+    _add_to_queue(new Task<void>(std::move(task)));
+  }
+
+  /**
+   * Schedules the given task for execution. Upon completion, the callback will
+   * be called with the result of the task.
+   *
+   * TODO(alaina): Implement this functionality. :)
+   */
+  template <typename T, typename Func>
+  void schedule(Task<T> task, Func&& callback);
+
+  /**
+   * Schedules a resumption of the current task when the given events fire.
    *
    * @param handle
    *  The OS handle/file descriptor the events will trigger on.
    * @param events
    *  The set of events to watch for.
-   * @param awaitable
-   *  The awaitable to resume once an event triggers. This object will be
-   *  forwarded and moved in the process of scheduling it.
    */
-  template <Awaitable Awaiter>
-  void schedule(Handle handle, Event events, Awaiter&& awaitable) {
-    _schedule(
-      handle,
-      events,
-      [awaitable{std::forward<Awaiter>(awaitable)}]() mutable {
-        awaitable.await_resume();
-      }
-    );
-  }
+  void schedule(Handle handle, Event events);
 
   /**
    * Runs the event loop until it is empty.
@@ -73,9 +92,15 @@ public:
 private:
   Scheduler();
 
+  void _add_to_queue(Task<void>* task);
+  void _schedule_queue_drain();
   void _schedule(Handle handle, Event events, std::function<void()> func);
+  void _resume(Task<void>* task);
 
   std::unique_ptr<internal::EPoll> _epoll;
+  Task<void>* _active_task = nullptr;
+  CircularQueue<Task<void>*> _task_queue;
+  Handle _event_fd = 0;
 };
 
 }

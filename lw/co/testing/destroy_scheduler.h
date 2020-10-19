@@ -4,6 +4,11 @@
 namespace lw::co::testing {
 
 /**
+ * Destroys all schedulers on all threads.
+ */
+void destroy_all_schedulers();
+
+/**
  * Destroys the scheduler tied to the given thread.
  */
 void destroy_scheduler(std::thread::id thread_id);
