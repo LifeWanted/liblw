@@ -12,6 +12,7 @@ namespace lw::io::stream {
 class StringBuffer: public std::streambuf {
 public:
   StringBuffer();
+  explicit StringBuffer(const std::string& str);
   StringBuffer(StringBuffer&&);
   StringBuffer(const StringBuffer&) = delete;
   StringBuffer& operator=(StringBuffer&&);

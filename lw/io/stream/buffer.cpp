@@ -2,10 +2,17 @@
 
 #include <algorithm>
 #include <cstring>
+#include <streambuf>
+#include <string>
 
 namespace lw::io::stream {
 
 StringBuffer::StringBuffer() {
+  setg(data(), data(), data());
+  setp(data(), data() + capacity());
+}
+
+StringBuffer::StringBuffer(const std::string& str): _buffer{str} {
   setg(data(), data(), data());
   setp(data(), data() + capacity());
 }
