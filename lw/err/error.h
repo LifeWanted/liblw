@@ -18,7 +18,9 @@ namespace lw {
  */
 class Error: public std::runtime_error {
 public:
+  Error(const Error& other);
   Error(Error&& other);
+  Error& operator=(const Error& other);
   Error& operator=(Error&& other);
 
   const char* what() const noexcept override {
