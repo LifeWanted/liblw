@@ -21,6 +21,8 @@ cc_library(
   hdrs = ["future.h"],
   visibility = ["//visibility:public"],
   deps = [
+    ":scheduler",
+    "//lw/err",
   ],
 )
 
@@ -29,7 +31,10 @@ cc_test(
   srcs = ["future_test.cpp"],
   deps = [
     ":future",
+    ":scheduler",
+    ":task",
     "@gtest//:gtest_main",
+    "//lw/co/testing:destroy_scheduler",
     "//lw/err",
   ],
 )
