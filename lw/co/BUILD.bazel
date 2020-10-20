@@ -5,6 +5,12 @@ cc_library(
 )
 
 cc_library(
+  name = "coroutine_promise",
+  hdrs = ["coroutine_promise.h"],
+  deps = ["//lw/err"],
+)
+
+cc_library(
   name = "events",
   hdrs = ["events.h"],
   visibility = ["//visibility:public"],
@@ -14,6 +20,8 @@ cc_library(
   name = "future",
   hdrs = ["future.h"],
   visibility = ["//visibility:public"],
+  deps = [
+  ],
 )
 
 cc_test(
@@ -88,6 +96,7 @@ cc_library(
   hdrs = ["task.h"],
   visibility = ["//visibility:public"],
   deps = [
+    ":coroutine_promise",
     "//lw/err",
   ],
 )
