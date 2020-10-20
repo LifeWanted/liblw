@@ -17,7 +17,32 @@ namespace internal {
 class EPoll;
 }
 
+class Scheduler;
+
 typedef int Handle;
+
+/**
+ * An opaque reference to a task running in a scheduler.
+ */
+class TaskRef {
+public:
+  TaskRef(): _task{nullptr} {}
+  TaskRef(const TaskRef&) = default;
+  TaskRef& operator=(const TaskRef&) = default;
+  TaskRef(TaskRef&&) = default;
+  TaskRef& operator=(TaskRef&&) = default;
+  ~TaskRef() = default;
+
+  operator bool() const { return _task != nullptr; }
+  bool operator==(std::nullptr_t) const { return _task == nullptr; }
+
+private:
+  TaskRef(Task<void>* task): _task{task} {}
+
+  Task<void>* _task;
+
+  friend class Scheduler;
+};
 
 /**
  * A per-thread singleton coroutine scheduling service.
@@ -45,6 +70,16 @@ public:
   static Scheduler& for_thread(std::thread::id thread_id);
 
   /**
+   * Fetches a reference to the currently active test.
+   *
+   * @throw FailedPrecondition
+   *  If there is no active task at the time of calling this method.
+   *
+   * TODO(alaina): Add tests.
+   */
+  TaskRef current_task() const;
+
+  /**
    * Suspends the calling task, to be resumed on the next tick.
    *
    * Only call this on the `this_thread` scheduler.
@@ -64,6 +99,16 @@ public:
   void schedule(Task<void> task) {
     _add_to_queue(new Task<void>(std::move(task)));
   }
+
+  /**
+   * Resumes the task on the scheduler's thread.
+   *
+   * @throw InvalidArgument
+   *  If the TaskRef is invalid (task == nullptr).
+   *
+   * TODO(alaina): Add tests.
+   */
+  void schedule(TaskRef task);
 
   /**
    * Schedules the given task for execution. Upon completion, the callback will

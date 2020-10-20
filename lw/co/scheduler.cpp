@@ -104,6 +104,19 @@ Scheduler& Scheduler::for_thread(std::thread::id thread_id) {
   return *itr->second;
 }
 
+TaskRef Scheduler::current_task() const {
+  if (_active_task == nullptr) {
+    throw FailedPrecondition()
+      << "No current task.";
+  }
+  return TaskRef{_active_task};
+}
+
+void Scheduler::schedule(TaskRef task) {
+  LW_CHECK_NULL(task);
+  _add_to_queue(task._task);
+}
+
 void Scheduler::schedule(Handle handle, Event events) {
   if (_active_task == nullptr) {
     throw FailedPrecondition()
