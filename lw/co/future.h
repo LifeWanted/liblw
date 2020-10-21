@@ -33,14 +33,13 @@ struct SharedPromiseState: public SharedPromiseState<void> {
 template <typename T>
 class Promise;
 
-template <typename T>
-class [[nodiscard]] Future {
+class [[nodiscard]] FutureBase {
 public:
-  Future(const Future&) = delete;
-  Future& operator=(const Future&) = delete;
+  FutureBase(const FutureBase&) = delete;
+  FutureBase& operator=(const FutureBase&) = delete;
 
-  Future(Future&&) = default;
-  Future& operator=(Future&&) = default;
+  FutureBase(FutureBase&&) = default;
+  FutureBase& operator=(FutureBase&&) = default;
 
   bool await_ready() const { return _state->state_set; }
 
@@ -48,11 +47,11 @@ public:
     _state->scheduler = &Scheduler::this_thread();
     _state->task = _state->scheduler->current_task();
 
-    // TODO(alaina): Check this for thread safety. This statement, and the
-    // equivalent one in Future<void> below, isn't exactly atomic, and I don't
-    // know if there is a race condition around setting the state flag and
-    // actually setting the state and how that will interact with coroutine
-    // logic the compiler generates around calling the await_* methods.
+    // TODO(alaina): Check this for thread safety. This statement isn't exactly
+    // atomic, and I don't know if there is a race condition around setting the
+    // state flag and actually setting the state and how that will interact with
+    // coroutine logic the compiler generates around calling the await_*
+    // methods.
     //
     // Possible test case involves a type with a mutex block in its copy
     // constructor to force a delay between setting the flag and setting the
@@ -64,36 +63,43 @@ public:
     return _state->future_suspended = !_state->state_set;
   }
 
+protected:
+  explicit FutureBase(
+    std::shared_ptr<internal::SharedPromiseState<void>> state
+  ):
+    _state{state}
+  {}
+
+  std::shared_ptr<internal::SharedPromiseState<void>> _state;
+};
+
+template <typename T>
+class [[nodiscard]] Future: public FutureBase {
+public:
   T await_resume() {
     if (!_state->state_set) {
       throw FailedPrecondition()
         << "Cannot resume future before state is set on promise.";
     }
     if (_state->exception) std::rethrow_exception(_state->exception);
-    return std::move(*_state->value);
+    return std::move(
+      *std::static_pointer_cast<internal::SharedPromiseState<T>>(_state)->value
+    );
   }
 
 private:
   explicit Future(std::shared_ptr<internal::SharedPromiseState<T>> state):
-    _state{state}
+    FutureBase{
+      std::static_pointer_cast<internal::SharedPromiseState<void>>(state)
+    }
   {}
-
-  std::shared_ptr<internal::SharedPromiseState<T>> _state;
 
   friend class Promise<T>;
 };
 
 template <>
-class [[nodiscard]] Future<void> {
+class [[nodiscard]] Future<void>: public FutureBase {
 public:
-  bool await_ready() const { return _state->state_set; }
-
-  bool await_suspend(std::coroutine_handle<>) {
-    _state->scheduler = &Scheduler::this_thread();
-    _state->task = _state->scheduler->current_task();
-    return _state->future_suspended = !_state->state_set;
-  }
-
   void await_resume() {
     if (!_state->state_set) {
       throw FailedPrecondition()
@@ -104,10 +110,8 @@ public:
 
 private:
   explicit Future(std::shared_ptr<internal::SharedPromiseState<void>> state):
-    _state{state}
+    FutureBase{state}
   {}
-
-  std::shared_ptr<internal::SharedPromiseState<void>> _state;
 
   friend class Promise<void>;
 };
