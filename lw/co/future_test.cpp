@@ -79,6 +79,26 @@ TEST(PromiseInt, FutureIsAwaitable) {
   testing::destroy_all_schedulers();
 }
 
+TEST(PromiseInt, ExceptionsAreThrown) {
+  Promise<int> p;
+  int result = 0;
+  Scheduler::this_thread().schedule(([&]() -> Task<void> {
+    EXPECT_EQ(result, 0);
+    result = 2;
+    EXPECT_THROW(result = co_await p.get_future(), InvalidArgument);
+    EXPECT_EQ(result, 2);
+    result = 3;
+  })());
+  Scheduler::this_thread().schedule(([&]() -> Task<void> {
+    co_await Scheduler::this_thread().next_tick();
+    EXPECT_EQ(result, 2);
+    p.set_exception(std::make_exception_ptr(InvalidArgument() << "error!"));
+  })());
+  Scheduler::this_thread().run();
+  EXPECT_EQ(result, 3);
+  testing::destroy_all_schedulers();
+}
+
 // -------------------------------------------------------------------------- //
 
 TEST(MakeFuture, ResolveVoid) {

@@ -57,6 +57,10 @@ public:
     // Possible test case involves a type with a mutex block in its copy
     // constructor to force a delay between setting the flag and setting the
     // value.
+    //
+    // Possible solution would be to combine state booleans into a single
+    // bitmask variable. Then compare_and_exchange could be used in a loop to
+    // check condition while setting attributes.
     return _state->future_suspended = !_state->state_set;
   }
 
