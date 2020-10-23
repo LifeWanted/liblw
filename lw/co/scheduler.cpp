@@ -1,11 +1,13 @@
 #include "lw/co/scheduler.h"
 
+#include <coroutine>
 #include <memory>
 #include <sys/eventfd.h>
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
 
+#include "lw/co/events.h"
 #include "lw/co/systems/epoll.h"
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
@@ -68,7 +70,7 @@ void destroy_scheduler(std::thread::id thread_id) {
 
 Scheduler::Scheduler():
   _epoll{std::make_unique<internal::EPoll>()},
-  _task_queue{flags::lw_scheduler_queue_size.value()}
+  _coro_queue{flags::lw_scheduler_queue_size.value()}
 {
   if (thread_schedulers.contains(std::this_thread::get_id())) {
     throw FailedPrecondition()
@@ -77,9 +79,9 @@ Scheduler::Scheduler():
 }
 
 Scheduler::~Scheduler() {
-  if (_event_fd) {
-    ::close(_event_fd);
-    _event_fd = 0;
+  if (_queue_notification_fd) {
+    ::close(_queue_notification_fd);
+    _queue_notification_fd = 0;
   }
 }
 
@@ -104,29 +106,12 @@ Scheduler& Scheduler::for_thread(std::thread::id thread_id) {
   return *itr->second;
 }
 
-TaskRef Scheduler::current_task() const {
-  if (_active_task == nullptr) {
-    throw FailedPrecondition()
-      << "No current task.";
-  }
-  return TaskRef{_active_task};
-}
-
-void Scheduler::schedule(TaskRef task) {
-  LW_CHECK_NULL(task);
-  _add_to_queue(task._task);
-}
-
-void Scheduler::schedule(Handle handle, Event events) {
-  if (_active_task == nullptr) {
-    throw FailedPrecondition()
-      << "Cannot schedule event resumption outside the context of a task.";
-  }
-  _schedule(
-    handle,
-    events,
-    [this, task{_active_task}]() { _resume(task); }
-  );
+void Scheduler::schedule(
+  std::coroutine_handle<> coro,
+  Handle handle,
+  Event events
+) {
+  _schedule(handle, events, [coro]() { coro.resume(); });
 }
 
 void Scheduler::run() {
@@ -140,27 +125,28 @@ void Scheduler::run() {
   while (_epoll->has_pending_items()) _epoll->wait();
 }
 
-void Scheduler::_add_to_queue(Task<void>* task) {
-  _task_queue.push_back(task);
+void Scheduler::_add_to_queue(std::coroutine_handle<> coro) {
+  _coro_queue.push_back(std::move(coro));
   _schedule_queue_drain();
 }
 
 void Scheduler::_schedule_queue_drain() {
-  if (!_event_fd) _event_fd = create_eventfd();
+  if (!_queue_notification_fd) _queue_notification_fd = create_eventfd();
   try {
-    _schedule(_event_fd, Event::READABLE | Event::ONE_SHOT, [this]() {
+    const auto events = Event::READABLE | Event::ONE_SHOT;
+    _schedule(_queue_notification_fd, events, [this]() {
       // Limit ourselves to resuming only the tasks in the queue at the start of
       // this cycle to prevent starvation of epoll.
-      clear_eventfd(_event_fd);
-      std::size_t limit = _task_queue.size();
-      for (std::size_t i = 0; i < limit && !_task_queue.empty(); ++i) {
-        _resume(_task_queue.pop_front());
+      clear_eventfd(_queue_notification_fd);
+      std::size_t limit = _coro_queue.size();
+      for (std::size_t i = 0; i < limit && !_coro_queue.empty(); ++i) {
+        _coro_queue.pop_front().resume();
       }
     });
   } catch (const AlreadyExists&) {
     // Ignore this case. Wakeup is already scheduled.
   }
-  ping_eventfd(_event_fd);
+  ping_eventfd(_queue_notification_fd);
 }
 
 void Scheduler::_schedule(
@@ -169,19 +155,6 @@ void Scheduler::_schedule(
   std::function<void()> func
 ) {
   _epoll->add(handle, events, std::move(func));
-}
-
-void Scheduler::_resume(Task<void>* task) {
-  LW_CHECK_NULL(task);
-  Task<void>* prev_task = _active_task;
-  _active_task = task;
-  task->resume();
-  if (task->done()) {
-    std::unique_ptr<Task<void>> task_ptr{task}; // This will delete for us.
-    task = nullptr;
-    task_ptr->get(); // To clear any exceptions.
-  }
-  _active_task = prev_task;
 }
 
 }

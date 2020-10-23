@@ -46,6 +46,10 @@ public:
     return std::move(*_handle.promise()._value);
   }
 
+  std::coroutine_handle<> handle() const {
+    return static_cast<std::coroutine_handle<>>(_handle);
+  }
+
 private:
   handle_type _handle;
 };
@@ -85,6 +89,10 @@ public:
       _handle.promise()._error = nullptr;
       std::rethrow_exception(error);
     }
+  }
+
+  std::coroutine_handle<> handle() const {
+    return static_cast<std::coroutine_handle<>>(_handle);
   }
 
 private:

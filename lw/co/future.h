@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <coroutine>
 #include <exception>
 #include <future>
 #include <memory>
@@ -20,7 +21,7 @@ struct SharedPromiseState<void> {
   std::atomic_bool future_suspended = false;
   std::exception_ptr exception;
   Scheduler* scheduler = nullptr;
-  TaskRef task;
+  std::coroutine_handle<> handle;
 };
 
 template <typename T>
@@ -41,11 +42,13 @@ public:
   FutureBase(FutureBase&&) = default;
   FutureBase& operator=(FutureBase&&) = default;
 
-  bool await_ready() const { return _state->state_set; }
+  bool await_ready() const {
+    return _state->state_set;
+  }
 
-  bool await_suspend(std::coroutine_handle<>) {
+  bool await_suspend(std::coroutine_handle<> handle) {
     _state->scheduler = &Scheduler::this_thread();
-    _state->task = _state->scheduler->current_task();
+    _state->handle = handle;
 
     // TODO(alaina): Check this for thread safety. This statement isn't exactly
     // atomic, and I don't know if there is a race condition around setting the
@@ -76,6 +79,8 @@ protected:
 template <typename T>
 class [[nodiscard]] Future: public FutureBase {
 public:
+  using promise_type = Promise<T>;
+
   T await_resume() {
     if (!_state->state_set) {
       throw FailedPrecondition()
@@ -100,6 +105,8 @@ private:
 template <>
 class [[nodiscard]] Future<void>: public FutureBase {
 public:
+  using promise_type = Promise<void>;
+
   void await_resume() {
     if (!_state->state_set) {
       throw FailedPrecondition()
@@ -132,6 +139,8 @@ public:
   Promise& operator=(const Promise&) = delete;
   Promise(Promise&&);
   Promise& operator=(Promise&&);
+
+  /*** std::promise API ***/
 
   Future<T> get_future() {
     bool future_already_obtained = _future_obtained.exchange(true);
@@ -166,6 +175,36 @@ public:
     _schedule_task();
   }
 
+  /*** Coroutine promise hooks ***/
+
+  auto initial_suspend() const {
+    return std::suspend_never{};
+  }
+
+  auto final_suspend() const {
+    return std::suspend_never{};
+  }
+
+  Future<T> get_return_object() {
+    return get_future();
+  }
+
+  template <typename U>
+  auto return_value(U&& value) {
+    set_value(std::forward<U>(value));
+    return std::suspend_never{};
+  }
+
+  auto return_void() {
+    set_exception(
+      std::make_exception_ptr(Internal() << "Non-void coroutine returned void!")
+    );
+  }
+
+  void unhandled_exception() {
+    set_exception(std::current_exception());
+  }
+
 private:
   void _claim_state_set() {
     bool state_already_set = _state->state_set.exchange(true);
@@ -176,7 +215,7 @@ private:
   }
 
   void _schedule_task() {
-    if (_state->future_suspended) _state->scheduler->schedule(_state->task);
+    if (_state->future_suspended) _state->scheduler->schedule(_state->handle);
   }
 
   std::atomic_bool _future_obtained = false;
@@ -194,6 +233,8 @@ public:
   Promise& operator=(const Promise&) = delete;
   Promise(Promise&&);
   Promise& operator=(Promise&&);
+
+  /*** std::promise API ***/
 
   Future<void> get_future() {
     bool future_already_obtained = _future_obtained.exchange(true);
@@ -215,6 +256,35 @@ public:
     _schedule_task();
   }
 
+  /*** Coroutine promise hooks ***/
+
+  auto initial_suspend() const {
+    return std::suspend_never{};
+  }
+
+  auto final_suspend() const {
+    return std::suspend_never{};
+  }
+
+  Future<void> get_return_object() {
+    return get_future();
+  }
+
+  template <typename U>
+  auto return_value(U&& value) {
+    set_exception(
+      std::make_exception_ptr(Internal() << "Void coroutine returned value!")
+    );
+  }
+
+  auto return_void() {
+    set_value();
+    return std::suspend_never{};
+  }
+
+  void unhandled_exception() {
+    set_exception(std::current_exception());
+  }
 private:
   void _claim_state_set() {
     bool state_already_set = _state->state_set.exchange(true);
@@ -225,7 +295,7 @@ private:
   }
 
   void _schedule_task() {
-    if (_state->future_suspended) _state->scheduler->schedule(_state->task);
+    if (_state->future_suspended) _state->scheduler->schedule(_state->handle);
   }
 
   std::atomic_bool _future_obtained = false;

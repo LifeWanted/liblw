@@ -17,12 +17,15 @@ concept Awaitable = requires(T a) {
   { a.await_resume() };
 };
 
+/**
+ * A CallbackCoroutine is a functor that returns either an `lw::co::Task<void>`
+ * or a `std::coroutine_handle<>`.
+ *
+ * TODO(alaina): Add restrictions on return type of the functor.
+ */
 template <typename T>
-concept Schedulable = std::is_same_v<T, ::lw::co::Scheduler&>;
-
-template <typename T>
-concept SchedulerHolder = requires(const T a) {
-  { a.scheduler() } -> Schedulable;
+concept CallableCoroutine = requires(T a) {
+  { a() };
 };
 
 }

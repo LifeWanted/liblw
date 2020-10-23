@@ -52,7 +52,7 @@ public:
 
   bool await_ready() const { return false; }
 
-  void await_suspend(std::coroutine_handle<>) {
+  void await_suspend(std::coroutine_handle<> handle) {
     if (!_timer) {
       _timer = internal::create_timerfd(
         internal::get_clock_type<Clock>(),
@@ -60,7 +60,7 @@ public:
       );
     }
     Scheduler::this_thread()
-      .schedule(_timer, Event::READABLE | Event::ONE_SHOT);
+      .schedule(handle, _timer, Event::READABLE | Event::ONE_SHOT);
   }
 
   void await_resume() {

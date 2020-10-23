@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coroutine>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -20,29 +21,6 @@ class EPoll;
 class Scheduler;
 
 typedef int Handle;
-
-/**
- * An opaque reference to a task running in a scheduler.
- */
-class TaskRef {
-public:
-  TaskRef(): _task{nullptr} {}
-  TaskRef(const TaskRef&) = default;
-  TaskRef& operator=(const TaskRef&) = default;
-  TaskRef(TaskRef&&) = default;
-  TaskRef& operator=(TaskRef&&) = default;
-  ~TaskRef() = default;
-
-  operator bool() const { return _task != nullptr; }
-  bool operator==(std::nullptr_t) const { return _task == nullptr; }
-
-private:
-  TaskRef(Task<void>* task): _task{task} {}
-
-  Task<void>* _task;
-
-  friend class Scheduler;
-};
 
 /**
  * A per-thread singleton coroutine scheduling service.
@@ -70,25 +48,18 @@ public:
   static Scheduler& for_thread(std::thread::id thread_id);
 
   /**
-   * Fetches a reference to the currently active test.
+   * Invokes the coroutine and schedules the returned coroutine handle for
+   * resumption on the next tick of the loop.
    *
-   * @throw FailedPrecondition
-   *  If there is no active task at the time of calling this method.
-   *
-   * TODO(alaina): Add tests.
+   * TODO(alaina): Add type check that Coroutine returns a handle or Task.
    */
-  TaskRef current_task() const;
+  template <CallableCoroutine Coroutine>
+  void schedule(Coroutine&& coroutine) {
+    _add_to_queue(coroutine().handle());
+  }
 
-  /**
-   * Suspends the calling task, to be resumed on the next tick.
-   *
-   * Only call this on the `this_thread` scheduler.
-   *
-   * TODO(alaina): Add thread-checking enforcement.
-   */
-  auto next_tick() {
-    _add_to_queue(_active_task);
-    return std::suspend_always{};
+  void schedule(std::coroutine_handle<> coro) {
+    _add_to_queue(std::move(coro));
   }
 
   /**
@@ -97,18 +68,8 @@ public:
    * TODO(alaina): Make this thread safe.
    */
   void schedule(Task<void> task) {
-    _add_to_queue(new Task<void>(std::move(task)));
+    _add_to_queue(task.handle());
   }
-
-  /**
-   * Resumes the task on the scheduler's thread.
-   *
-   * @throw InvalidArgument
-   *  If the TaskRef is invalid (task == nullptr).
-   *
-   * TODO(alaina): Add tests.
-   */
-  void schedule(TaskRef task);
 
   /**
    * Schedules the given task for execution. Upon completion, the callback will
@@ -122,12 +83,14 @@ public:
   /**
    * Schedules a resumption of the current task when the given events fire.
    *
+   * @param coro
+   *  The coroutine that will be resumed when the event fires.
    * @param handle
    *  The OS handle/file descriptor the events will trigger on.
    * @param events
    *  The set of events to watch for.
    */
-  void schedule(Handle handle, Event events);
+  void schedule(std::coroutine_handle<> coro, Handle handle, Event events);
 
   /**
    * Runs the event loop until it is empty.
@@ -137,15 +100,66 @@ public:
 private:
   Scheduler();
 
-  void _add_to_queue(Task<void>* task);
+  void _add_to_queue(std::coroutine_handle<> coro);
   void _schedule_queue_drain();
   void _schedule(Handle handle, Event events, std::function<void()> func);
-  void _resume(Task<void>* task);
 
   std::unique_ptr<internal::EPoll> _epoll;
-  Task<void>* _active_task = nullptr;
-  CircularQueue<Task<void>*> _task_queue;
-  Handle _event_fd = 0;
+  CircularQueue<std::coroutine_handle<>> _coro_queue;
+  Handle _queue_notification_fd = 0;
 };
+
+// -------------------------------------------------------------------------- //
+
+namespace internal {
+
+struct NextTickAwaitable {
+  bool await_ready() const { return false; }
+  void await_suspend(std::coroutine_handle<> coro) const {
+    Scheduler::this_thread().schedule(std::move(coro));
+  }
+  void await_resume() const {}
+};
+
+struct EventsAwaitable {
+  /**
+   * Creates an awaitable that will schedule the coroutine to resume when the
+   * given event files on the handle.
+   *
+   * @param handle
+   *  The OS handle/file descriptor the events will trigger on.
+   * @param events
+   *  The set of events to watch for.
+   */
+  EventsAwaitable(Handle handle, Event events): _handle{handle}, _events{events}
+  {}
+
+  bool await_ready() const { return false; }
+  void await_suspend(std::coroutine_handle<> coro) const {
+    Scheduler::this_thread().schedule(std::move(coro), _handle, _events);
+  }
+  void await_resume() const {}
+
+private:
+  Handle _handle;
+  Event _events;
+};
+
+}
+
+/**
+ * Suspends the coroutine, to be resumed on the next tick.
+ */
+auto next_tick() { return internal::NextTickAwaitable{}; }
+
+/**
+ * Schedules a resumption of the current task handle is readable.
+ *
+ * @param fd
+ *  The OS handle/file descriptor the events will trigger on.
+ */
+auto fd_readable(Handle fd) {
+  return internal::EventsAwaitable{fd, Event::READABLE | Event::ONE_SHOT};
+}
 
 }

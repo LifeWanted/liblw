@@ -75,6 +75,7 @@ cc_test(
   deps = [
     ":events",
     ":scheduler",
+    ":task",
     "@gtest//:gtest_main",
     "//lw/co/testing:destroy_scheduler",
   ],

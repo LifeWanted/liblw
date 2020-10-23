@@ -1,70 +1,69 @@
 #include "lw/co/scheduler.h"
 
+#include <chrono>
 #include <sys/timerfd.h>
 
 #include "gtest/gtest.h"
 #include "lw/co/events.h"
+#include "lw/co/task.h"
 #include "lw/co/testing/destroy_scheduler.h"
 
 namespace lw::co {
 namespace {
 
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+
 class SchedulerTest : public ::testing::Test {
 protected:
   SchedulerTest() {}
-  ~SchedulerTest() {
+  ~SchedulerTest() noexcept {
     testing::destroy_all_schedulers();
   }
 
-  Task<void> test_task(int& counter) {
-    ++counter;
-    co_await Scheduler::this_thread().next_tick();
-    ++counter;
-  }
-
-  template <typename Func>
-  Task<void> observe(Func&& f) {
-    f();
-    co_return;
-  }
-
-  template <typename Func>
-  Task<void> observe_next_tick(Func&& f) {
-    co_await Scheduler::this_thread().next_tick();
-    f();
+  int create_timer(std::chrono::nanoseconds delay) {
+    int timer = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
+    auto seconds = duration_cast<std::chrono::seconds>(delay);
+    ::itimerspec spec{
+      .it_interval = {0},
+      .it_value = {
+        .tv_sec = seconds.count(),
+        .tv_nsec =
+          duration_cast<std::chrono::nanoseconds>(delay - seconds).count()
+      }
+    };
+    ::timerfd_settime(timer, /*flags=*/0, &spec, nullptr);
+    return timer;
   }
 };
 
-TEST_F(SchedulerTest, RunATask) {
-  int counter = 0;
-  {
-    auto task = test_task(counter);
-    EXPECT_EQ(counter, 0);
-    Scheduler::this_thread().schedule(std::move(task));
-  }
+TEST_F(SchedulerTest, NextTick) {
+  int result = 0;
+  auto co = [&](int expect) -> Task<void> {
+    EXPECT_EQ(result, expect);
+    ++result;
+    co_await next_tick();
+    EXPECT_EQ(result, expect + 2);
+    ++result;
+  };
+  Scheduler::this_thread().schedule(co(0));
+  Scheduler::this_thread().schedule(co(1));
+  EXPECT_EQ(result, 0);
   Scheduler::this_thread().run();
-  EXPECT_EQ(counter, 2);
+  EXPECT_EQ(result, 4);
 }
 
-TEST_F(SchedulerTest, RunMultipleTasks) {
-  int counter = 0;
-  {
-    auto task = test_task(counter);
-    EXPECT_EQ(counter, 0);
-    Scheduler::this_thread().schedule(std::move(task));
-  }
-  Scheduler::this_thread().schedule(observe([&]() {
-    // This should execute when `test_task` suspends for next tick.
-    EXPECT_EQ(counter, 1);
-    ++counter;
-  }));
-  Scheduler::this_thread().schedule(observe_next_tick([&]() {
-    // This should execute after `test_task` resumes its next tick.
-    EXPECT_EQ(counter, 3);
-    ++counter;
-  }));
+TEST_F(SchedulerTest, FDEvents) {
+  auto sleep = std::chrono::milliseconds(15);
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    int handle = create_timer(sleep);
+    co_await fd_readable(handle);
+    ::close(handle);
+  });
+  auto start = high_resolution_clock::now();
   Scheduler::this_thread().run();
-  EXPECT_EQ(counter, 4);
+  auto end = high_resolution_clock::now();
+  EXPECT_GT(end, start + sleep);
 }
 
 }
