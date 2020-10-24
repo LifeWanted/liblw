@@ -162,4 +162,14 @@ auto fd_readable(Handle fd) {
   return internal::EventsAwaitable{fd, Event::READABLE | Event::ONE_SHOT};
 }
 
+/**
+ * Schedules a resumption of the current task handle is writable.
+ *
+ * @param fd
+ *  The OS handle/file descriptor the events will trigger on.
+ */
+auto fd_writable(Handle fd) {
+  return internal::EventsAwaitable{fd, Event::WRITABLE | Event::ONE_SHOT};
+}
+
 }
