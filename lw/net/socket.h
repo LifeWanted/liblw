@@ -3,13 +3,14 @@
 #include <future>
 #include <string_view>
 
+#include "lw/co/future.h"
 #include "lw/memory/buffer.h"
 
 namespace lw::net {
 
 struct Address {
-  std::string hostname;
-  std::string service;
+  std::string_view hostname;
+  std::string_view service;
 };
 
 class Socket {
@@ -29,7 +30,7 @@ public:
    *
    * The returned future is resolved when the connection is opened.
    */
-  [[nodiscard]] std::future<void> connect(Address addr);
+  co::Future<void> connect(Address addr);
 
   /**
    * Sends the given buffer over the socket.
@@ -41,7 +42,7 @@ public:
    * @return
    *  A future that will resolve to the number of bytes sent on the wire.
    */
-  [[nodiscard]] std::future<std::size_t> send(const Buffer& data);
+  co::Future<std::size_t> send(const Buffer& data);
 
   /**
    * Reads up to `buff->size()` bytes from the socket.
@@ -53,14 +54,14 @@ public:
    * @return
    *  A future that will resolve to the number of bytes read from the wire.
    */
-  [[nodiscard]] std::future<std::size_t> receive(Buffer* buff);
+  co::Future<std::size_t> receive(Buffer& buff);
 
   /**
    * Binds this socket to the given address and starts listening for
    * connections. Upon successful resolution, users may `accept()` new
    * connections.
    */
-  [[nodiscard]] std::future<void> listen(Address addr);
+  void listen(Address addr);
 
   /**
    * Waits for a new connection to come in.
@@ -68,12 +69,14 @@ public:
    * @return
    *  A future that will resolve to a new Socket if a connection comes in.
    */
-  [[nodiscard]] std::future<Socket> accept() const;
+  co::Future<Socket> accept() const;
 
 private:
   explicit Socket(int socket_fd): _socket_fd{socket_fd} {}
 
-  std::size_t do_send(const Buffer& data, int flags);
+  co::Future<std::size_t> _do_send(const Buffer& data, int flags);
+  co::Future<std::size_t> _do_recv(Buffer& data);
+  co::Future<Socket> _do_accept() const;
 
   int _socket_fd = 0;
 };

@@ -70,6 +70,8 @@ cc_library(
   hdrs = ["socket.h"],
   srcs = ["socket.cpp"],
   deps = [
+    "//lw/co:future",
+    "//lw/co:scheduler",
     "//lw/err",
     "//lw/err:system",
     "//lw/flags",
@@ -83,6 +85,9 @@ cc_test(
   deps = [
     ":socket",
     "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/co:time",
+    "//lw/co/testing:destroy_scheduler",
     "//lw/err",
     "//lw/memory:buffer",
   ]

@@ -97,6 +97,7 @@ public:
 
   std::size_t capacity() const { return _capacity; }
   std::size_t size() const { return capacity(); }
+  [[nodiscard]] bool empty() const { return _capacity == 0; }
 
   std::uint8_t* data() { return _data; }
   const std::uint8_t* data() const { return _data; }
