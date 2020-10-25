@@ -19,11 +19,11 @@ LW_FLAG(unsigned short, port, 8080, "Port for the server to listen on.");
 namespace {
 class EchoHandler: public lw::net::HttpHandler {
 public:
-  std::future<lw::net::HttpResponse::Body> run() override {
+  lw::co::Future<lw::net::HttpResponse::Body> run() override {
     if (request().has_header("content-length")) {
       response().header("content-length", request().header("content-length"));
     }
-    return future_response_body(request().body());
+    co_return request().body();
   }
 };
 LW_REGISTER_HTTP_HANDLER(EchoHandler, "POST", "/echo");
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
     server.listen();
     std::cout << "Server is listening on port " << lw::flags::port << std::endl;
-    server.run().get();
+    server.run();
   } catch (const std::runtime_error& err) {
     std::cerr << err.what() << std::endl;
     return -1;
