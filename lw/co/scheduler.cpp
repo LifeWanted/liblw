@@ -115,6 +115,7 @@ void Scheduler::schedule(
 }
 
 void Scheduler::run() {
+  _continue_polling = true;
   auto itr = thread_schedulers.find(std::this_thread::get_id());
   if (itr == thread_schedulers.end() || itr->second.get() != this) {
     throw FailedPrecondition()
@@ -122,7 +123,12 @@ void Scheduler::run() {
          "created it.";
   }
 
-  while (_epoll->has_pending_items()) _epoll->wait();
+  while (_continue_polling && _epoll->has_pending_items()) _epoll->wait();
+}
+
+void Scheduler::stop() {
+  _continue_polling = false;
+  _schedule_queue_drain();
 }
 
 void Scheduler::_add_to_queue(std::coroutine_handle<> coro) {

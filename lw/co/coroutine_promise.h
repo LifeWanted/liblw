@@ -34,15 +34,10 @@ public:
     return Ret<T>{Ret<T>::handle_type::from_promise(*this)};
   }
 
-  auto return_void() const {
-    throw Internal() << "Non-void coroutine returned void!";
-  }
-
   template <typename U>
-  auto return_value(U&& value) {
+  void return_value(U&& value) {
     _value = std::make_unique<T>(std::forward<U>(value));
     _valid = true;
-    return std::suspend_never{};
   }
 
   void unhandled_exception() {
@@ -80,14 +75,8 @@ public:
       return Ret<void>{Ret<void>::handle_type::from_promise(*this)};
   }
 
-  auto return_void() {
+  void return_void() {
     _valid = true;
-    return std::suspend_never{};
-  }
-
-  template <typename U>
-  auto return_value(U&& value) const {
-    throw Internal() << "Void coroutine returning a value!";
   }
 
   void unhandled_exception() {

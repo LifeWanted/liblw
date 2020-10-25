@@ -1,7 +1,9 @@
 #include "lw/co/scheduler.h"
 
+#include <atomic>
 #include <chrono>
 #include <sys/timerfd.h>
+#include <thread>
 
 #include "gtest/gtest.h"
 #include "lw/co/events.h"
@@ -14,28 +16,55 @@ namespace {
 using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 
+int create_timer(std::chrono::nanoseconds delay) {
+  int timer = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
+  auto seconds = duration_cast<std::chrono::seconds>(delay);
+  ::itimerspec spec{
+    .it_interval = {0},
+    .it_value = {
+      .tv_sec = seconds.count(),
+      .tv_nsec =
+        duration_cast<std::chrono::nanoseconds>(delay - seconds).count()
+    }
+  };
+  ::timerfd_settime(timer, /*flags=*/0, &spec, nullptr);
+  return timer;
+}
+
 class SchedulerTest : public ::testing::Test {
 protected:
   SchedulerTest() {}
   ~SchedulerTest() noexcept {
     testing::destroy_all_schedulers();
   }
-
-  int create_timer(std::chrono::nanoseconds delay) {
-    int timer = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
-    auto seconds = duration_cast<std::chrono::seconds>(delay);
-    ::itimerspec spec{
-      .it_interval = {0},
-      .it_value = {
-        .tv_sec = seconds.count(),
-        .tv_nsec =
-          duration_cast<std::chrono::nanoseconds>(delay - seconds).count()
-      }
-    };
-    ::timerfd_settime(timer, /*flags=*/0, &spec, nullptr);
-    return timer;
-  }
 };
+
+TEST_F(SchedulerTest, StartAndStop) {
+  std::atomic_int ticks = 0;
+  std::atomic_int* ticks_ptr = &ticks;
+  std::jthread scheduler_thread{[ticks_ptr]() {
+    // Schedule an infinite task that will keep the scheduler running.
+    Scheduler::this_thread().schedule([ticks_ptr]() -> Task<void> {
+      while (true) {
+        ++(*ticks_ptr);
+        int timer = create_timer(std::chrono::milliseconds(1));
+        co_await fd_readable(timer);
+        ::close(timer);
+      }
+    });
+
+    Scheduler::this_thread().run();
+  }};
+
+  // Make sure the scheduler gets going and doesn't stop on its own.
+  while (ticks.load() < 5) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+
+  // Now kill it.
+  Scheduler::for_thread(scheduler_thread.get_id()).stop();
+  scheduler_thread.join();
+}
 
 TEST_F(SchedulerTest, NextTick) {
   int result = 0;

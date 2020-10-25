@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <coroutine>
 #include <cstdint>
 #include <functional>
@@ -93,9 +94,14 @@ public:
   void schedule(std::coroutine_handle<> coro, Handle handle, Event events);
 
   /**
-   * Runs the event loop until it is empty.
+   * Runs the event loop until it is empty or stop is called.
    */
   void run();
+
+  /**
+   * Signals the event loop to stop. Safe to call from any thread.
+   */
+  void stop();
 
 private:
   Scheduler();
@@ -104,6 +110,7 @@ private:
   void _schedule_queue_drain();
   void _schedule(Handle handle, Event events, std::function<void()> func);
 
+  std::atomic_bool _continue_polling = true;
   std::unique_ptr<internal::EPoll> _epoll;
   CircularQueue<std::coroutine_handle<>> _coro_queue;
   Handle _queue_notification_fd = 0;
