@@ -1,8 +1,9 @@
 #include "lw/net/router.h"
 
-#include <future>
+#include <memory>
 
 #include "gtest/gtest.h"
+#include "lw/co/task.h"
 
 namespace lw::net {
 namespace {
@@ -10,10 +11,10 @@ namespace {
 class TestRouter: public Router {
 public:
   void attach_routes() override {};
-  std::future<void> run(Socket* conn) override {
-    std::promise<void> p;
-    return p.get_future();
+  co::Task<void> run(std::unique_ptr<Socket> conn) override {
+    co_return;
   };
+  std::size_t connection_count() const override { return 0; }
 
   const std::unordered_set<RouteBase*>& test_get_registered_routes() {
     return get_registered_routes();

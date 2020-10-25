@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_set>
 
+#include "lw/co/task.h"
 #include "lw/net/socket.h"
 
 namespace lw::net {
@@ -42,7 +43,7 @@ public:
   virtual ~Router() = default;
 
   virtual void attach_routes() = 0;
-  virtual std::future<void> run(std::unique_ptr<Socket> conn) = 0;
+  virtual co::Task<void> run(std::unique_ptr<Socket> conn) = 0;
   virtual std::size_t connection_count() const = 0;
 
 protected:

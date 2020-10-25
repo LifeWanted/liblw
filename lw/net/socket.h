@@ -23,6 +23,10 @@ public:
   ~Socket();
 
   bool is_open() const { return _socket_fd > 0; }
+
+  /**
+   * Closes the socket, disabling any further reads or writes.
+   */
   void close();
 
   /**

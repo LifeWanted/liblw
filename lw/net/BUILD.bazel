@@ -1,35 +1,12 @@
 
 cc_library(
-  name = "server",
-  visibility = ["//visibility:public"],
-  hdrs = ["server.h"],
-  srcs = ["server.cpp"],
-  deps = [
-    ":router",
-    "//lw/err",
-  ]
-)
-
-cc_test(
-  name = "server_test",
-  srcs = ["server_test.cpp"],
-  deps = [
-    ":router",
-    ":server",
-    ":socket",
-    "@gtest//:gtest_main",
-    "//lw/co:future",
-  ]
-)
-
-cc_library(
   name = "router",
   visibility = ["//visibility:public"],
   hdrs = ["router.h"],
   srcs = ["router.cpp"],
   deps = [
     ":socket",
-    "//lw/co:future",
+    "//lw/co:task",
     "//lw/err",
   ]
 )
@@ -40,6 +17,7 @@ cc_test(
   deps = [
     ":router",
     "@gtest//:gtest_main",
+    "//lw/co:task",
   ]
 )
 
@@ -62,6 +40,33 @@ cc_test(
   deps = [
     ":http",
     "@gtest//:gtest_main",
+  ]
+)
+
+cc_library(
+  name = "server",
+  visibility = ["//visibility:public"],
+  hdrs = ["server.h"],
+  srcs = ["server.cpp"],
+  deps = [
+    ":router",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "server_test",
+  srcs = ["server_test.cpp"],
+  deps = [
+    ":router",
+    ":server",
+    ":socket",
+    "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/co/testing:destroy_scheduler",
   ]
 )
 
