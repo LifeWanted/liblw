@@ -1,0 +1,20 @@
+package(default_visibility = ["//lw/net:__subpackages__"])
+
+cc_library(
+  name = "http_mount_path",
+  hdrs = ["http_mount_path.h"],
+  srcs = ["http_mount_path.cpp"],
+  deps = [
+    "//lw/base:strings",
+    "//lw/err",
+  ],
+)
+
+cc_test(
+  name = "http_mount_path_test",
+  srcs = ["http_mount_path_test.cpp"],
+  deps = [
+    ":http_mount_path",
+    "@gtest//:gtest_main"
+  ],
+)
