@@ -4,6 +4,7 @@
 #include "lw/net/http_handler.h"
 
 namespace lw::net::internal {
+namespace {
 
 void insert_endpoint(EndpointTrie& trie, std::string_view endpoint) {
   trie.insert(MountPath::parse_endpoint(endpoint), HttpHandler{endpoint});
@@ -233,4 +234,5 @@ TEST(EndpointTrie, WildcardJumpBack) {
   EXPECT_EQ(result->endpoint.route(), "/:param1/:param3/other");
 }
 
+}
 }

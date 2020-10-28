@@ -15,6 +15,8 @@ class EndpointTrie;
 
 class PathMatcher {
 public:
+  virtual ~PathMatcher() = default;
+
   virtual bool is_literal() const = 0;
   virtual std::string_view name() const = 0;
   virtual std::string_view chunk() const = 0;
