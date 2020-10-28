@@ -6,18 +6,37 @@
 #include <regex>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "lw/base/strings.h"
 #include "lw/err/canonical.h"
+#include "lw/net/http_handler.h"
 
 namespace lw::net::internal {
 namespace {
 
 const char SEP = '/';
 
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+//                                                                            //
+//                  # #   ##  #####  ### #  # #### ###   ##                   //
+//                 # # # #  #   #   #    #  # #    #  # #                     //
+//                 # # # ####   #   #    #### ###  ###   ##                   //
+//                 #   # #  #   #   #    #  # #    #  #    #                  //
+//                 #   # #  #   #    ### #  # #### #  #  ##                   //
+//                                                                            //
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+
 class LiteralPathMatcher: public PathMatcher {
 public:
   explicit LiteralPathMatcher(std::string_view chunk): _chunk{chunk} {}
+  LiteralPathMatcher(const LiteralPathMatcher&) = default;
+  LiteralPathMatcher(LiteralPathMatcher&&) = default;
+  LiteralPathMatcher& operator=(const LiteralPathMatcher&) = default;
+  LiteralPathMatcher& operator=(LiteralPathMatcher&&) = default;
 
   bool is_literal() const override { return true; }
   std::string_view name() const override { return _chunk; }
@@ -156,6 +175,18 @@ private:
   std::string _chunk;
   std::regex _regex;
 };
+
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
+//                                                                            //
+//                      ####   ##  ###   ##  #### ###                         //
+//                      #   # #  # #  # #    #    #  #                        //
+//                      ####  #### ###   ##  ###  ###                         //
+//                      #     #  # #  #    # #    #  #                        //
+//                      #     #  # #  #  ##  #### #  #                        //
+//                                                                            //
+// -------------------------------------------------------------------------- //
+// -------------------------------------------------------------------------- //
 
 std::vector<std::unique_ptr<PathMatcher>> parse_into_matchers(
   std::string_view endpoint
@@ -364,9 +395,10 @@ std::vector<std::unique_ptr<PathMatcher>> parse_into_matchers(
 
 }
 
+// -------------------------------------------------------------------------- //
+
 MountPath MountPath::parse_endpoint(std::string_view endpoint) {
-  auto matchers = parse_into_matchers(endpoint);
-  return MountPath{std::move(matchers)};
+  return MountPath{parse_into_matchers(endpoint)};
 }
 
 std::optional<std::unordered_map<std::string_view, std::string_view>>
@@ -399,6 +431,119 @@ MountPath::match(std::string_view url_path) const {
   }
 
   return parameters;
+}
+
+std::optional<EndpointTrie::MatchResult> EndpointTrie::match(
+  std::string_view url_path
+) const {
+  std::unordered_map<std::string_view, std::string_view> parameters;
+  const TrieNode* node = &_root;
+  std::vector<std::pair<const TrieNode*, std::size_t>> wildcard_stack;
+  std::size_t i = 0;
+  for (; i < url_path.size(); ++i) {
+    if (node->wildcard) wildcard_stack.push_back(std::make_pair(node, i));
+    if (node->children.contains(url_path[i])) {
+      node = node->children.at(url_path[i]).get();
+      continue;
+    }
+    while (!wildcard_stack.empty()) {
+      auto [wild_node, wild_i] = wildcard_stack.back();
+      wildcard_stack.pop_back();
+
+      // Pull out the URL part this matcher will look against.
+      std::size_t sep_pos = url_path.find(SEP, wild_i + 1);
+      if (sep_pos == std::string_view::npos) sep_pos = url_path.size();
+      std::string_view url_part{&url_path[wild_i], &url_path[sep_pos]};
+
+      const auto& [matcher, matched_node] = *wild_node->wildcard;
+      std::optional<std::string_view> wild_results = matcher->match(url_part);
+      if (wild_results) {
+        // TODO(alaina): Remove parameters from false path matches.
+        //
+        // A: /foo/:param2/baz
+        // B: /:param1/:param3/other
+        //
+        // Request for `/foo/something/other` will match `:param2 = something`
+        // then backtrack and match `:param1 = foo` and `:param3 = something`
+        // before executing handler B.
+        //
+        // This exposes to handler B a small amount of information about handler
+        // A. If B had a colliding parameter name, its would override the
+        // previous value set in A.
+
+        parameters[matcher->name()] = *wild_results;
+        i = wild_i + wild_results->size() - 1; // Account for increment.
+        node = matched_node.get();
+        goto for_end;
+      }
+    }
+
+    // No matches.
+    return std::nullopt;
+
+    for_end:;
+  }
+
+  if (node && node->endpoint) {
+    return MatchResult{
+      .parameters = std::move(parameters),
+      .endpoint = *node->endpoint
+    };
+  }
+  return std::nullopt;
+}
+
+EndpointTrie::TrieNode* EndpointTrie::_build_path(
+  MountPath&& mount_path,
+  const HttpHandler& endpoint
+) {
+  TrieNode* node = &_root;
+
+  for (auto& matcher : mount_path._matchers) {
+    node = _build_literal_path(node, "/");
+    if (matcher->is_literal()) {
+      node = _build_literal_path(node, matcher->chunk());
+      continue;
+    }
+    if (!node->wildcard) {
+      node->wildcard = std::make_pair(
+        std::move(matcher),
+        std::make_unique<TrieNode>()
+      );
+    } else if (node->wildcard->first->chunk() != matcher->chunk()) {
+      throw AlreadyExists()
+        << "Path parameter " << matcher->chunk() << " for route "
+        << endpoint.route() << " collides with existing path parameter "
+        << node->wildcard->first->chunk();
+    }
+    node = node->wildcard->second.get();
+  }
+
+  if (node->endpoint) {
+    if (node->endpoint->route() == endpoint.route()) {
+      throw AlreadyExists()
+        << "A handler already exists for the route " << endpoint.route();
+    } else {
+      throw AlreadyExists()
+        << "Handler route " << endpoint.route()
+        << " collides with existing route " << node->endpoint->route();
+    }
+  }
+
+  return node;
+}
+
+EndpointTrie::TrieNode* EndpointTrie::_build_literal_path(
+  TrieNode* root,
+  std::string_view part
+) {
+  for (char c : part) {
+    if (!root->children.contains(c)) {
+      root->children.emplace(c, std::make_unique<TrieNode>());
+    }
+    root = root->children[c].get();
+  }
+  return root;
 }
 
 }

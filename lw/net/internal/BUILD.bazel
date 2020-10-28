@@ -7,6 +7,7 @@ cc_library(
   deps = [
     "//lw/base:strings",
     "//lw/err",
+    "//lw/net:http_handler",
   ],
 )
 
@@ -15,6 +16,7 @@ cc_test(
   srcs = ["http_mount_path_test.cpp"],
   deps = [
     ":http_mount_path",
-    "@gtest//:gtest_main"
+    "@gtest//:gtest_main",
+    "//lw/net:http_handler",
   ],
 )

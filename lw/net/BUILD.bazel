@@ -1,5 +1,35 @@
 
 cc_library(
+  name = "http",
+  visibility = ["//visibility:public"],
+  hdrs = ["http.h"],
+  srcs = ["http.cpp"],
+  deps = [
+    ":http_handler",
+    ":router",
+    "//lw/base:strings",
+    "//lw/co:future",
+    "//lw/err",
+    "//lw/net/internal:http_mount_path",
+  ]
+)
+
+cc_test(
+  name = "http_test",
+  srcs = ["http_test.cpp"],
+  deps = [
+    ":http",
+    "@gtest//:gtest_main",
+  ]
+)
+
+cc_library(
+  name = "http_handler",
+  visibility = ["//visibility:public"],
+  hdrs = ["http_handler.h"],
+)
+
+cc_library(
   name = "router",
   visibility = ["//visibility:public"],
   hdrs = ["router.h"],
@@ -18,28 +48,6 @@ cc_test(
     ":router",
     "@gtest//:gtest_main",
     "//lw/co:task",
-  ]
-)
-
-cc_library(
-  name = "http",
-  visibility = ["//visibility:public"],
-  hdrs = ["http.h"],
-  srcs = ["http.cpp"],
-  deps = [
-    # ":router",
-    "//lw/base:strings",
-    "//lw/co:future",
-    "//lw/err",
-  ]
-)
-
-cc_test(
-  name = "http_test",
-  srcs = ["http_test.cpp"],
-  deps = [
-    ":http",
-    "@gtest//:gtest_main",
   ]
 )
 

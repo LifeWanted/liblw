@@ -1,8 +1,13 @@
 #include "lw/net/internal/http_mount_path.h"
 
 #include "gtest/gtest.h"
+#include "lw/net/http_handler.h"
 
 namespace lw::net::internal {
+
+void insert_endpoint(EndpointTrie& trie, std::string_view endpoint) {
+  trie.insert(MountPath::parse_endpoint(endpoint), HttpHandler{endpoint});
+}
 
 TEST(MountPath, BasicEndpoint) {
   MountPath mp = MountPath::parse_endpoint("/foo");
@@ -71,6 +76,161 @@ TEST(MountPath, IntValidatedParameterCapture) {
   EXPECT_FALSE(mp.match("/foobar"));
   EXPECT_FALSE(mp.match("/123foo"));
   EXPECT_FALSE(mp.match("/foo123"));
+}
+
+TEST(MountPath, UIntValidatedParameterCapture) {
+  MountPath mp = MountPath::parse_endpoint("/:[uint]foo");
+  auto result = mp.match("/1234");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->contains("foo"));
+  EXPECT_EQ(result->at("foo"), "1234");
+
+  EXPECT_FALSE(mp.match("/-4321"));
+  EXPECT_FALSE(mp.match("/foobar"));
+  EXPECT_FALSE(mp.match("/123foo"));
+  EXPECT_FALSE(mp.match("/foo123"));
+}
+
+TEST(MountPath, RegexParameterCapture) {
+  MountPath mp = MountPath::parse_endpoint("/:[re]f[o]{2,}");
+  auto result = mp.match("/foo");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->contains("1"));
+  EXPECT_EQ(result->at("1"), "foo");
+
+  EXPECT_TRUE(mp.match("/fooo"));
+  EXPECT_TRUE(mp.match("/fooooooooooooooooooo"));
+  EXPECT_FALSE(mp.match("/fo"));
+  EXPECT_FALSE(mp.match("/foobar"));
+  EXPECT_FALSE(mp.match("/foo/bar"));
+}
+
+TEST(MountPath, RegexCaptureParameterCapture) {
+  MountPath mp = MountPath::parse_endpoint("/:[re]f([o]{2,})bar");
+  auto result = mp.match("/foobar");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->contains("1"));
+  EXPECT_EQ(result->at("1"), "oo");
+
+  EXPECT_EQ(mp.match("/fooobar")->at("1"), "ooo");
+  EXPECT_EQ(mp.match("/fooooooooooooooooobar")->at("1"), "ooooooooooooooooo");
+  EXPECT_FALSE(mp.match("/fo"));
+  EXPECT_FALSE(mp.match("/fobar"));
+  EXPECT_FALSE(mp.match("/foo/bar"));
+}
+
+// -------------------------------------------------------------------------- //
+
+TEST(EndpointTrie, BasicEndpoint) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/foo");
+  auto result = trie.match("/foo");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_TRUE(result->parameters.empty());
+  EXPECT_EQ(result->endpoint.route(), "/foo");
+
+  EXPECT_FALSE(trie.match("/bar"));
+  EXPECT_FALSE(trie.match("/foobar"));
+  EXPECT_FALSE(trie.match("/foo/bar"));
+}
+
+TEST(EndpointTrie, TwoPartEndpoint) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/foo/bar");
+  auto result = trie.match("/foo/bar");
+  ASSERT_TRUE(result.has_value());
+  EXPECT_TRUE(result->parameters.empty());
+
+  EXPECT_FALSE(trie.match("/bar/foo"));
+}
+
+TEST(EndpointTrie, SimpleParameterCapture) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/:foo");
+  auto result = trie.match("/fizz");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->parameters.contains("foo"));
+  EXPECT_EQ(result->parameters.at("foo"), "fizz");
+  EXPECT_EQ(result->endpoint.route(), "/:foo");
+
+  EXPECT_FALSE(trie.match("/flim/flam"));
+}
+
+TEST(EndpointTrie, DoubleParameterCapture) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/:foo/:bar");
+  auto result = trie.match("/flim/flam");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->parameters.contains("foo"));
+  ASSERT_TRUE(result->parameters.contains("bar"));
+  EXPECT_EQ(result->parameters.at("foo"), "flim");
+  EXPECT_EQ(result->parameters.at("bar"), "flam");
+  EXPECT_EQ(result->endpoint.route(), "/:foo/:bar");
+
+  EXPECT_FALSE(trie.match("/onepart"));
+  EXPECT_FALSE(trie.match("/three/parts/here"));
+}
+
+TEST(EndpointTrie, MixedCaptureNoCapture) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/foo/:foo/bar/:bar/baz");
+  auto result = trie.match("/foo/capture/bar/this/baz");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->parameters.contains("foo"));
+  ASSERT_TRUE(result->parameters.contains("bar"));
+  EXPECT_EQ(result->parameters.at("foo"), "capture");
+  EXPECT_EQ(result->parameters.at("bar"), "this");
+  EXPECT_EQ(result->parameters.size(), 2);
+  EXPECT_EQ(result->endpoint.route(), "/foo/:foo/bar/:bar/baz");
+}
+
+TEST(EndpointTrie, IntValidatedParameterCapture) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/:[int]foo");
+  auto result = trie.match("/1234");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->parameters.contains("foo"));
+  EXPECT_EQ(result->parameters.at("foo"), "1234");
+  EXPECT_EQ(result->endpoint.route(), "/:[int]foo");
+
+  auto result2 = trie.match("/-4321");
+  ASSERT_TRUE(result2.has_value());
+  ASSERT_TRUE(result2->parameters.contains("foo"));
+  EXPECT_EQ(result2->parameters.at("foo"), "-4321");
+
+  EXPECT_FALSE(trie.match("/foobar"));
+  EXPECT_FALSE(trie.match("/123foo"));
+  EXPECT_FALSE(trie.match("/foo123"));
+}
+
+TEST(EndpointTrie, TwoMountedEndpoints) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/foo");
+  insert_endpoint(trie, "/bar");
+  auto foo_result = trie.match("/foo");
+  ASSERT_TRUE(foo_result);
+  EXPECT_EQ(foo_result->endpoint.route(), "/foo");
+
+  auto bar_result = trie.match("/bar");
+  ASSERT_TRUE(bar_result);
+  EXPECT_EQ(bar_result->endpoint.route(), "/bar");
+}
+
+TEST(EndpointTrie, WildcardJumpBack) {
+  EndpointTrie trie;
+  insert_endpoint(trie, "/foo/:param2/baz");
+  insert_endpoint(trie, "/:param1/:param3/other");
+  auto result = trie.match("/foo/something/other");
+  ASSERT_TRUE(result.has_value());
+  ASSERT_TRUE(result->parameters.contains("param1"));
+  ASSERT_TRUE(result->parameters.contains("param3"));
+
+  // TODO(alaina): Remove parameters added by false paths down trie.
+  // EXPECT_FALSE(result->parameters.contains(":param2"));
+
+  EXPECT_EQ(result->parameters.at("param1"), "foo");
+  EXPECT_EQ(result->parameters.at("param3"), "something");
+  EXPECT_EQ(result->endpoint.route(), "/:param1/:param3/other");
 }
 
 }
