@@ -1,0 +1,13 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+  name = "string_readable",
+  hdrs = ["string_readable.h"],
+  visibility = ["//lw/io/co:__subpackages__"],
+  testonly = True,
+  deps = [
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/memory:buffer",
+  ],
+)

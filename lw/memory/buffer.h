@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <string_view>
 
 namespace lw {
 
@@ -189,6 +190,13 @@ public:
    * Only `std::min( this->size(), other.size() )` bytes are combined.
    */
   Buffer& operator^=(const Buffer& other);
+
+  /**
+   * Convert a Buffer to a string_view.
+   */
+  operator std::string_view() const {
+    return std::string_view{reinterpret_cast<const char*>(begin()), size()};
+  }
 
 private:
   /**

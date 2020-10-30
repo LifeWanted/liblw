@@ -3,7 +3,6 @@
 #include <atomic>
 #include <coroutine>
 #include <exception>
-#include <future>
 #include <memory>
 
 #include "lw/co/scheduler.h"
@@ -195,12 +194,6 @@ public:
     return std::suspend_never{};
   }
 
-  auto return_void() {
-    set_exception(
-      std::make_exception_ptr(Internal() << "Non-void coroutine returned void!")
-    );
-  }
-
   void unhandled_exception() {
     set_exception(std::current_exception());
   }
@@ -268,13 +261,6 @@ public:
 
   Future<void> get_return_object() {
     return get_future();
-  }
-
-  template <typename U>
-  auto return_value(U&& value) {
-    set_exception(
-      std::make_exception_ptr(Internal() << "Void coroutine returned value!")
-    );
   }
 
   auto return_void() {
