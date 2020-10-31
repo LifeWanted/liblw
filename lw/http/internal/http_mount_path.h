@@ -3,10 +3,11 @@
 #include <memory>
 #include <optional>
 #include <string_view>
-#include <utility>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
+#include "lw/http/headers.h"
 #include "lw/http/http_handler.h"
 
 namespace lw::http::internal {
@@ -37,8 +38,7 @@ public:
   MountPath& operator=(const MountPath&) = default;
   MountPath& operator=(MountPath&&) = default;
 
-  std::optional<std::unordered_map<std::string_view, std::string_view>>
-  match(std::string_view url_path) const;
+  std::optional<http::HeadersView> match(std::string_view url_path) const;
 
 private:
   friend class EndpointTrie;
@@ -46,26 +46,22 @@ private:
   std::vector<std::unique_ptr<PathMatcher>> _matchers;
 };
 
-
 class EndpointTrie {
 public:
   struct MatchResult {
-    std::unordered_map<std::string_view, std::string_view> parameters;
+    http::HeadersView parameters;
     const BaseHttpHandlerFactory& endpoint;
   };
 
-  template <typename HttpHandlerFactory>
-  void insert(MountPath&& mount_path, HttpHandlerFactory&& endpoint) {
+  void insert(MountPath&& mount_path, const BaseHttpHandlerFactory& endpoint) {
     TrieNode* node = _build_path(std::move(mount_path), endpoint);
-    node->endpoint = std::make_unique<HttpHandlerFactory>(
-      std::forward<HttpHandlerFactory>(endpoint)
-    );
+    node->endpoint = &endpoint;
   }
 
   std::optional<MatchResult> match(std::string_view url_path) const;
 private:
   struct TrieNode {
-    std::unique_ptr<BaseHttpHandlerFactory> endpoint;
+    const BaseHttpHandlerFactory* endpoint = nullptr;
     std::unordered_map<char, std::unique_ptr<TrieNode>> children;
     std::optional<
       std::pair<std::unique_ptr<PathMatcher>, std::unique_ptr<TrieNode>>

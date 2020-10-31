@@ -9,6 +9,7 @@ cc_library(
   deps = [
     "//lw/base:strings",
     "//lw/err",
+    "//lw/http:headers",
     "//lw/http:http_handler",
   ],
 )

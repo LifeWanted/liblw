@@ -11,6 +11,7 @@
 
 #include "lw/base/strings.h"
 #include "lw/err/canonical.h"
+#include "lw/http/headers.h"
 #include "lw/http/http_handler.h"
 
 namespace lw::http::internal {
@@ -401,11 +402,10 @@ MountPath MountPath::parse_endpoint(std::string_view endpoint) {
   return MountPath{parse_into_matchers(endpoint)};
 }
 
-std::optional<std::unordered_map<std::string_view, std::string_view>>
-MountPath::match(std::string_view url_path) const {
+std::optional<HeadersView> MountPath::match(std::string_view url_path) const {
   std::string_view url_part;
   const char* part_start = url_path.begin();
-  std::unordered_map<std::string_view, std::string_view> parameters;
+  HeadersView parameters;
   auto match_itr = _matchers.begin();
   std::size_t i = 0;
   for (; i <= url_path.size() && match_itr != _matchers.end(); ++i) {
@@ -436,7 +436,7 @@ MountPath::match(std::string_view url_path) const {
 std::optional<EndpointTrie::MatchResult> EndpointTrie::match(
   std::string_view url_path
 ) const {
-  std::unordered_map<std::string_view, std::string_view> parameters;
+  HeadersView parameters;
   const TrieNode* node = &_root;
   std::vector<std::pair<const TrieNode*, std::size_t>> wildcard_stack;
   std::size_t i = 0;
@@ -510,6 +510,7 @@ EndpointTrie::TrieNode* EndpointTrie::_build_path(
         std::move(matcher),
         std::make_unique<TrieNode>()
       );
+      node->wildcard->second->endpoint = nullptr;
     } else if (node->wildcard->first->chunk() != matcher->chunk()) {
       throw AlreadyExists()
         << "Path parameter " << matcher->chunk() << " for route "
