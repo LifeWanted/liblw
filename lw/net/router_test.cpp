@@ -4,6 +4,7 @@
 
 #include "gtest/gtest.h"
 #include "lw/co/task.h"
+#include "lw/io/co/co.h"
 
 namespace lw::net {
 namespace {
@@ -11,7 +12,7 @@ namespace {
 class TestRouter: public Router {
 public:
   void attach_routes() override {};
-  co::Task<void> run(std::unique_ptr<Socket> conn) override {
+  co::Task<void> run(std::unique_ptr<io::CoStream> conn) override {
     co_return;
   };
   std::size_t connection_count() const override { return 0; }

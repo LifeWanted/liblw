@@ -6,9 +6,9 @@ cc_library(
   hdrs = ["router.h"],
   srcs = ["router.cpp"],
   deps = [
-    ":socket",
     "//lw/co:task",
     "//lw/err",
+    "//lw/io/co",
   ]
 )
 
@@ -29,6 +29,7 @@ cc_library(
   srcs = ["server.cpp"],
   deps = [
     ":router",
+    ":socket",
     "//lw/co:scheduler",
     "//lw/co:task",
     "//lw/err",
@@ -46,6 +47,7 @@ cc_test(
     "//lw/co:scheduler",
     "//lw/co:task",
     "//lw/co/testing:destroy_scheduler",
+    "//lw/io/co",
   ]
 )
 
@@ -59,6 +61,7 @@ cc_library(
     "//lw/err",
     "//lw/err:system",
     "//lw/flags",
+    "//lw/io/co",
     "//lw/memory:buffer",
   ]
 )

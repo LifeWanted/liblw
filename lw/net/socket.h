@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "lw/co/future.h"
+#include "lw/io/co/co.h"
 #include "lw/memory/buffer.h"
 
 namespace lw::net {
@@ -13,7 +14,7 @@ struct Address {
   std::string_view service;
 };
 
-class Socket {
+class Socket: public io::CoStream {
 public:
   Socket() = default;
   Socket(Socket&& other);
@@ -27,7 +28,16 @@ public:
   /**
    * Closes the socket, disabling any further reads or writes.
    */
-  void close();
+  void close() override;
+
+  bool good() const override { return is_open(); }
+  bool eof() const override {  return is_open(); }
+  co::Future<std::size_t> write(const Buffer& data) override {
+    return send(data);
+  }
+  co::Future<std::size_t> read(Buffer& buffer) override {
+    return receive(buffer);
+  }
 
   /**
    * Connects to the given endpoint.

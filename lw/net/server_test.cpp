@@ -7,6 +7,7 @@
 #include "lw/co/scheduler.h"
 #include "lw/co/task.h"
 #include "lw/co/testing/destroy_scheduler.h"
+#include "lw/io/co/co.h"
 #include "lw/net/router.h"
 #include "lw/net/socket.h"
 
@@ -19,7 +20,7 @@ public:
     routes_attached = true;
   }
 
-  co::Task<void> run(std::unique_ptr<Socket> conn) override {
+  co::Task<void> run(std::unique_ptr<io::CoStream> conn) override {
     connection = std::move(conn);
     co_return;
   }
@@ -29,7 +30,7 @@ public:
   }
 
   bool routes_attached = false;
-  std::unique_ptr<Socket> connection = nullptr;
+  std::unique_ptr<io::CoStream> connection = nullptr;
 };
 
 std::jthread run_in_background(Server* server, Router* router) {
