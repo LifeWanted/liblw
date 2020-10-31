@@ -1,33 +1,4 @@
-
-cc_library(
-  name = "http",
-  visibility = ["//visibility:public"],
-  hdrs = ["http.h"],
-  srcs = ["http.cpp"],
-  deps = [
-    ":http_handler",
-    ":router",
-    "//lw/base:strings",
-    "//lw/co:future",
-    "//lw/err",
-    "//lw/net/internal:http_mount_path",
-  ]
-)
-
-cc_test(
-  name = "http_test",
-  srcs = ["http_test.cpp"],
-  deps = [
-    ":http",
-    "@gtest//:gtest_main",
-  ]
-)
-
-cc_library(
-  name = "http_handler",
-  visibility = ["//visibility:public"],
-  hdrs = ["http_handler.h"],
-)
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
   name = "router",

@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "lw/net/http_handler.h"
+#include "lw/http/http_handler.h"
 
-namespace lw::net::internal {
+namespace lw::http::internal {
 
 class EndpointTrie;
 
@@ -51,28 +51,31 @@ class EndpointTrie {
 public:
   struct MatchResult {
     std::unordered_map<std::string_view, std::string_view> parameters;
-    const HttpHandler& endpoint;
+    const BaseHttpHandlerFactory& endpoint;
   };
 
-  template <typename HttpHandlerType>
-  void insert(MountPath&& mount_path, HttpHandlerType&& endpoint) {
+  template <typename HttpHandlerFactory>
+  void insert(MountPath&& mount_path, HttpHandlerFactory&& endpoint) {
     TrieNode* node = _build_path(std::move(mount_path), endpoint);
-    node->endpoint = std::make_unique<HttpHandlerType>(
-      std::forward<HttpHandlerType>(endpoint)
+    node->endpoint = std::make_unique<HttpHandlerFactory>(
+      std::forward<HttpHandlerFactory>(endpoint)
     );
   }
 
   std::optional<MatchResult> match(std::string_view url_path) const;
 private:
   struct TrieNode {
-    std::unique_ptr<HttpHandler> endpoint;
+    std::unique_ptr<BaseHttpHandlerFactory> endpoint;
     std::unordered_map<char, std::unique_ptr<TrieNode>> children;
     std::optional<
       std::pair<std::unique_ptr<PathMatcher>, std::unique_ptr<TrieNode>>
     > wildcard;
   };
 
-  TrieNode* _build_path(MountPath&& mount_path, const HttpHandler& endpoint);
+  TrieNode* _build_path(
+    MountPath&& mount_path,
+    const BaseHttpHandlerFactory& endpoint
+  );
   TrieNode* _build_literal_path(TrieNode* root, std::string_view part);
 
   TrieNode _root;

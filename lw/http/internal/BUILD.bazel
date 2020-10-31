@@ -1,4 +1,6 @@
-package(default_visibility = ["//lw/net:__subpackages__"])
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+package(default_visibility = ["//lw/http:__subpackages__"])
 
 cc_library(
   name = "http_mount_path",
@@ -7,7 +9,7 @@ cc_library(
   deps = [
     "//lw/base:strings",
     "//lw/err",
-    "//lw/net:http_handler",
+    "//lw/http:http_handler",
   ],
 )
 
@@ -17,6 +19,6 @@ cc_test(
   deps = [
     ":http_mount_path",
     "@gtest//:gtest_main",
-    "//lw/net:http_handler",
+    "//lw/http:http_handler",
   ],
 )

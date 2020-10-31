@@ -1,0 +1,61 @@
+#pragma once
+
+#include <memory>
+#include <string>
+#include <string_view>
+
+#include "lw/co/future.h"
+#include "lw/http/http_request.h"
+#include "lw/http/http_response.h"
+
+namespace lw {
+
+class HttpHandler {
+public:
+  HttpHandler(HttpRequest request): _request{std::move(request)} {}
+  virtual ~HttpHandler() = default;
+
+  const HttpRequest& request() const { return _request; }
+  HttpResponse& response() { return _response; }
+
+  virtual co::Future<void> del() {      return _default_behavior(); }
+  virtual co::Future<void> get() {      return _default_behavior(); }
+  virtual co::Future<void> head() {     return _default_behavior(); }
+  virtual co::Future<void> options() {  return _default_behavior(); }
+  virtual co::Future<void> patch() {    return _default_behavior(); }
+  virtual co::Future<void> post() {     return _default_behavior(); }
+  virtual co::Future<void> put() {      return _default_behavior(); }
+
+private:
+  co::Future<void> _default_behavior();
+
+  HttpRequest _request;
+  HttpResponse _response;
+};
+
+class BaseHttpHandlerFactory {
+public:
+  explicit BaseHttpHandlerFactory(std::string_view route): _route{route} {}
+  virtual ~BaseHttpHandlerFactory() = default;
+
+  std::string_view route() const { return _route; }
+
+  virtual std::unique_ptr<HttpHandler> make_handler(HttpRequest request) = 0;
+
+private:
+  std::string _route;
+};
+
+template <typename HandlerType>
+class HttpHandlerFactory: public BaseHttpHandlerFactory {
+public:
+  explicit HttpHandlerFactory(std::string_view route):
+    BaseHttpHandlerFactory{route}
+  {}
+
+  std::unique_ptr<HttpHandler> make_handler(HttpRequest request) override {
+    return std::make_unique<HandlerType>(std::move(request));
+  }
+};
+
+}

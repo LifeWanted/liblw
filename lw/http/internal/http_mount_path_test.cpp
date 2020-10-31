@@ -1,13 +1,16 @@
-#include "lw/net/internal/http_mount_path.h"
+#include "lw/http/internal/http_mount_path.h"
 
 #include "gtest/gtest.h"
-#include "lw/net/http_handler.h"
+#include "lw/http/http_handler.h"
 
-namespace lw::net::internal {
+namespace lw::http::internal {
 namespace {
 
 void insert_endpoint(EndpointTrie& trie, std::string_view endpoint) {
-  trie.insert(MountPath::parse_endpoint(endpoint), HttpHandler{endpoint});
+  trie.insert(
+    MountPath::parse_endpoint(endpoint),
+    HttpHandlerFactory<HttpHandler>{endpoint}
+  );
 }
 
 TEST(MountPath, BasicEndpoint) {

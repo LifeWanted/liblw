@@ -1,4 +1,4 @@
-#include "lw/net/internal/http_mount_path.h"
+#include "lw/http/internal/http_mount_path.h"
 
 #include <cctype>
 #include <memory>
@@ -11,9 +11,9 @@
 
 #include "lw/base/strings.h"
 #include "lw/err/canonical.h"
-#include "lw/net/http_handler.h"
+#include "lw/http/http_handler.h"
 
-namespace lw::net::internal {
+namespace lw::http::internal {
 namespace {
 
 const char SEP = '/';
@@ -63,8 +63,8 @@ public:
     _chunk{chunk}
   {
     _extension = std::string_view{
-      _chunk.end() - extension.size(),
-      _chunk.end()
+      _chunk.data() + (_chunk.size() - extension.size()),
+      extension.size()
     };
 
     _name = std::string_view{
@@ -495,7 +495,7 @@ std::optional<EndpointTrie::MatchResult> EndpointTrie::match(
 
 EndpointTrie::TrieNode* EndpointTrie::_build_path(
   MountPath&& mount_path,
-  const HttpHandler& endpoint
+  const BaseHttpHandlerFactory& endpoint
 ) {
   TrieNode* node = &_root;
 
