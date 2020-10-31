@@ -54,6 +54,17 @@ cc_library(
   ],
 )
 
+cc_test(
+  name = "http_request_test",
+  srcs = ["http_request_test.cpp"],
+  deps = [
+    ":http_request",
+    "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/io/co/testing:string_reader",
+  ],
+)
 
 cc_library(
   name = "http_response",
