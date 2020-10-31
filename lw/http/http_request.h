@@ -40,8 +40,28 @@ public:
     return _query_params.at(param_name);
   }
 
+  bool has_route_param(std::string_view param_name) const {
+    return _route_params.contains(param_name);
+  }
+  std::string_view route_param(std::string_view param_name) const {
+    return _route_params.at(param_name);
+  }
+  void route_params(http::HeadersView params) {
+    _route_params = std::move(params);
+  }
+
   std::size_t content_length() const { return _content_length; }
 
+  /**
+   * Reads from the connection until the end of the header is detected and then
+   * parses the header.
+   *
+   * @throw InvalidArgument
+   *  If the header is malformed.
+   *
+   * @throw FailedPrecondition
+   *  If the header has already been loaded.
+   */
   co::Future<void> read_header();
 
   /**
@@ -64,6 +84,7 @@ private:
 
   http::HeadersView _headers;
   http::HeadersView _query_params;
+  http::HeadersView _route_params;
 
   std::int64_t _content_length = -1;
 };

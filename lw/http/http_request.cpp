@@ -30,9 +30,9 @@ bool is_not_space(std::string_view header, std::size_t i) {
  * Asserts that the given position is within the header and is a whitespace
  * character but not a newline.
  *
- * @throws InvalidArgument
+ * @throw InvalidArgument
  *  If the position given by `i` is outside the header.
- * @throws InvalidArgument
+ * @throw InvalidArgument
  *  If the character at given position is not whitespace or is either carriage
  *  return (`\r`) or newline (`\n`).
  */
@@ -58,9 +58,9 @@ void check_is_space(
  * Asserts that the given position is inside the header and not a newline
  * character.
  *
- * @throws InvalidArgument
+ * @throw InvalidArgument
  *  If the position given by `i` is outside the header.
- * @throws InvalidArgument
+ * @throw InvalidArgument
  *  If the character at given position is either carriage return (`\r`) or
  *  newline (`\n`).
  */
@@ -161,6 +161,9 @@ void parse_query_params(
 /**
  * Parses the line as an HTTP header, returning the Key-Value pair and adjusting
  * the header view to after the line.
+ *
+ * @throw InvalidArgument
+ *  If the end of the input is found before a proper header line is parsed.
  *
  * @param header_view
  *  A point to a string view containing an HTTP header. This view will be
