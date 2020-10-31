@@ -5,6 +5,7 @@
 #include <ostream>
 
 #include "lw/http/headers.h"
+#include "lw/memory/buffer.h"
 
 namespace lw {
 
@@ -110,13 +111,14 @@ public:
   std::string_view header(std::string_view header_name) const;
 
   void header(std::string_view header_name, std::string_view value);
-  void header(std::string_view header_name, std::string&& value);
 
   const http::Headers& headers() const { return _headers; }
 
   void body(const Body& b) { _body = b; }
   void body(Body&& b) { _body = std::move(b); }
   const Body& body() const { return _body; }
+
+  Buffer serialize() const;
 
 private:
   int _status_code = 0;

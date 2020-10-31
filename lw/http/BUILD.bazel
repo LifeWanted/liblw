@@ -2,6 +2,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
   name = "headers",
+  visibility = ["//lw/http:__subpackages__"],
   hdrs = ["headers.h"],
   deps = ["//lw/base:strings"],
 )
@@ -69,5 +70,18 @@ cc_test(
 cc_library(
   name = "http_response",
   hdrs = ["http_response.h"],
-  deps = [":headers"],
+  srcs = ["http_response.cpp"],
+  deps = [
+    ":headers",
+    "//lw/memory:buffer",
+  ],
+)
+
+cc_test(
+  name = "http_response_test",
+  srcs = ["http_response_test.cpp"],
+  deps = [
+    ":http_response",
+    "@gtest//:gtest_main",
+  ],
 )
