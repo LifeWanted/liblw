@@ -29,6 +29,9 @@ public:
   const std::experimental::source_location& where() const noexcept {
     return _location;
   }
+  std::string_view what_string() const noexcept {
+    return _buffer.string();
+  }
 
 protected:
   Error(std::string_view name, const std::experimental::source_location& loc);
