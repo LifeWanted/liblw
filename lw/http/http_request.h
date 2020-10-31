@@ -11,7 +11,7 @@
 namespace lw {
 
 /**
- *
+ * Incoming HTTP request to be handled by this process as the server.
  */
 class HttpRequest {
 public:

@@ -100,7 +100,8 @@ void insert_view_pairs(
   if (value_start >= value_end) {
     pairs->insert({
       view.substr(key_start, key_end - key_start),
-      view.substr(value_start, 0)});
+      view.substr(value_start, 0)
+    });
   } else {
     pairs->insert({
       view.substr(key_start, key_end - key_start),
@@ -131,9 +132,7 @@ void parse_query_params(
     if (parsing_key) {
       key_end = i;
       value_start = i + 1;
-      if (c == '=') {
-        parsing_key = false;
-      }
+      if (c == '=') parsing_key = false;
     }
 
     if (c == '&') {
@@ -159,6 +158,17 @@ void parse_query_params(
   }
 }
 
+/**
+ * Parses the line as an HTTP header, returning the Key-Value pair and adjusting
+ * the header view to after the line.
+ *
+ * @param header_view
+ *  A point to a string view containing an HTTP header. This view will be
+ *  trimmed to exclude the parsed header line.
+ *
+ * @return
+ *  The Key-Value pair parsed from the line of header.
+ */
 std::pair<std::string_view, std::string_view> parse_header_line(
   std::string_view* header_view
 ) {
@@ -184,6 +194,9 @@ std::pair<std::string_view, std::string_view> parse_header_line(
     throw InvalidArgument() << "Unexpected end of input at position " << i;
   }
 
+  // TODO(alaina): Trim the right-end of the header value. It could containe
+  // extra spaces before the \r\n which should be ignored.
+
   auto results = std::make_pair(
     header_view->substr(0, colon_pos),
     header_view->substr(value_start, value_end - value_start)
@@ -204,7 +217,8 @@ co::Future<void> HttpRequest::read_header() {
   // TODO(alaina): Check that a proper header was loaded. If "\r\n\r\n" is never
   // encountered, that co_await will never return. This should schedule a
   // timeout to close the connection if no data is received in an appropriate
-  // amount of time.
+  // amount of time. If the connection closes before the header termination is
+  // received then an empty buffer is returned.
 
   std::size_t method_line_end = _parse_method_line(_raw_header);
   _parse_headers(
@@ -221,7 +235,7 @@ std::size_t HttpRequest::_parse_method_line(std::string_view header_view) {
   // Parse HTTP verb.
   std::size_t i = 0;
   while (is_not_space(header_view, i)) ++i;
-  check_is_space(header_view, i);
+  check_is_space(header_view, i); // May be end of sequence.
   _method = header_view.substr(0, i);
 
   // Parse path and query params.
