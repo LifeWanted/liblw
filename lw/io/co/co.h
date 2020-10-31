@@ -126,4 +126,20 @@ private:
   Buffer _write_window;
 };
 
+// -------------------------------------------------------------------------- //
+
+/**
+ * Interface compliant with the lw::io::CoReadWritable concept.
+ */
+class CoStream {
+public:
+  virtual bool eof() const = 0;
+  virtual bool good() const = 0;
+
+  virtual co::Future<std::size_t> read(Buffer& buffer) = 0;
+  virtual co::Future<std::size_t> write(const Buffer& buffer) = 0;
+
+  virtual void close() = 0;
+};
+
 }
