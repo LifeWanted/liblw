@@ -3,11 +3,22 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 cc_library(
   name = "string_readable",
   hdrs = ["string_readable.h"],
-  visibility = ["//lw/io/co:__subpackages__"],
+  visibility = ["//lw:__subpackages__"],
   testonly = True,
   deps = [
     "//lw/co:future",
     "//lw/co:scheduler",
     "//lw/memory:buffer",
+  ],
+)
+
+cc_library(
+  name = "string_reader",
+  hdrs = ["string_reader.h"],
+  visibility = ["//lw:__subpackages__"],
+  testonly = True,
+  deps = [
+    ":string_readable",
+    "//lw/io/co",
   ],
 )
