@@ -189,9 +189,8 @@ public:
   }
 
   template <typename U>
-  auto return_value(U&& value) {
+  void return_value(U&& value) {
     set_value(std::forward<U>(value));
-    return std::suspend_never{};
   }
 
   void unhandled_exception() {
@@ -255,7 +254,7 @@ public:
     return std::suspend_never{};
   }
 
-  auto final_suspend() const {
+  auto final_suspend() const noexcept {
     return std::suspend_never{};
   }
 
@@ -263,9 +262,8 @@ public:
     return get_future();
   }
 
-  auto return_void() {
+  void return_void() {
     set_value();
-    return std::suspend_never{};
   }
 
   void unhandled_exception() {
@@ -287,6 +285,8 @@ private:
   std::atomic_bool _future_obtained = false;
   std::shared_ptr<internal::SharedPromiseState<void>> _state;
 };
+
+// -------------------------------------------------------------------------- //
 
 /**
  * Creates a future that is already resolved with the given value.
