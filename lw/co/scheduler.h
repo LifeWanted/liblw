@@ -157,7 +157,7 @@ private:
 /**
  * Suspends the coroutine, to be resumed on the next tick.
  */
-auto next_tick() { return internal::NextTickAwaitable{}; }
+inline auto next_tick() { return internal::NextTickAwaitable{}; }
 
 /**
  * Schedules a resumption of the current task handle is readable.
@@ -165,7 +165,7 @@ auto next_tick() { return internal::NextTickAwaitable{}; }
  * @param fd
  *  The OS handle/file descriptor the events will trigger on.
  */
-auto fd_readable(Handle fd) {
+inline auto fd_readable(Handle fd) {
   return internal::EventsAwaitable{fd, Event::READABLE | Event::ONE_SHOT};
 }
 
@@ -175,7 +175,7 @@ auto fd_readable(Handle fd) {
  * @param fd
  *  The OS handle/file descriptor the events will trigger on.
  */
-auto fd_writable(Handle fd) {
+inline auto fd_writable(Handle fd) {
   return internal::EventsAwaitable{fd, Event::WRITABLE | Event::ONE_SHOT};
 }
 

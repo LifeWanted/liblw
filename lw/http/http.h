@@ -29,7 +29,7 @@
 
 #define LW_REGISTER_HTTP_HANDLER(HandlerClass, route) \
   ::lw::HttpRoute http_route_ ## HandlerClass{        \
-    HttpHandlerFactory<HandlerClass>{route}           \
+    ::lw::HttpHandlerFactory<HandlerClass>{route}     \
   };
 
 namespace lw {
