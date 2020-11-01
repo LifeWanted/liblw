@@ -64,6 +64,8 @@ public:
    */
   co::Future<void> read_header();
 
+  co::Future<Buffer> body() const;
+
   /**
    * Reads and discards the remaining data for the request.
    */

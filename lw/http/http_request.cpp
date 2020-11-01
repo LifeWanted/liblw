@@ -233,6 +233,16 @@ co::Future<void> HttpRequest::read_header() {
   _parse_content_length();
 }
 
+co::Future<Buffer> HttpRequest::body() const {
+  // TODO(alaina): Implement other methods for determining the end of an HTTP
+  // request's body.
+  if (content_length() == 0) return co::make_resolved_future(Buffer{});
+  if (content_length() > 0) return _connection.read(content_length());
+
+  throw Internal()
+    << "Unsupported method of content body determination in request.";
+}
+
 std::size_t HttpRequest::_parse_method_line(std::string_view header_view) {
   // GET /foo/bar HTTP/1.1\r\n
   // Parse HTTP verb.

@@ -146,5 +146,22 @@ TEST(HttpRequestHeaders, AreCaseInsensitive) {
   });
 }
 
+TEST(HttpRequestBody, IsReadableFromContentLength) {
+  run([]() -> co::Task<void> {
+    StringReader input{
+      "POST /foo/bar HTTP/1.1\r\n"
+      "Host: test.com\r\n"
+      "Content-Length: 6\r\n"
+      "\r\n"
+      "foobar"
+    };
+    HttpRequest req{input};
+    co_await req.read_header();
+
+    Buffer body = co_await req.body();
+    EXPECT_EQ(static_cast<std::string_view>(body), "foobar");
+  });
+}
+
 }
 }
