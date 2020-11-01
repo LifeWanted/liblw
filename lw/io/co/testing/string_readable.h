@@ -26,7 +26,7 @@ public:
 
   co::Future<std::size_t> read(Buffer& buffer) {
     co_await co::next_tick();
-    std::size_t read_size = std::min(_str.size(), buffer.size());
+    std::size_t read_size = std::min(_str.size() - _read_pos, buffer.size());
     buffer.copy(_str.begin() + _read_pos, read_size);
     _read_pos += read_size;
     co_return read_size;

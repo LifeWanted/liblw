@@ -22,3 +22,16 @@ cc_library(
     "//lw/io/co",
   ],
 )
+
+cc_library(
+  name = "string_stream",
+  hdrs = ["string_stream.h"],
+  visibility = ["//lw:__subpackages__"],
+  testonly = True,
+  deps = [
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/io/co",
+    "//lw/memory:buffer",
+  ],
+)
