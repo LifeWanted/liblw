@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  build:
+    # TODO(alaina): Move to ununtu-latest when that is at least 20.04
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Basilisk
+        run: |
+          wget https://github.com/bazelbuild/bazelisk/releases/download/v1.7.4/bazelisk-linux-amd64
+          chmod a+x bazelisk-linux-amd64
+          sudo mv bazelisk-linux-amd64 /usr/local/bin/bazel
+
+      - name: Install GCC-10
+        run: |
+          which gcc-10 || sudo apt install gcc-10
+          sudo update-alternatives --install `which gcc` gcc `which gcc-10` 90
+          sudo update-alternatives --install `which g++` g++ `which g++-10` 90
+          g++ --version
+
+      - name: Run tests
+        run: |
+          cd $GITHUB_WORKSPACE
+          bazel test //lw/...
