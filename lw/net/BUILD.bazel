@@ -1,0 +1,81 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+  name = "router",
+  visibility = ["//visibility:public"],
+  hdrs = ["router.h"],
+  srcs = ["router.cpp"],
+  deps = [
+    "//lw/co:task",
+    "//lw/err",
+    "//lw/io/co",
+  ]
+)
+
+cc_test(
+  name = "router_test",
+  srcs = ["router_test.cpp"],
+  deps = [
+    ":router",
+    "@gtest//:gtest_main",
+    "//lw/co:task",
+  ]
+)
+
+cc_library(
+  name = "server",
+  visibility = ["//visibility:public"],
+  hdrs = ["server.h"],
+  srcs = ["server.cpp"],
+  deps = [
+    ":router",
+    ":socket",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "server_test",
+  srcs = ["server_test.cpp"],
+  deps = [
+    ":router",
+    ":server",
+    ":socket",
+    "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/co/testing:destroy_scheduler",
+    "//lw/io/co",
+  ]
+)
+
+cc_library(
+  name = "socket",
+  hdrs = ["socket.h"],
+  srcs = ["socket.cpp"],
+  deps = [
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/err",
+    "//lw/err:system",
+    "//lw/flags",
+    "//lw/io/co",
+    "//lw/memory:buffer",
+  ]
+)
+
+cc_test(
+  name = "socket_test",
+  srcs = ["socket_test.cpp"],
+  deps = [
+    ":socket",
+    "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/co:time",
+    "//lw/co/testing:destroy_scheduler",
+    "//lw/err",
+    "//lw/memory:buffer",
+  ]
+)

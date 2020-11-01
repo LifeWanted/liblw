@@ -1,0 +1,44 @@
+
+cc_library(
+  name = "base",
+  visibility = ["//visibility:public"],
+  hdrs = ["base.h"],
+  deps = [":init"]
+)
+
+cc_library(
+  name = "init",
+  hdrs = ["init.h"],
+  srcs = ["init.cpp"],
+  deps = [
+    "//lw/err",
+    "//lw/flags",
+  ]
+)
+
+cc_test(
+  name = "init_test",
+  srcs = ["init_test.cpp"],
+  deps = [
+    ":init",
+    "@gtest//:gtest_main",
+  ]
+)
+
+cc_library(
+  name = "strings",
+  visibility = ["//visibility:public"],
+  hdrs = ["strings.h"],
+  deps = [
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "strings_test",
+  srcs = ["strings_test.cpp"],
+  deps = [
+    ":strings",
+    "@gtest//:gtest_main",
+  ]
+)

@@ -1,0 +1,39 @@
+
+cc_library(
+  name = "flags",
+  visibility = ["//visibility:public"],
+  hdrs = ["flags.h"],
+  srcs = ["flags.cpp"],
+  deps = [
+    ":format",
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "flags_test",
+  srcs = ["flags_test.cpp"],
+  deps = [
+    ":flags",
+    "@gtest//:gtest_main",
+  ]
+)
+
+cc_library(
+  name = "format",
+  visibility = ["//visibility:public"],
+  hdrs = ["format.h"],
+  srcs = ["format.cpp"],
+  deps = [
+    "//lw/err",
+  ]
+)
+
+cc_test(
+  name = "format_test",
+  srcs = ["format_test.cpp"],
+  deps = [
+    ":format",
+    "@gtest//:gtest_main",
+  ]
+)

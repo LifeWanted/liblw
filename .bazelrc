@@ -1,0 +1,2 @@
+build --cxxopt='-std=c++2a' --cxxopt='-fdiagnostics-color=always' --cxxopt='-Werror' --cxxopt='-fcoroutines'
+test --test_output=errors --compilation_mode=dbg

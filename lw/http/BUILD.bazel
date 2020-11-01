@@ -1,0 +1,91 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+  name = "headers",
+  visibility = ["//lw/http:__subpackages__"],
+  hdrs = ["headers.h"],
+  deps = ["//lw/base:strings"],
+)
+
+cc_library(
+  name = "http",
+  visibility = ["//visibility:public"],
+  hdrs = ["http.h"],
+  srcs = ["http.cpp"],
+  deps = [
+    ":http_handler",
+    "//lw/base:strings",
+    "//lw/co:future",
+    "//lw/err",
+    "//lw/http/internal:http_mount_path",
+    "//lw/log",
+    "//lw/net:router",
+  ],
+)
+
+cc_test(
+  name = "http_test",
+  srcs = ["http_test.cpp"],
+  deps = [
+    ":http",
+    ":http_handler",
+    "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/io/co/testing:string_stream",
+  ],
+)
+
+cc_library(
+  name = "http_handler",
+  visibility = ["//visibility:public"],
+  hdrs = ["http_handler.h"],
+  srcs = ["http_handler.cpp"],
+  deps = [
+    ":http_request",
+    ":http_response",
+    "//lw/co:future",
+  ],
+)
+
+cc_library(
+  name = "http_request",
+  hdrs = ["http_request.h"],
+  srcs = ["http_request.cpp"],
+  deps = [
+    ":headers",
+    "//lw/co:future",
+    "//lw/err",
+    "//lw/io/co",
+  ],
+)
+
+cc_test(
+  name = "http_request_test",
+  srcs = ["http_request_test.cpp"],
+  deps = [
+    ":http_request",
+    "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/io/co/testing:string_reader",
+  ],
+)
+
+cc_library(
+  name = "http_response",
+  hdrs = ["http_response.h"],
+  srcs = ["http_response.cpp"],
+  deps = [
+    ":headers",
+    "//lw/memory:buffer",
+  ],
+)
+
+cc_test(
+  name = "http_response_test",
+  srcs = ["http_response_test.cpp"],
+  deps = [
+    ":http_response",
+    "@gtest//:gtest_main",
+  ],
+)

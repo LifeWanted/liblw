@@ -1,0 +1,13 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+  name = "echo-server",
+  srcs = ["echo-server.cpp"],
+  deps = [
+    "//lw/base",
+    "//lw/co:future",
+    "//lw/flags",
+    "//lw/http",
+    "//lw/net:server",
+  ],
+)
