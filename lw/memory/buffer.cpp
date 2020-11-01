@@ -76,7 +76,7 @@ const std::uint8_t& Buffer::back() const {
 }
 
 Buffer Buffer::trim_prefix(std::size_t n) const {
-  if (n >= _capacity) {
+  if (n > _capacity) {
     throw InvalidArgument()
       << "Cannot trim " << n << " bytes from buffer with " << _capacity
       << " bytes.";
@@ -85,7 +85,7 @@ Buffer Buffer::trim_prefix(std::size_t n) const {
 }
 
 Buffer Buffer::trim_suffix(std::size_t n) const {
-  if (n >= _capacity) {
+  if (n > _capacity) {
     throw InvalidArgument()
       << "Cannot trim " << n << " bytes from buffer with " << _capacity
       << " bytes.";
