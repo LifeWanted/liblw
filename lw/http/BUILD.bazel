@@ -18,8 +18,9 @@ cc_library(
     "//lw/co:future",
     "//lw/err",
     "//lw/http/internal:http_mount_path",
+    "//lw/log",
     "//lw/net:router",
-  ]
+  ],
 )
 
 cc_test(
@@ -27,8 +28,11 @@ cc_test(
   srcs = ["http_test.cpp"],
   deps = [
     ":http",
+    ":http_handler",
     "@gtest//:gtest_main",
-  ]
+    "//lw/co:scheduler",
+    "//lw/io/co/testing:string_stream",
+  ],
 )
 
 cc_library(

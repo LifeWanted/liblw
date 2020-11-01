@@ -85,7 +85,7 @@ public:
   // serializing based on MIME type.
   typedef std::string Body;
 
-  int status() const { return _status_code; }
+  int status() const { return _status_code ? _status_code : OK; }
 
   void status(int code) {
     _status_code = code;
@@ -114,8 +114,7 @@ public:
 
   const http::Headers& headers() const { return _headers; }
 
-  void body(const Body& b) { _body = b; }
-  void body(Body&& b) { _body = std::move(b); }
+  void body(std::string_view b) { _body = Body{b}; }
   const Body& body() const { return _body; }
 
   Buffer serialize() const;

@@ -88,7 +88,7 @@ std::string_view default_status_message(int code) {
 }
 
 std::string_view HttpResponse::status_message() const {
-  if (_status_message.empty()) return default_status_message(_status_code);
+  if (_status_message.empty()) return default_status_message(status());
   return _status_message;
 }
 
