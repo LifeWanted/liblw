@@ -1,5 +1,8 @@
 #include "lw/flags/flags.h"
 
+#include <sstream>
+
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "lw/err/canonical.h"
 
@@ -25,6 +28,8 @@ LW_FLAG(std::string, change_me_str, "", "This value will be changed by tests.");
 
 namespace lw::cli {
 namespace {
+
+using ::testing::MatchesRegex;
 
 TEST(FlagsExists, FalseForFlagsThatAreNotRegistered) {
   EXPECT_FALSE(flags_exists("this flag does not exist"));
@@ -77,6 +82,37 @@ TEST(FlagsCliSet, TakesNextArgumentAsValue) {
   const char* argv[] = {"42"};
   EXPECT_TRUE(flags_cli_set("change-me", std::nullopt, argv, argc));
   EXPECT_EQ(flags::change_me, 42);
+}
+
+// -------------------------------------------------------------------------- //
+
+TEST(PrintFlags, PrintsFlagDescriptions) {
+  std::stringstream out;
+  cli::print_flags(out);
+
+  EXPECT_THAT(
+    out.str(),
+    MatchesRegex(".*The answer to life, the universe, and everything.*")
+  );
+}
+
+TEST(PrintFlags, PrintsInAlphabeticalOrder) {
+  std::stringstream out;
+  cli::print_flags(out);
+
+  EXPECT_THAT(
+    out.str(),
+    MatchesRegex(
+      ".*answer_to_life"
+      ".*bool_false"
+      ".*bool_true"
+      ".*change_me"
+      ".*change_me_bool"
+      ".*change_me_str"
+      ".*moar_pi"
+      ".*pi.*"
+    )
+  );
 }
 
 // -------------------------------------------------------------------------- //
