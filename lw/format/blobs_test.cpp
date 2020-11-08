@@ -26,5 +26,25 @@ TEST(FormatHex, Streamable) {
   EXPECT_EQ(stream.str(), "626172");
 }
 
+// -------------------------------------------------------------------------- //
+
+TEST(FormatBase64, ConvertBuffersToHexStrings) {
+  Buffer data{10};
+  data.copy("fitzgerald", 10);
+
+  auto encoded = base64(data);
+  std::string str = std::string(encoded.begin(), encoded.end());
+  EXPECT_EQ(str, "Zml0emdlcmFsZA==");
+}
+
+TEST(FormatBase64, Streamable) {
+  Buffer data{8};
+  data.copy("arugulas", 8);
+
+  std::stringstream stream;
+  stream << base64(data);
+  EXPECT_EQ(stream.str(), "YXJ1Z3VsYXM=");
+}
+
 }
 }
