@@ -1,0 +1,14 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+  name = "make_cert",
+  srcs = ["make_cert.cpp"],
+  deps = [
+    "//third_party:botan",
+    "//lw/base",
+    "//lw/flags",
+    "//lw/format:blobs",
+    "//lw/log",
+    "//lw/memory:buffer",
+  ],
+)
