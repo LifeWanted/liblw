@@ -1,0 +1,33 @@
+load("@rules_foreign_cc//tools/build_defs:make.bzl", "make")
+
+package(
+  default_visibility = [
+    "//lw:__subpackages__",
+    "//tools:__subpackages__",
+  ],
+)
+
+make(
+  name = "botan",
+  lib_source = "@botan//:all",
+  make_commands = [
+    "python configure.py " +
+      "--prefix=$INSTALLDIR " +
+      "--without-documentation " +
+      "--without-os-features=sockets " +
+      "--without-os-features=threads " +
+      "--disable-shared-library " +
+      "--with-build-dir=$EXT_BUILD_ROOT/external/botan " +
+      "--no-install-python-module " +
+      "--build-targets=static",
+
+    "make -j8 -C $EXT_BUILD_ROOT/external/botan",
+
+    "make -C $EXT_BUILD_ROOT/external/botan install PREFIX=$INSTALLDIR",
+
+    "mv $INSTALLDIR/include/botan-2/botan $INSTALLDIR/include/botan",
+
+    "rm -r $INSTALLDIR/include/botan-2",
+  ],
+  static_libraries = ["libbotan-2.a"],
+)
