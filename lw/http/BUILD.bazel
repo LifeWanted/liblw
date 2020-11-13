@@ -89,3 +89,26 @@ cc_test(
     "@gtest//:gtest_main",
   ],
 )
+
+cc_library(
+  name = "https",
+  hdrs = ["https.h"],
+  srcs = ["https.cpp"],
+  deps = [
+    ":http",
+    "//lw/co:task",
+    "//lw/io/co",
+    "//lw/net:router",
+    "//third_party:openssl",
+  ],
+)
+
+cc_test(
+  name = "https_test",
+  srcs = ["https_test.cpp"],
+  data = [":testing/test.cert"],
+  deps = [
+    ":https",
+    "@gtest//:gtest_main",
+  ],
+)
