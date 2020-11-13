@@ -31,3 +31,21 @@ make(
   ],
   static_libraries = ["libbotan-2.a"],
 )
+
+make(
+  name = "openssl",
+  lib_source = "@openssl//:all",
+  make_commands = [
+    "cd $EXT_BUILD_ROOT/external/openssl",
+    "./Configure " +
+      "no-buildtest-c++ no-deprecated no-des no-external-tests no-legacy " +
+      "no-makedepend no-md2 no-md4 no-shared no-tests no-ui-console " +
+      "no-unit-test no-weak-ssl-ciphers no-zlib " +
+      "--prefix=$INSTALLDIR",
+
+    "make -j",
+
+    "make -j install PREFIX=$INSTALLDIR",
+  ],
+  static_libraries = ["libcrypto.a", "libssl.a"],
+)

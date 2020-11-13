@@ -32,3 +32,13 @@ http_archive(
     'visibility = ["//visibility:public"])',
   url = "https://github.com/randombit/botan/archive/2.16.0.zip",
 )
+
+http_archive(
+  name = "openssl",
+  strip_prefix = "openssl-openssl-3.0.0-alpha8",
+  sha256 = "c3b7883c4a1567eee09b2806de304521a1c293dec8935e5525f20e426eb797b7",
+  build_file_content =
+    'filegroup(name = "all", srcs = glob(["**"]), ' +
+    'visibility = ["//visibility:public"])',
+  url = "https://github.com/openssl/openssl/archive/openssl-3.0.0-alpha8.zip",
+)
