@@ -1,0 +1,10 @@
+package(default_visibility = ["//lw/net:__subpackages__"])
+
+filegroup(
+  name = "tls_credentials",
+  testonly = True,
+  srcs = [
+    "test.cert.pem",
+    "test.key.pem",
+  ],
+)
