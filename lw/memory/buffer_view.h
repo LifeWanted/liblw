@@ -63,6 +63,13 @@ public:
     return std::string_view{reinterpret_cast<const char*>(begin()), size()};
   }
 
+  BufferView trim_prefix(std::size_t n) const {
+    return {_buffer.trim_prefix(n)};
+  }
+  BufferView trim_suffix(std::size_t n) const {
+    return {_buffer.trim_suffix(n)};
+  }
+
 private:
   Buffer _buffer;
 };
