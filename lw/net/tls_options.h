@@ -12,10 +12,10 @@ struct TLSOptions {
   std::variant<std::filesystem::path> certificate;
 
   enum ConnectionMode {
-    CLIENT, // Initiator of TLS connection.
-    SERVER  // Acceptor of TLS connection.
+    CONNECT,  // Initiator of TLS connection.
+    ACCEPT    // Acceptor of TLS connection.
   };
-  ConnectionMode connection_mode = CLIENT;
+  ConnectionMode connection_mode = CONNECT;
 };
 
 }

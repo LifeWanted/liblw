@@ -69,8 +69,7 @@ TLSClientImpl::TLSClientImpl(
 {}
 
 TLSClientImpl::~TLSClientImpl() {
-  if (_encrypted) BIO_free(_encrypted);
-  if (_plaintext) BIO_free(_plaintext);
+  // BIOs are freed by the SSL client for us.
   if (_client) SSL_free(_client);
 }
 

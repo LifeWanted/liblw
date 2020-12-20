@@ -12,7 +12,7 @@ cc_library(
     "//lw/flags",
     "//lw/memory:buffer",
     "//lw/memory:buffer_view",
-    "//third_party:openssl",
+    "//third_party/openssl",
   ],
 )
 
@@ -25,6 +25,17 @@ cc_library(
     "//lw/err",
     "//lw/err:system",
     "//lw/net:tls_options",
-    "//third_party:openssl",
+    "//third_party/openssl",
+  ],
+)
+
+cc_test(
+  name = "tls_context_test",
+  srcs = ["tls_context_test.cpp"],
+  deps = [
+    ":tls_context",
+    "@gtest//:gtest_main",
+    "//lw/net:tls_options",
+    "//lw/net/testing:tls_credentials",
   ],
 )

@@ -40,7 +40,7 @@ void check_openssl_error(source_location loc = source_location::current()) {
   throw Internal(loc) << "OpenSSL error: " << static_cast<char*>(err);
 }
 
-void check_all_errors(
+[[noreturn]] void check_all_errors(
   std::string_view backup_message,
   source_location loc = source_location::current()
 ) {
@@ -49,7 +49,7 @@ void check_all_errors(
   throw Internal(loc) << backup_message;
 }
 
-void context_setup_error(
+[[noreturn]] void context_setup_error(
   SSL_CTX* context,
   std::string_view backup_message,
   source_location loc = source_location::current()
@@ -70,7 +70,7 @@ std::unique_ptr<TLSContextImpl> TLSContextImpl::from_options(
   openssl_init();
 
   SSL_CTX* context = SSL_CTX_new(
-    options.connection_mode == TLSOptions::SERVER
+    options.connection_mode == TLSOptions::ACCEPT
       ? TLS_server_method()
       : TLS_client_method()
   );
