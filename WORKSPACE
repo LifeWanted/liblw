@@ -35,10 +35,10 @@ http_archive(
 
 http_archive(
   name = "openssl",
-  strip_prefix = "openssl-openssl-3.0.0-alpha8",
-  sha256 = "c3b7883c4a1567eee09b2806de304521a1c293dec8935e5525f20e426eb797b7",
+  strip_prefix = "openssl-openssl-3.0.0-alpha9",
+  sha256 = "d02655c3d807dd77d550347f8490ea272ee9c0b21917fa3f5b43e09eb2854306",
   build_file_content =
     'filegroup(name = "all", srcs = glob(["**"]), ' +
     'visibility = ["//visibility:public"])',
-  url = "https://github.com/openssl/openssl/archive/openssl-3.0.0-alpha8.zip",
+  url = "https://github.com/openssl/openssl/archive/openssl-3.0.0-alpha9.zip",
 )
