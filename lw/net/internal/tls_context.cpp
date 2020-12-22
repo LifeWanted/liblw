@@ -69,6 +69,7 @@ std::unique_ptr<TLSContextImpl> TLSContextImpl::from_options(
 ) {
   openssl_init();
 
+  // Instantiate the SSL context.
   SSL_CTX* context = SSL_CTX_new(
     options.connection_mode == TLSOptions::ACCEPT
       ? TLS_server_method()
@@ -81,9 +82,9 @@ std::unique_ptr<TLSContextImpl> TLSContextImpl::from_options(
     context_setup_error(context, "Unknown error setting min TLS version.");
   }
 
+  // Configure the certificate and private key.
   auto key_path = std::get<std::filesystem::path>(options.private_key);
   auto cert_path = std::get<std::filesystem::path>(options.certificate);
-
   if (
     SSL_CTX_use_certificate_file(
       context,
@@ -93,7 +94,6 @@ std::unique_ptr<TLSContextImpl> TLSContextImpl::from_options(
   ) {
     context_setup_error(context, "Unknown error setting certificate file.");
   }
-
   if (
     SSL_CTX_use_PrivateKey_file(
       context,
@@ -103,12 +103,11 @@ std::unique_ptr<TLSContextImpl> TLSContextImpl::from_options(
   ) {
     context_setup_error(context, "Unknown error setting private key file.");
   }
-
   if (SSL_CTX_check_private_key(context) != 1) {
     context_setup_error(context, "Unknown error with private key.");
   }
 
-  return std::unique_ptr<TLSContextImpl>{new TLSContextImpl{context}};
+  return std::unique_ptr<TLSContextImpl>{new TLSContextImpl{options, context}};
 }
 
 std::unique_ptr<TLSClientImpl> TLSContextImpl::make_client() {
@@ -129,7 +128,11 @@ std::unique_ptr<TLSClientImpl> TLSContextImpl::make_client() {
     check_all_errors("Unknown error creating SSL client.");
   }
 
-  SSL_set_accept_state(client);
+  if (_connection_mode == TLSOptions::ACCEPT) {
+    SSL_set_accept_state(client);
+  } else {
+    SSL_set_connect_state(client);
+  }
   SSL_set_bio(client, encrypted, plaintext);
   return std::make_unique<TLSClientImpl>(client, encrypted, plaintext);
 }

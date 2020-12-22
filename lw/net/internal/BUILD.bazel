@@ -16,6 +16,20 @@ cc_library(
   ],
 )
 
+cc_test(
+  name = "tls_client_test",
+  srcs = ["tls_client_test.cpp"],
+  deps = [
+    ":tls_client",
+    ":tls_context",
+    "@gtest//:gtest_main",
+    "//lw/memory:buffer",
+    "//lw/memory:buffer_view",
+    "//lw/net:tls_options",
+    "//lw/net/testing:tls_credentials",
+  ],
+)
+
 cc_library(
   name = "tls_context",
   hdrs = ["tls_context.h"],

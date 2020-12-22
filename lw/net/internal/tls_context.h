@@ -19,8 +19,12 @@ public:
   std::unique_ptr<TLSClientImpl> make_client();
 
 private:
-  TLSContextImpl(SSL_CTX* context): _context{context} {}
+  TLSContextImpl(const TLSOptions& options, SSL_CTX* context):
+    _connection_mode{options.connection_mode},
+    _context{context}
+  {}
 
+  TLSOptions::ConnectionMode _connection_mode;
   SSL_CTX* _context = nullptr;
 };
 

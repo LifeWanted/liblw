@@ -6,6 +6,41 @@
 
 namespace lw::net::internal {
 
+enum class TLSResult {
+  /**
+   * The underlying library needs to read more data, but none is available.
+   *
+   * Resolve this by reading more data off the wire and calling
+   * `buffer_encrypted_data`.
+   */
+  NEED_TO_READ,
+
+  /**
+   * The underlying library needs to write more data, but the buffer is full.
+   *
+   * Resolve this by calling `read_encrypted_data` and writing it to the wire.
+   */
+  NEED_TO_WRITE,
+
+  /**
+   * The requested action should be tried again later, possibly after buffering
+   * more data.
+   */
+  AGAIN,
+
+  /**
+   * The action has completed.
+   */
+  COMPLETED
+};
+
+struct TLSBufferingResult {
+  TLSResult result;
+  std::size_t bytes_written = 0;
+
+  operator bool() const { return result == TLSResult::COMPLETED; }
+};
+
 class TLSClientImpl {
 public:
   TLSClientImpl(
@@ -16,18 +51,42 @@ public:
 
   ~TLSClientImpl();
 
-  Buffer& read_buffer(std::size_t min_size);
+  TLSResult handshake();
+
+  /**
+   * Add encrypted data to the decryption buffer.
+   *
+   * Data buffered with this method may be read as plaintext using the
+   * `read_decrypted_data` method.
+   *
+   * @retrun The number of bytes written to the decryption buffer.
+   */
   std::size_t buffer_encrypted_data(BufferView buffer);
+
+  /**
+   * Reads as plaintext data which was buffered using `buffer_encrypted_data`.
+   */
   std::size_t read_decrypted_data(Buffer& buffer);
 
-  std::size_t buffer_plaintext_data(BufferView buffer);
+  /**
+   * Add plaintext data to the encryption buffer.
+   *
+   * Data buffered with this method may be read encrypted using the
+   * `read_encrypted_data` method.
+   *
+   * @return The number of bytes written to the encryption buffer.
+   */
+  TLSBufferingResult buffer_plaintext_data(BufferView buffer);
+
+  /**
+   * Reads encrypted data previously buffered using `buffer_plaintext_data`.
+   */
   Buffer read_encrypted_data(std::size_t limit);
 
 private:
   SSL* _client = nullptr;
   BIO* _encrypted = nullptr;
   BIO* _plaintext = nullptr;
-  Buffer _read_buffer;
   Buffer _write_buffer;
 };
 

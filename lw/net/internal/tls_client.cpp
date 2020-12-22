@@ -23,8 +23,10 @@ namespace {
 
 using std::experimental::source_location;
 
-void check_openssl_error(source_location loc = source_location::current()) {
-  auto err_code = ERR_get_error();
+void check_openssl_error(
+  long unsigned int err_code,
+  source_location loc = source_location::current()
+) {
   if (!err_code) return;
 
   // OpenSSL recommends a minimum of 256 bytes for this buffer.
@@ -36,6 +38,10 @@ void check_openssl_error(source_location loc = source_location::current()) {
   throw Internal(loc) << "OpenSSL error: " << static_cast<char*>(err);
 }
 
+void check_openssl_error(source_location loc = source_location::current()) {
+  check_openssl_error(ERR_get_error());
+}
+
 void check_all_errors(
   std::string_view backup_message,
   source_location loc = source_location::current()
@@ -43,15 +49,6 @@ void check_all_errors(
   check_openssl_error(loc);
   check_system_error(loc);
   throw Internal(loc) << backup_message;
-}
-
-std::size_t bio_read(BIO* bio, Buffer& buffer, std::size_t bytes = 0) {
-  std::size_t bytes_read = 0;
-  const std::size_t to_read = bytes ? bytes : buffer.size();
-  if (!BIO_read_ex(bio, buffer.data(), to_read, &bytes_read)) {
-    check_all_errors("Unknown BIO read error.");
-  }
-  return bytes_read;
 }
 
 }
@@ -64,7 +61,6 @@ TLSClientImpl::TLSClientImpl(
   _client{client},
   _encrypted{encrypted},
   _plaintext{plaintext},
-  _read_buffer{flags::tls_buffer_size},
   _write_buffer{flags::tls_buffer_size}
 {}
 
@@ -73,9 +69,18 @@ TLSClientImpl::~TLSClientImpl() {
   if (_client) SSL_free(_client);
 }
 
-Buffer& TLSClientImpl::read_buffer(std::size_t min_size) {
-  if (min_size > _read_buffer.size()) _read_buffer = Buffer{min_size};
-  return _read_buffer;
+TLSResult TLSClientImpl::handshake() {
+  if (SSL_is_init_finished(_client)) return TLSResult::COMPLETED;
+
+  int ret = SSL_do_handshake(_client);
+  int err = SSL_get_error(_client, ret);
+  switch (err) {
+    case SSL_ERROR_NONE:        return TLSResult::AGAIN;
+    case SSL_ERROR_WANT_READ:   return TLSResult::NEED_TO_READ;
+    case SSL_ERROR_WANT_WRITE:  return TLSResult::NEED_TO_WRITE;
+  }
+  check_openssl_error(err);
+  throw Internal() << "Unknown error during handshake.";
 }
 
 std::size_t TLSClientImpl::buffer_encrypted_data(BufferView buffer) {
@@ -91,23 +96,40 @@ std::size_t TLSClientImpl::buffer_encrypted_data(BufferView buffer) {
 
 std::size_t TLSClientImpl::read_decrypted_data(Buffer& buffer) {
   std::size_t decrypted = 0;
-  if (!SSL_read_ex(_client, buffer.data(), buffer.size(), &decrypted)) {
-    check_all_errors("Unknown SSL read error.");
-  }
+  int ret = SSL_read_ex(_client, buffer.data(), buffer.size(), &decrypted);
+  if (ret <= 0) check_all_errors("Unknown SSL read error.");
   return decrypted;
 }
 
-std::size_t TLSClientImpl::buffer_plaintext_data(BufferView buffer) {
+TLSBufferingResult TLSClientImpl::buffer_plaintext_data(BufferView buffer) {
   std::size_t written = 0;
-  if (!SSL_write_ex(_client, buffer.data(), buffer.size(), &written)) {
+  int ret = SSL_write_ex(_client, buffer.data(), buffer.size(), &written);
+  if (ret <= 0) {
+    switch (SSL_get_error(_client, ret)) {
+      case SSL_ERROR_WANT_READ:   return {.result = TLSResult::NEED_TO_READ};
+      case SSL_ERROR_WANT_WRITE:  return {.result = TLSResult::NEED_TO_WRITE};
+    }
+
     check_all_errors("Unknown SSL write error.");
   }
-  return written;
+  return {.result = TLSResult::COMPLETED, .bytes_written = written};
 }
 
 Buffer TLSClientImpl::read_encrypted_data(std::size_t limit) {
   if (limit > _write_buffer.size()) _write_buffer = Buffer{limit};
-  std::size_t bytes_read = bio_read(_plaintext, _write_buffer);
+
+  std::size_t bytes_read = 0;
+  int ret = BIO_read_ex(
+    _plaintext,
+    _write_buffer.data(),
+    _write_buffer.size(),
+    &bytes_read
+  );
+  if (!ret) {
+    if (BIO_should_retry(_plaintext)) return Buffer{};
+    check_all_errors("Unknown BIO read error.");
+  }
+
   return Buffer{_write_buffer.data(), bytes_read, /*own_data=*/false};
 }
 
