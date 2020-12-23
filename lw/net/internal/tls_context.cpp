@@ -16,17 +16,6 @@ namespace {
 
 using std::experimental::source_location;
 
-void openssl_init() {
-  // TODO(alaina): Determine if OpenSSL still needs manual initialization. Man
-  // pages claim that as of 1.1.0 this is no longer necessary.
-  //
-  // static int init = ([]() {
-  //   OPENSSL_init_crypto();
-  //   OPENSSL_init_ssl();
-  //   return 0;
-  // })();
-}
-
 void check_openssl_error(source_location loc = source_location::current()) {
   auto err_code = ERR_get_error();
   if (!err_code) return;
@@ -67,8 +56,6 @@ TLSContextImpl::~TLSContextImpl() {
 std::unique_ptr<TLSContextImpl> TLSContextImpl::from_options(
   const TLSOptions& options
 ) {
-  openssl_init();
-
   // Instantiate the SSL context.
   SSL_CTX* context = SSL_CTX_new(
     options.connection_mode == TLSOptions::ACCEPT
