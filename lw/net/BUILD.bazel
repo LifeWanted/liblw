@@ -109,7 +109,11 @@ cc_test(
   data = ["//lw/net/testing:tls_credentials"],
   deps = [
     ":tls",
+    ":tls_options",
     "@gtest//:gtest_main",
+    "//lw/co/testing:destroy_scheduler",
+    "//lw/co:scheduler",
+    "//lw/io/co/testing:string_connection",
     "//lw/io/co/testing:string_stream",
     "//lw/net/testing:tls_credentials",
   ],
