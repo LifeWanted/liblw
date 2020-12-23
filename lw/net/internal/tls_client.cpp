@@ -6,17 +6,11 @@
 
 #include "lw/err/canonical.h"
 #include "lw/err/system.h"
-#include "lw/flags/flags.h"
 #include "lw/memory/buffer.h"
 #include "lw/memory/buffer_view.h"
 #include "openssl/bio.h"
 #include "openssl/err.h"
 #include "openssl/ssl.h"
-
-LW_FLAG(
-  std::size_t, tls_buffer_size, 1024 * 1024,
-  "Initial size of read and write buffers for TLS streams."
-);
 
 namespace lw::net::internal {
 namespace {
@@ -53,17 +47,6 @@ void check_all_errors(
 
 }
 
-TLSClientImpl::TLSClientImpl(
-  SSL* client,
-  BIO* encrypted,
-  BIO* plaintext
-):
-  _client{client},
-  _encrypted{encrypted},
-  _plaintext{plaintext},
-  _write_buffer{flags::tls_buffer_size}
-{}
-
 TLSClientImpl::~TLSClientImpl() {
   // BIOs are freed by the SSL client for us.
   if (_client) SSL_free(_client);
@@ -83,7 +66,7 @@ TLSResult TLSClientImpl::handshake() {
   throw Internal() << "Unknown error during handshake.";
 }
 
-std::size_t TLSClientImpl::buffer_encrypted_data(BufferView buffer) {
+TLSIOResult TLSClientImpl::buffer_encrypted_data(BufferView buffer) {
   std::size_t written = 0;
   if (!BIO_write_ex(_encrypted, buffer.data(), buffer.size(), &written)) {
     // TODO(alaina): Check BIO_should_retry before throwing errors if the
@@ -91,17 +74,17 @@ std::size_t TLSClientImpl::buffer_encrypted_data(BufferView buffer) {
     // for the underlying socket to become available again.
     check_all_errors("Unknown BIO write error.");
   };
-  return written;
+  return {.result = TLSResult::COMPLETED, .bytes = written};
 }
 
-std::size_t TLSClientImpl::read_decrypted_data(Buffer& buffer) {
+TLSIOResult TLSClientImpl::read_decrypted_data(Buffer& buffer) {
   std::size_t decrypted = 0;
   int ret = SSL_read_ex(_client, buffer.data(), buffer.size(), &decrypted);
   if (ret <= 0) check_all_errors("Unknown SSL read error.");
-  return decrypted;
+  return {.result = TLSResult::COMPLETED, .bytes = decrypted};
 }
 
-TLSBufferingResult TLSClientImpl::buffer_plaintext_data(BufferView buffer) {
+TLSIOResult TLSClientImpl::buffer_plaintext_data(BufferView buffer) {
   std::size_t written = 0;
   int ret = SSL_write_ex(_client, buffer.data(), buffer.size(), &written);
   if (ret <= 0) {
@@ -112,25 +95,18 @@ TLSBufferingResult TLSClientImpl::buffer_plaintext_data(BufferView buffer) {
 
     check_all_errors("Unknown SSL write error.");
   }
-  return {.result = TLSResult::COMPLETED, .bytes_written = written};
+  return {.result = TLSResult::COMPLETED, .bytes = written};
 }
 
-Buffer TLSClientImpl::read_encrypted_data(std::size_t limit) {
-  if (limit > _write_buffer.size()) _write_buffer = Buffer{limit};
-
+TLSIOResult TLSClientImpl::read_encrypted_data(Buffer& buffer) {
   std::size_t bytes_read = 0;
-  int ret = BIO_read_ex(
-    _plaintext,
-    _write_buffer.data(),
-    _write_buffer.size(),
-    &bytes_read
-  );
+  int ret = BIO_read_ex(_plaintext, buffer.data(), buffer.size(), &bytes_read);
   if (!ret) {
-    if (BIO_should_retry(_plaintext)) return Buffer{};
+    if (BIO_should_retry(_plaintext)) return {.result = TLSResult::AGAIN};
     check_all_errors("Unknown BIO read error.");
   }
 
-  return Buffer{_write_buffer.data(), bytes_read, /*own_data=*/false};
+  return {.result = TLSResult::COMPLETED, .bytes = bytes_read};
 }
 
 }

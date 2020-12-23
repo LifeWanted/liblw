@@ -34,9 +34,9 @@ enum class TLSResult {
   COMPLETED
 };
 
-struct TLSBufferingResult {
+struct TLSIOResult {
   TLSResult result;
-  std::size_t bytes_written = 0;
+  std::size_t bytes = 0;
 
   operator bool() const { return result == TLSResult::COMPLETED; }
 };
@@ -47,7 +47,11 @@ public:
     SSL* client,
     BIO* encrypted,
     BIO* plaintext
-  );
+  ):
+    _client{client},
+    _encrypted{encrypted},
+    _plaintext{plaintext}
+  {}
 
   ~TLSClientImpl();
 
@@ -61,12 +65,12 @@ public:
    *
    * @retrun The number of bytes written to the decryption buffer.
    */
-  std::size_t buffer_encrypted_data(BufferView buffer);
+  TLSIOResult buffer_encrypted_data(BufferView buffer);
 
   /**
    * Reads as plaintext data which was buffered using `buffer_encrypted_data`.
    */
-  std::size_t read_decrypted_data(Buffer& buffer);
+  TLSIOResult read_decrypted_data(Buffer& buffer);
 
   /**
    * Add plaintext data to the encryption buffer.
@@ -76,18 +80,17 @@ public:
    *
    * @return The number of bytes written to the encryption buffer.
    */
-  TLSBufferingResult buffer_plaintext_data(BufferView buffer);
+  TLSIOResult buffer_plaintext_data(BufferView buffer);
 
   /**
    * Reads encrypted data previously buffered using `buffer_plaintext_data`.
    */
-  Buffer read_encrypted_data(std::size_t limit);
+  TLSIOResult read_encrypted_data(Buffer& buffer);
 
 private:
   SSL* _client = nullptr;
   BIO* _encrypted = nullptr;
   BIO* _plaintext = nullptr;
-  Buffer _write_buffer;
 };
 
 }

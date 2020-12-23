@@ -33,18 +33,27 @@ TEST(TLSClientImpl, CanCommunicateWithItself) {
   // Introduce eachother.
   TLSResult client_handshake = client_client->handshake();
   TLSResult server_handshake = server_client->handshake();
+  Buffer handshake_buffer{1024};
   do {
     client_handshake = client_client->handshake();
-    Buffer data = client_client->read_encrypted_data(1024);
-    if (!data.empty()) {
-      ASSERT_EQ(server_client->buffer_encrypted_data(data), data.size());
+    TLSIOResult res = client_client->read_encrypted_data(handshake_buffer);
+    if (res && res.bytes > 0) {
+      TLSIOResult buffer_res = server_client->buffer_encrypted_data(
+        {handshake_buffer.data(), res.bytes}
+      );
+      ASSERT_TRUE(buffer_res);
+      ASSERT_EQ(buffer_res.bytes, res.bytes);
     }
     client_handshake = client_client->handshake();
 
     server_handshake = server_client->handshake();
-    data = server_client->read_encrypted_data(1024);
-    if (!data.empty()) {
-      ASSERT_EQ(client_client->buffer_encrypted_data(data), data.size());
+    res = server_client->read_encrypted_data(handshake_buffer);
+    if (res && res.bytes > 0) {
+      TLSIOResult buffer_res = client_client->buffer_encrypted_data(
+        {handshake_buffer.data(), res.bytes}
+      );
+      ASSERT_TRUE(buffer_res);
+      ASSERT_EQ(buffer_res.bytes, res.bytes);
     }
     server_handshake = server_client->handshake();
   } while (
@@ -55,26 +64,27 @@ TEST(TLSClientImpl, CanCommunicateWithItself) {
   // Write client plaintext data.
   const std::string_view message = "my secret message, do not steal";
   const Buffer message_buffer{message.begin(), message.end()};
-  TLSBufferingResult res = client_client->buffer_plaintext_data(message_buffer);
+  TLSIOResult res = client_client->buffer_plaintext_data(message_buffer);
   EXPECT_TRUE(res);
-  EXPECT_EQ(res.bytes_written, message_buffer.size());
+  EXPECT_EQ(res.bytes, message_buffer.size());
 
   // Transfer the encrypted data across the "wire."
-  Buffer wire_buffer;
-  wire_buffer = client_client->read_encrypted_data(1024);
-  EXPECT_GE(wire_buffer.size(), message_buffer.size());
-  EXPECT_EQ(
-    server_client->buffer_encrypted_data(wire_buffer),
-    wire_buffer.size()
-  );
+  Buffer wire_buffer{1024};
+  res = client_client->read_encrypted_data(wire_buffer);
+  EXPECT_TRUE(res);
+  EXPECT_GE(res.bytes, message_buffer.size());
+  TLSIOResult wire_res =
+    server_client->buffer_encrypted_data({wire_buffer.data(), res.bytes});
+  EXPECT_TRUE(wire_res);
+  EXPECT_EQ(wire_res.bytes, res.bytes);
 
   // Read plaintext data out of the server.
   Buffer server_read_buffer{1024};
-  const std::size_t bytes_decrypted =
-    server_client->read_decrypted_data(server_read_buffer);
-  EXPECT_EQ(bytes_decrypted, message.size());
+  res = server_client->read_decrypted_data(server_read_buffer);
+  EXPECT_TRUE(res);
+  EXPECT_EQ(res.bytes, message.size());
 
-  const BufferView server_read_view{server_read_buffer.data(), bytes_decrypted};
+  const BufferView server_read_view{server_read_buffer.data(), res.bytes};
   EXPECT_EQ(static_cast<std::string_view>(server_read_view), message);
 }
 
