@@ -19,6 +19,8 @@ class TLSStreamFactory;
 
 class TLSStream: public io::CoStream {
 public:
+  ~TLSStream();
+
   bool eof() const override { return _raw_stream->eof(); }
   bool good() const override { return _raw_stream->good(); }
   void close() override { return _raw_stream->close(); }

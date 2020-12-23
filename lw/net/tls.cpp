@@ -24,6 +24,11 @@ TLSStream::TLSStream(
   _write_buffer{flags::tls_buffer_size}
 {}
 
+TLSStream::~TLSStream() {
+  // This destructor must be defined in this file where it has access to the
+  // full definition of the TLS*Impl classes.
+}
+
 co::Future<void> TLSStream::handshake() {
   // Get into handshake mode.
   _client->handshake();

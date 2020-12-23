@@ -110,5 +110,7 @@ cc_test(
   deps = [
     ":tls",
     "@gtest//:gtest_main",
+    "//lw/io/co/testing:string_stream",
+    "//lw/net/testing:tls_credentials",
   ],
 )
