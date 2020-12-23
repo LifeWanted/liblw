@@ -24,16 +24,6 @@ git_repository(
 )
 
 http_archive(
-  name = "botan",
-  strip_prefix = "botan-2.16.0",
-  sha256 = "80c2b5c81c21bfeaa1dc74c92bec3bca5b689ec0f681833a9f6b6121e0d84a43",
-  build_file_content =
-    'filegroup(name = "all", srcs = glob(["**"]), ' +
-    'visibility = ["//visibility:public"])',
-  url = "https://github.com/randombit/botan/archive/2.16.0.zip",
-)
-
-http_archive(
   name = "openssl",
   strip_prefix = "openssl-openssl-3.0.0-alpha9",
   sha256 = "d02655c3d807dd77d550347f8490ea272ee9c0b21917fa3f5b43e09eb2854306",
