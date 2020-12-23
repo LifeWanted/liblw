@@ -94,6 +94,7 @@ cc_library(
   deps = [
     ":tls_options",
     "//lw/co:future",
+    "//lw/flags",
     "//lw/io/co",
     "//lw/memory:buffer",
     "//lw/memory:buffer_view",

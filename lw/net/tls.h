@@ -23,6 +23,8 @@ public:
   bool good() const override { return _raw_stream->good(); }
   void close() override { return _raw_stream->close(); }
 
+  co::Future<void> handshake();
+
   co::Future<std::size_t> read(Buffer& buffer) override;
   co::Future<std::size_t> write(const Buffer& buffer) override;
 
@@ -36,6 +38,7 @@ private:
 
   std::unique_ptr<internal::TLSClientImpl> _client;
   std::unique_ptr<io::CoStream> _raw_stream;
+  Buffer _write_buffer;
 };
 
 class TLSStreamFactory {
