@@ -92,14 +92,17 @@ cc_test(
 
 cc_library(
   name = "https",
+  visibility = ["//visibility:public"],
   hdrs = ["https.h"],
   srcs = ["https.cpp"],
   deps = [
     ":http",
+    "//lw/co:future",
     "//lw/co:task",
     "//lw/io/co",
+    "//lw/log",
     "//lw/net:router",
-    "//third_party:openssl",
+    "//lw/net:tls",
   ],
 )
 
@@ -108,7 +111,12 @@ cc_test(
   srcs = ["https_test.cpp"],
   data = [":testing/test.cert"],
   deps = [
+    ":http",
     ":https",
     "@gtest//:gtest_main",
+    "//lw/io/co/testing:string_connection",
+    "//lw/net/testing:tls_credentials",
+    "//lw/net:tls",
+    "//lw/net:tls_options",
   ],
 )
