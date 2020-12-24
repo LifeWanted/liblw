@@ -4,17 +4,14 @@
 #include <memory>
 #include <variant>
 
+#include "lw/co/future.h"
 #include "lw/co/task.h"
 #include "lw/http/http.h"
 #include "lw/io/co/co.h"
 #include "lw/net/router.h"
+#include "lw/net/tls.h"
 
 namespace lw {
-namespace internal {
-
-class TLSState;
-
-}
 
 class HttpsRouter: public net::Router {
 public:
@@ -28,15 +25,14 @@ public:
   HttpsRouter(const Options& options);
 
   void attach_routes() override { _http_router.attach_routes(); }
-  std::size_t connection_count() const override {
-    return _http_router.connection_count();
-  }
+  std::size_t connection_count() const override { return _connection_counter; }
 
   co::Task<void> run(std::unique_ptr<io::CoStream> conn) override;
 
 private:
   HttpRouter _http_router;
-  std::unique_ptr<internal::TLSState> _tls;
+  net::TLSStreamFactory _tls;
+  std::size_t _connection_counter = 0;
 };
 
 }

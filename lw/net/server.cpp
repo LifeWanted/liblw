@@ -83,9 +83,7 @@ bool Server::try_close() {
   // TODO: Pause accepting new connections while checking if all routers are
   // idle. Without pausing, this check is prone to race conditions.
   for (auto& [port, router] : _port_map) {
-    if (router.router.connection_count() > 0) {
-      return false;
-    }
+    if (router.router.connection_count() > 0) return false;
   }
 
   force_close();

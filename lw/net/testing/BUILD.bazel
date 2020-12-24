@@ -1,6 +1,11 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
-package(default_visibility = ["//lw/net:__subpackages__"])
+package(
+  default_visibility = [
+    "//lw/http:__subpackages__",
+    "//lw/net:__subpackages__",
+  ],
+)
 
 filegroup(
   name = "tls_credential_files",

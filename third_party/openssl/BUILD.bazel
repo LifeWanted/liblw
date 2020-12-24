@@ -17,7 +17,7 @@ configure_make(
     "no-unit-test", "no-weak-ssl-ciphers", "no-zlib",
   ],
   make_commands = ["make -j", "make install -j"],
-  linkopts = ["-ldl"],
+  linkopts = ["-ldl", "-pthread"],
   lib_source = "@openssl//:all",
   visibility = ["//visibility:public"],
   configure_env_vars = {},
