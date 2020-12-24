@@ -3,12 +3,23 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 package(default_visibility = ["//lw/net:__subpackages__"])
 
 cc_library(
+  name = "errors",
+  hdrs = ["errors.h"],
+  srcs = ["errors.cpp"],
+  deps = [
+    "//lw/err",
+    "//lw/err:system",
+    "//third_party/openssl",
+  ]
+)
+
+cc_library(
   name = "tls_client",
   hdrs = ["tls_client.h"],
   srcs = ["tls_client.cpp"],
   deps = [
+    ":errors",
     "//lw/err",
-    "//lw/err:system",
     "//lw/memory:buffer",
     "//lw/memory:buffer_view",
     "//third_party/openssl",
@@ -34,9 +45,8 @@ cc_library(
   hdrs = ["tls_context.h"],
   srcs = ["tls_context.cpp"],
   deps = [
+    ":errors",
     ":tls_client",
-    "//lw/err",
-    "//lw/err:system",
     "//lw/net:tls_options",
     "//third_party/openssl",
   ],

@@ -5,38 +5,15 @@
 #include <string_view>
 
 #include "lw/err/canonical.h"
-#include "lw/err/system.h"
+#include "lw/net/internal/errors.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
-#include "openssl/err.h"
 #include "openssl/ssl.h"
 
 namespace lw::net::internal {
 namespace {
 
 using std::experimental::source_location;
-
-void check_openssl_error(source_location loc = source_location::current()) {
-  auto err_code = ERR_get_error();
-  if (!err_code) return;
-
-  // OpenSSL recommends a minimum of 256 bytes for this buffer.
-  char err[1024] = {0};
-  ERR_error_string_n(err_code, err, sizeof(err));
-
-  // TODO(alaina): Split OpenSSL errors by class of error instead of all being
-  // Internal.
-  throw Internal(loc) << "OpenSSL error: " << static_cast<char*>(err);
-}
-
-[[noreturn]] void check_all_errors(
-  std::string_view backup_message,
-  source_location loc = source_location::current()
-) {
-  check_openssl_error(loc);
-  check_system_error(loc);
-  throw Internal(loc) << backup_message;
-}
 
 [[noreturn]] void context_setup_error(
   SSL_CTX* context,
