@@ -89,3 +89,33 @@ cc_test(
     "@gtest//:gtest_main",
   ],
 )
+
+cc_library(
+  name = "https",
+  visibility = ["//visibility:public"],
+  hdrs = ["https.h"],
+  srcs = ["https.cpp"],
+  deps = [
+    ":http",
+    "//lw/co:future",
+    "//lw/co:task",
+    "//lw/io/co",
+    "//lw/log",
+    "//lw/net:router",
+    "//lw/net:tls",
+  ],
+)
+
+cc_test(
+  name = "https_test",
+  srcs = ["https_test.cpp"],
+  deps = [
+    ":http",
+    ":https",
+    "@gtest//:gtest_main",
+    "//lw/io/co/testing:string_connection",
+    "//lw/net/testing:tls_credentials",
+    "//lw/net:tls",
+    "//lw/net:tls_options",
+  ],
+)

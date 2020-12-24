@@ -251,8 +251,7 @@ co::Future<std::size_t> Socket::_do_recv(Buffer& buff) {
 
   // Some kind of error occurred.
   check_system_error();
-  throw Internal()
-    << "Unknown socket error while receiving.";
+  throw Internal() << "Unknown socket error while receiving.";
 }
 
 void Socket::listen(Address addr) {

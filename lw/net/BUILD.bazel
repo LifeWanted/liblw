@@ -79,3 +79,42 @@ cc_test(
     "//lw/memory:buffer",
   ]
 )
+
+cc_library(
+  name = "tls_options",
+  visibility = ["//visibility:public"],
+  hdrs = ["tls_options.h"],
+)
+
+cc_library(
+  name = "tls",
+  visibility = ["//visibility:public"],
+  hdrs = ["tls.h"],
+  srcs = ["tls.cpp"],
+  deps = [
+    ":tls_options",
+    "//lw/co:future",
+    "//lw/flags",
+    "//lw/io/co",
+    "//lw/memory:buffer",
+    "//lw/memory:buffer_view",
+    "//lw/net/internal:tls_client",
+    "//lw/net/internal:tls_context",
+  ],
+)
+
+cc_test(
+  name = "tls_test",
+  srcs = ["tls_test.cpp"],
+  data = ["//lw/net/testing:tls_credentials"],
+  deps = [
+    ":tls",
+    ":tls_options",
+    "@gtest//:gtest_main",
+    "//lw/co/testing:destroy_scheduler",
+    "//lw/co:scheduler",
+    "//lw/io/co/testing:string_connection",
+    "//lw/io/co/testing:string_stream",
+    "//lw/net/testing:tls_credentials",
+  ],
+)

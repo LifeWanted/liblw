@@ -1,6 +1,19 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
+  name = "string_connection",
+  hdrs = ["string_connection.h"],
+  visibility = ["//lw:__subpackages__"],
+  testonly = True,
+  deps = [
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/io/co",
+    "//lw/memory:buffer",
+  ],
+)
+
+cc_library(
   name = "string_readable",
   hdrs = ["string_readable.h"],
   visibility = ["//lw:__subpackages__"],

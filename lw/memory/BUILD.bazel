@@ -1,3 +1,4 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
   name = "buffer",
@@ -16,6 +17,13 @@ cc_test(
     ":buffer",
     "@gtest//:gtest_main",
   ]
+)
+
+cc_library(
+  name = "buffer_view",
+  visibility = ["//visibility:public"],
+  hdrs = ["buffer_view.h"],
+  deps = [":buffer"],
 )
 
 cc_library(

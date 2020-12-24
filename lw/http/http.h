@@ -51,6 +51,8 @@ public:
   co::Task<void> run(std::unique_ptr<io::CoStream> conn) override;
   std::size_t connection_count() const override { return _connection_counter; }
 
+  co::Future<void> run_once(io::CoStream& conn);
+
 private:
   http::internal::EndpointTrie _trie;
   std::size_t _connection_counter = 0;

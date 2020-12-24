@@ -110,13 +110,17 @@ co::Task<void> HttpRouter::run(std::unique_ptr<io::CoStream> conn) {
 
   while (conn->good()) {
     try {
-      co_await run_request(*conn, _trie);
+      co_await run_once(*conn);
     } catch(const Error& err) {
       if (conn->good()) conn->close();
       log(ERROR) << "Unhandled application error: " << err.what();
     }
   }
   --_connection_counter;
+}
+
+co::Future<void> HttpRouter::run_once(io::CoStream& conn) {
+  return run_request(conn, _trie);
 }
 
 }

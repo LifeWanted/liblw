@@ -1,5 +1,6 @@
 #include "lw/base/init.h"
 
+#include <iostream>
 #include <optional>
 #include <string_view>
 #include <utility>
@@ -7,6 +8,8 @@
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
 #include "lw/flags/flags.h"
+
+LW_FLAG(bool, help, false, "Print this help message and exit.");
 
 namespace lw {
 namespace {
@@ -85,7 +88,14 @@ bool init(int* argc, const char** argv) {
     }
   }
 
-  // TODO: Add handling of `--help` flag.
+  if (flags::help) {
+    std::cout
+      << "Usage: " << argv[0] << " [options...]" << std::endl
+      << "Options:" << std::endl;
+    cli::print_flags(std::cout);
+    return false;
+  }
+
   return true;
 }
 

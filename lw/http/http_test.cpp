@@ -43,7 +43,7 @@ TEST(HttpRouter, ExecutesRegisteredHandlers) {
   );
 }
 
-TEST(HttpRouter, RespondsNotFOund) {
+TEST(HttpRouter, RespondsNotFound) {
   HttpRouter router;
   router.attach_routes();
 

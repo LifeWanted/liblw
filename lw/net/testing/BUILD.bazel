@@ -1,0 +1,24 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+package(
+  default_visibility = [
+    "//lw/http:__subpackages__",
+    "//lw/net:__subpackages__",
+  ],
+)
+
+filegroup(
+  name = "tls_credential_files",
+  testonly = True,
+  srcs = [
+    "test.cert.pem",
+    "test.key.pem",
+  ],
+)
+
+cc_library(
+  name = "tls_credentials",
+  hdrs = ["tls_credentials.h"],
+  testonly = True,
+  data = [":tls_credential_files"],
+)

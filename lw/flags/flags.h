@@ -17,10 +17,12 @@
 
 #include <cstdlib>
 #include <optional>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 
 #include "lw/err/canonical.h"
 #include "lw/flags/format.h"
@@ -56,6 +58,15 @@ bool flags_cli_set(
   const char* const* rest_args,
   int argc
 );
+
+/**
+ * Formats all of the flags with their type, defaults, and description suitable
+ * for printing to a terminal window.
+ *
+ * @param out
+ *  An output stream to write the formatted flag descriptions.
+ */
+void print_flags(std::ostream& out);
 
 // -------------------------------------------------------------------------- //
 
