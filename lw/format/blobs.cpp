@@ -9,11 +9,13 @@ namespace lw::format {
 namespace internal {
 namespace {
 
+constexpr std::size_t B64_BLOCK_SIZE = 4;
+
 char to_hex_char(int n) {
   return n < 10 ? ('0' + n) : ('a' + n - 10);
 }
 
-void to_base_64(char* out, BufferView buffer, std::size_t offset) {
+void to_base_64(char (&out)[B64_BLOCK_SIZE], BufferView buffer) {
   // TODO(alaina): Create a URL-safe version of this too using - and _.
   static const std::string_view b64_table =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -22,9 +24,9 @@ void to_base_64(char* out, BufferView buffer, std::size_t offset) {
   int bits_collected        = 0;
   unsigned int accumulator  = 0;
 
-  // Work on every character of the source string...
-  for (; outpos < 4 && offset < buffer.size(); ++offset) {
-    accumulator = (accumulator << 8) | (buffer[offset] & 0xffu);
+  // Work on one block of the source string...
+  for (std::size_t i = 0; outpos < B64_BLOCK_SIZE && i < buffer.size(); ++i) {
+    accumulator = (accumulator << 8) | (buffer[i] & 0xffu);
     bits_collected += 8;
 
     // ...and add groups of 6 bits to the resulting string.
@@ -40,7 +42,7 @@ void to_base_64(char* out, BufferView buffer, std::size_t offset) {
     accumulator <<= 6 - bits_collected;
     out[outpos++] = b64_table[accumulator & 0x3fu];
   }
-  while (outpos < 4) out[outpos++] = '=';
+  while (outpos < B64_BLOCK_SIZE) out[outpos++] = '=';
 }
 
 }
@@ -123,7 +125,7 @@ void Base64Iterator::_load_chars() {
     std::memset(_block, '\0', 4);
     return;
   }
-  to_base_64(_block, _buffer, _index);
+  to_base_64(_block, _buffer.trim_prefix(_index));
 }
 
 }

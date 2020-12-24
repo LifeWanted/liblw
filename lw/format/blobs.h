@@ -146,22 +146,22 @@ inline internal::BlobView<internal::Base64Iterator> base64(BufferView buffer) {
   return internal::BlobView<internal::Base64Iterator>{buffer};
 }
 
+struct IteratorTraits {
+  typedef std::int64_t difference_type;
+  typedef const char value_type;
+  typedef const char* pointer;
+  typedef const char& reference;
+  typedef std::bidirectional_iterator_tag iterator_category;
+};
+
 }
 
 template<>
-struct std::iterator_traits<::lw::format::internal::HexIterator> {
-  typedef std::int64_t difference_type;
-  typedef const char value_type;
-  typedef const char* pointer;
-  typedef const char& reference;
-  typedef std::bidirectional_iterator_tag iterator_category;
-};
+struct std::iterator_traits<::lw::format::internal::HexIterator>:
+  public ::lw::format::IteratorTraits
+{};
 
 template<>
-struct std::iterator_traits<::lw::format::internal::Base64Iterator> {
-  typedef std::int64_t difference_type;
-  typedef const char value_type;
-  typedef const char* pointer;
-  typedef const char& reference;
-  typedef std::bidirectional_iterator_tag iterator_category;
-};
+struct std::iterator_traits<::lw::format::internal::Base64Iterator>:
+  public ::lw::format::IteratorTraits
+{};

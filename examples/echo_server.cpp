@@ -4,7 +4,6 @@
  *  contents of the request.
  */
 
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>

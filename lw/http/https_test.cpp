@@ -107,7 +107,7 @@ TEST_F(HttpsRouterTest, ExecutesRegisteredHandlers) {
   scheduler().run();
 }
 
-TEST_F(HttpsRouterTest, RespondsNotFOund) {
+TEST_F(HttpsRouterTest, RespondsNotFound) {
   std::string response;
   auto [client, server] = make_connection();
 

@@ -26,7 +26,7 @@ TLSStream::TLSStream(
 
 TLSStream::~TLSStream() {
   // This destructor must be defined in this file where it has access to the
-  // full definition of the TLS*Impl classes.
+  // full definition of the TLSClientImpl class.
 }
 
 co::Future<void> TLSStream::handshake() {

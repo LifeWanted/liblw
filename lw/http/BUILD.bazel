@@ -109,7 +109,6 @@ cc_library(
 cc_test(
   name = "https_test",
   srcs = ["https_test.cpp"],
-  data = [":testing/test.cert"],
   deps = [
     ":http",
     ":https",

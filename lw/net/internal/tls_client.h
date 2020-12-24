@@ -10,8 +10,8 @@ enum class TLSResult {
   /**
    * The underlying library needs to read more data, but none is available.
    *
-   * Resolve this by reading more data off the wire and calling
-   * `buffer_encrypted_data`.
+   * Resolve this by buffering more data using the appropriate `buffer_*_data`
+   * method.
    */
   NEED_TO_READ,
 
@@ -41,6 +41,14 @@ struct TLSIOResult {
   operator bool() const { return result == TLSResult::COMPLETED; }
 };
 
+/**
+ * Simplified interface for setting up and utilizing a TLS connection.
+ *
+ * This implementation uses non-blocking memory buffers for processing all
+ * encryption and decryption internally. This means it is necessary to first
+ * buffer decrypted or encrypted data before attempting to read. Failure to do
+ * so will result in `TLSResult::NEED_TO_READ`.
+ */
 class TLSClientImpl {
 public:
   TLSClientImpl(
@@ -55,6 +63,26 @@ public:
 
   ~TLSClientImpl();
 
+  /**
+   * Attempts to perform a TLS handshake sequence. Safe to call repeatedly.
+   *
+   * A complete TLS handshake requires communicating with the other end of the
+   * connection to agree to an encryption protocol and exchange keys. Roughly,
+   * completing a handshake requires this sequence:
+   *
+   * ```
+   *  while (handshake() != COMPLETED)
+   *    if (read_encrypted_data(buffer))
+   *      connection.write(buffer)
+   *    if (handshake() == NEED_TO_READ)
+   *      connection.read(buffer)
+   *      buffer_encrypted_data(buffer)
+   * ```
+   *
+   * @return
+   *  The desired next step for the handshake to finish. If the handshake is
+   *  finished, `TLSResult::COMPLETED` is returned.
+   */
   TLSResult handshake();
 
   /**
