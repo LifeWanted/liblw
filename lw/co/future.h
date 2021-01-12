@@ -136,8 +136,15 @@ public:
 
   Promise(const Promise&) = delete;
   Promise& operator=(const Promise&) = delete;
-  Promise(Promise&&);
-  Promise& operator=(Promise&&);
+  Promise(Promise&& other):
+    _future_obtained{other._future_obtained.load()},
+    _state{std::move(other._state)}
+  {}
+  Promise& operator=(Promise&& other) {
+    _future_obtained = other._future_obtained.load();
+    _state = std::move(other._state);
+    return *this;
+  }
 
   /*** std::promise API ***/
 
@@ -223,8 +230,15 @@ public:
 
   Promise(const Promise&) = delete;
   Promise& operator=(const Promise&) = delete;
-  Promise(Promise&&);
-  Promise& operator=(Promise&&);
+  Promise(Promise&& other):
+    _future_obtained{other._future_obtained.load()},
+    _state{std::move(other._state)}
+  {}
+  Promise& operator=(Promise&& other) {
+    _future_obtained = other._future_obtained.load();
+    _state = std::move(other._state);
+    return *this;
+  }
 
   /*** std::promise API ***/
 
