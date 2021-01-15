@@ -14,11 +14,15 @@ Generator<int> yield_some() {
   co_yield 2;
 }
 
+Future<int> await_some(int x) {
+  co_await next_tick();
+  co_return x;
+}
+
 AsyncGenerator<int> yield_async() {
   co_await next_tick();
   co_yield 1;
-  co_await next_tick();
-  co_yield make_resolved_future(2);
+  co_yield await_some(2);
 }
 
 TEST(Generator, BasicGeneration) {
