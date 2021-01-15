@@ -9,6 +9,13 @@
 #include "lw/err/canonical.h"
 
 namespace lw::co {
+
+template <typename T>
+class Future;
+
+template <typename T>
+class Promise;
+
 namespace internal {
 
 template <typename T>
@@ -18,7 +25,7 @@ template <>
 struct SharedPromiseState<void> {
   std::atomic_bool state_set = false;
   std::atomic_bool future_suspended = false;
-  std::exception_ptr exception;
+  std::exception_ptr exception = nullptr;
   Scheduler* scheduler = nullptr;
   std::coroutine_handle<> handle;
 };
@@ -26,12 +33,10 @@ struct SharedPromiseState<void> {
 template <typename T>
 struct SharedPromiseState: public SharedPromiseState<void> {
   std::unique_ptr<T> value;
+  std::unique_ptr<Future<void>> future_return = nullptr;
 };
 
 }
-
-template <typename T>
-class Promise;
 
 class [[nodiscard]] FutureBase {
 public:
@@ -119,7 +124,8 @@ private:
     FutureBase{state}
   {}
 
-  friend class Promise<void>;
+  template <typename T>
+  friend class Promise;
 };
 
 /**
@@ -163,12 +169,6 @@ public:
     _schedule_task();
   }
 
-  void set_value(T& value) {
-    _claim_state_set();
-    _state->value = std::make_unique<T>(value);
-    _schedule_task();
-  }
-
   void set_value(T&& value) {
     _claim_state_set();
     _state->value = std::make_unique<T>(std::move(value));
@@ -187,8 +187,8 @@ public:
     return std::suspend_never{};
   }
 
-  auto final_suspend() const {
-    return std::suspend_never{};
+  Future<void> final_suspend() const {
+    if (_state->future_return) co_await *_state->future_return;
   }
 
   Future<T> get_return_object() {
@@ -198,6 +198,22 @@ public:
   template <typename U>
   void return_value(U&& value) {
     set_value(std::forward<U>(value));
+  }
+
+  template <typename U>
+  void return_value(Future<U>&& value) {
+    // TODO(#10): This logic causes a segmentation fault. See the test
+    // `PromiseInt::CoReturnFuture` for more details.
+    if (value.await_ready()) {
+      set_value(value.await_resume());
+    }
+
+    _state->future_return = std::make_unique<Future<void>>(
+      _await_return(std::move(value))
+    );
+    _state->scheduler = _state->future_return->_state->scheduler;
+    _state->handle = _state->future_return->_state->handle;
+    _state->future_suspended = true;
   }
 
   void unhandled_exception() {
@@ -215,6 +231,11 @@ private:
 
   void _schedule_task() {
     if (_state->future_suspended) _state->scheduler->schedule(_state->handle);
+  }
+
+  template <typename U>
+  Future<void> _await_return(Future<U>&& value) {
+    set_value(co_await value);
   }
 
   std::atomic_bool _future_obtained = false;
