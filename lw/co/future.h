@@ -33,7 +33,7 @@ struct SharedPromiseState<void> {
 template <typename T>
 struct SharedPromiseState: public SharedPromiseState<void> {
   std::unique_ptr<T> value;
-  std::unique_ptr<Future<void>> future_return = nullptr;
+  std::shared_ptr<SharedPromiseState<T>> chain_state = nullptr;
 };
 
 }
@@ -44,7 +44,9 @@ public:
   FutureBase& operator=(const FutureBase&) = delete;
 
   FutureBase(FutureBase&&) = default;
-  FutureBase& operator=(FutureBase&&) = default;
+  FutureBase& operator=(FutureBase&& other) = default;
+
+  virtual ~FutureBase() = default;
 
   bool await_ready() const {
     return _state->state_set;
@@ -86,14 +88,13 @@ public:
   using promise_type = Promise<T>;
 
   T await_resume() {
-    if (!_state->state_set) {
+    auto state = _get_state();
+    if (!state->state_set) {
       throw FailedPrecondition()
         << "Cannot resume future before state is set on promise.";
     }
-    if (_state->exception) std::rethrow_exception(_state->exception);
-    return std::move(
-      *std::static_pointer_cast<internal::SharedPromiseState<T>>(_state)->value
-    );
+    if (state->exception) std::rethrow_exception(state->exception);
+    return std::move(*state->value);
   }
 
 private:
@@ -102,6 +103,14 @@ private:
       std::static_pointer_cast<internal::SharedPromiseState<void>>(state)
     }
   {}
+
+  std::shared_ptr<internal::SharedPromiseState<T>> _get_state() {
+    auto state = std::static_pointer_cast<internal::SharedPromiseState<T>>(
+      _state
+    );
+    while (state->chain_state) state = state->chain_state;
+    return state;
+  }
 
   friend class Promise<T>;
 };
@@ -164,21 +173,18 @@ public:
   }
 
   void set_value(const T& value) {
-    _claim_state_set();
-    _state->value = std::make_unique<T>(value);
-    _schedule_task();
+    _do_set_value(std::make_unique<T>(value));
   }
 
   void set_value(T&& value) {
-    _claim_state_set();
-    _state->value = std::make_unique<T>(std::move(value));
-    _schedule_task();
+    _do_set_value(std::make_unique<T>(std::move(value)));
   }
 
   void set_exception(std::exception_ptr err) {
-    _claim_state_set();
-    _state->exception = err;
-    _schedule_task();
+    auto state = _get_state();
+    _claim_state_set(state);
+    state->exception = err;
+    _schedule_task(state);
   }
 
   /*** Coroutine promise hooks ***/
@@ -187,8 +193,8 @@ public:
     return std::suspend_never{};
   }
 
-  Future<void> final_suspend() const {
-    if (_state->future_return) co_await *_state->future_return;
+  auto final_suspend() const {
+    return std::suspend_never{};
   }
 
   Future<T> get_return_object() {
@@ -200,20 +206,20 @@ public:
     set_value(std::forward<U>(value));
   }
 
-  template <typename U>
-  void return_value(Future<U>&& value) {
-    // TODO(#10): This logic causes a segmentation fault. See the test
-    // `PromiseInt::CoReturnFuture` for more details.
-    if (value.await_ready()) {
-      set_value(value.await_resume());
-    }
-
-    _state->future_return = std::make_unique<Future<void>>(
-      _await_return(std::move(value))
+  void return_value(Future<T>&& value) {
+    auto val_state = std::static_pointer_cast<internal::SharedPromiseState<T>>(
+      value._state
     );
-    _state->scheduler = _state->future_return->_state->scheduler;
-    _state->handle = _state->future_return->_state->handle;
-    _state->future_suspended = true;
+
+    if (val_state->state_set) {
+      if (val_state->exception) {
+        set_exception(val_state->exception);
+      } else {
+        set_value(std::move(*val_state->value));
+      }
+    } else {
+      val_state->chain_state = _state;
+    }
   }
 
   void unhandled_exception() {
@@ -221,21 +227,31 @@ public:
   }
 
 private:
-  void _claim_state_set() {
-    bool state_already_set = _state->state_set.exchange(true);
+  using state_ptr = std::shared_ptr<internal::SharedPromiseState<T>>;
+
+  void _do_set_value(std::unique_ptr<T>&& value) {
+    auto state = _get_state();
+    _claim_state_set(state);
+    state->value = std::move(value);
+    _schedule_task(state);
+  }
+
+  void _claim_state_set(state_ptr& state) {
+    bool state_already_set = state->state_set.exchange(true);
     if (state_already_set) {
       throw FailedPrecondition()
         << "Promise state already set previously.";
     }
   }
 
-  void _schedule_task() {
-    if (_state->future_suspended) _state->scheduler->schedule(_state->handle);
+  void _schedule_task(state_ptr& state) {
+    if (state->future_suspended) state->scheduler->schedule(state->handle);
   }
 
-  template <typename U>
-  Future<void> _await_return(Future<U>&& value) {
-    set_value(co_await value);
+  std::shared_ptr<internal::SharedPromiseState<T>> _get_state() {
+    auto state = _state;
+    while (state->chain_state) state = state->chain_state;
+    return state;
   }
 
   std::atomic_bool _future_obtained = false;

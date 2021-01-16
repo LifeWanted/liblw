@@ -122,32 +122,44 @@ TEST(PromiseInt, FutureCoroutine) {
   destroy_all_schedulers();
 }
 
-// TODO(#10): This test causes a segmentation fault when resuming the
-// `next_tick_coro`'s future. For some reason, the future thinks it has an
-// exception and attempts to rethrow it. This rethrow triggers a seg fault.
-//
-// TEST(PromiseInt, CoReturnFuture) {
-//   auto next_tick_coro = [](int i) -> Future<int> {
-//     co_await next_tick();
-//     co_return i * 2;
-//   };
-//   auto coro = [&](int i) -> Future<int> {
-//     co_return next_tick_coro(i);
-//   };
-//   int result = 0;
-//   Scheduler::this_thread().schedule([&]() -> Task<void> {
-//     ++result;
-//     co_await next_tick();
-//     ++result;
-//     result = co_await coro(result);
-//     ++result;
-//     EXPECT_EQ(result, 5);
-//     result = co_await coro(result);
-//   });
-//   Scheduler::this_thread().run();
-//   EXPECT_EQ(result, 10);
-//   destroy_all_schedulers();
-// }
+TEST(PromiseInt, CoReturnSetFuture) {
+  auto next_tick_coro = [](int i) -> Future<int> {
+    co_return i * 2;
+  };
+  auto coro = [&](int i) -> Future<int> {
+    co_return next_tick_coro(i);
+  };
+  int result = 0;
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    result += 2;
+    result = co_await coro(result);
+    ++result;
+    EXPECT_EQ(result, 5);
+  });
+  Scheduler::this_thread().run();
+  EXPECT_EQ(result, 5);
+  destroy_all_schedulers();
+}
+
+TEST(PromiseInt, CoReturnSuspendedFuture) {
+  auto next_tick_coro = [](int i) -> Future<int> {
+    co_await next_tick();
+    co_return i * 2;
+  };
+  auto coro = [&](int i) -> Future<int> {
+    co_return next_tick_coro(i);
+  };
+  int result = 0;
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    result += 2;
+    result = co_await coro(result);
+    ++result;
+    EXPECT_EQ(result, 5);
+  });
+  Scheduler::this_thread().run();
+  EXPECT_EQ(result, 5);
+  destroy_all_schedulers();
+}
 
 TEST(PromiseInt, ThrowingFutureCoroutine) {
   auto coro = []() -> Future<int> {
@@ -163,6 +175,30 @@ TEST(PromiseInt, ThrowingFutureCoroutine) {
       EXPECT_THAT(err.what(), HasSubstr("On noes"));
       ++result;
     }
+  });
+  Scheduler::this_thread().run();
+  EXPECT_EQ(result, 2);
+  destroy_all_schedulers();
+}
+
+TEST(PromiseInt, CoReturnThrownFuture) {
+  auto next_tick_coro = [](int i) -> Future<int> {
+    throw InvalidArgument() << "On noes!";
+  };
+  auto coro = [&](int i) -> Future<int> {
+    co_return next_tick_coro(i);
+  };
+  int result = 0;
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    ++result;
+    try {
+      result = co_await coro(result);
+      result += 2;
+    } catch (const InvalidArgument& err) {
+      EXPECT_THAT(err.what(), HasSubstr("On noes"));
+      ++result;
+    }
+    EXPECT_EQ(result, 2);
   });
   Scheduler::this_thread().run();
   EXPECT_EQ(result, 2);
