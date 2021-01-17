@@ -23,6 +23,29 @@ cc_test(
 )
 
 cc_library(
+  name = "server_resource",
+  hdrs = ["server_resource.h"],
+  srcs = ["server_resource.cpp"],
+  deps = [
+    "//lw/co:future",
+    "//lw/err",
+  ],
+)
+
+cc_test(
+  name = "server_resource_test",
+  srcs = ["server_resource_test.cpp"],
+  deps = [
+    ":server_resource",
+    "@gtest//:gtest_main",
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/co/testing:destroy_scheduler",
+  ],
+)
+
+cc_library(
   name = "server",
   visibility = ["//visibility:public"],
   hdrs = ["server.h"],
