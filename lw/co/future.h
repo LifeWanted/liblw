@@ -4,6 +4,7 @@
 #include <coroutine>
 #include <exception>
 #include <memory>
+#include <tuple>
 
 #include "lw/co/scheduler.h"
 #include "lw/err/canonical.h"
@@ -363,6 +364,18 @@ Future<T> make_resolved_future(std::exception_ptr err) {
   Promise<T> promise;
   promise.set_exception(err);
   return promise.get_future();
+}
+
+/**
+ * Await all the provided futures concurrently.
+ *
+ * @return
+ *  A tuple containing all the resolved values from the futures in the order
+ *  they are specified in the arguments.
+ */
+template <typename... Args>
+co::Future<std::tuple<Args...>> all(co::Future<Args>... futures) {
+  co_return std::make_tuple((co_await futures)...);
 }
 
 }

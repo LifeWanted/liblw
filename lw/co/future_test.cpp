@@ -359,5 +359,75 @@ TEST(MakeFuture, RejectAValue) {
   EXPECT_THROW(f.await_resume(), InvalidArgument);
 }
 
+TEST(AwaitAll, AllResolve) {
+  Scheduler::this_thread().schedule([]() -> Task<void> {
+    std::tuple<int, float, double> res = co_await all(
+      make_resolved_future<int>(1),
+      make_resolved_future<float>(2.0f),
+      make_resolved_future<double>(3.14)
+    );
+    EXPECT_EQ(std::get<int>(res), 1);
+    EXPECT_EQ(std::get<float>(res), 2.0f);
+    EXPECT_EQ(std::get<double>(res), 3.14);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+// TODO(alaina): Implement support for Future<void> in co::all.
+// TEST(AwaitAll, AllVoid) {
+//   int counter = 0;
+//   auto coro0 = [&]() -> Future<void> {
+//     co_await next_tick();
+//     EXPECT_EQ(++counter, 1);
+//   };
+//   auto coro1 = [&]() -> Future<void> {
+//     co_await next_tick();
+//     EXPECT_EQ(++counter, 2);
+//   };
+//   auto coro2 = [&]() -> Future<void> {
+//     co_await next_tick();
+//     EXPECT_EQ(++counter, 3);
+//   };
+
+//   Scheduler::this_thread().schedule([&]() -> Task<void> {
+//     co_await all(coro0(), coro1(), coro2());
+//     EXPECT_EQ(counter, 3);
+//   });
+//   Scheduler::this_thread().run();
+//   destroy_all_schedulers();
+// }
+
+TEST(AwaitAll, ResolveOutOfOrder) {
+  int counter = 0;
+  auto coro0 = [&]() -> Future<int> {
+    EXPECT_EQ(counter, 0);
+    co_await next_tick();
+    EXPECT_EQ(counter, 1);
+    co_await next_tick();
+    EXPECT_EQ(counter, 2);
+    co_return ++counter;
+  };
+  auto coro1 = [&]() -> Future<int> {
+    EXPECT_EQ(counter, 0);
+    co_await next_tick();
+    EXPECT_EQ(counter, 1);
+    co_return ++counter;
+  };
+  auto coro2 = [&]() -> Future<int> {
+    EXPECT_EQ(counter, 0);
+    co_return ++counter;
+  };
+
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    auto res = co_await all(coro0(), coro1(), coro2());
+    EXPECT_EQ(std::get<0>(res), 3);
+    EXPECT_EQ(std::get<1>(res), 2);
+    EXPECT_EQ(std::get<2>(res), 1);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
 }
 }
