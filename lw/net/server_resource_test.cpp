@@ -10,7 +10,6 @@
 #include "lw/co/testing/destroy_scheduler.h"
 
 namespace lw {
-namespace {
 
 template <typename T>
 struct TestServerResource: public ServerResource<> {
@@ -57,6 +56,28 @@ LW_REGISTER_RESOURCE_FACTORY(
   }
 );
 
+struct DependencyConvergenceTestServerResource:
+  public ServerResource<
+    std::tuple<
+      DependentTestServerResource<int>,
+      OtherDependentTestServerResource
+    >
+  >
+{
+  DependencyConvergenceTestServerResource(int val): value{val} {}
+
+  int value;
+};
+
+LW_REGISTER_RESOURCE_FACTORY(
+  DependencyConvergenceTestServerResource,
+  [](DependentTestServerResource<int>& a, OtherDependentTestServerResource& b) {
+    return std::make_unique<DependencyConvergenceTestServerResource>(
+      a.value * b.value
+    );
+  }
+);
+
 template <typename T>
 struct AsyncTestServerResource: public ServerResource<> {
   template <typename U>
@@ -76,6 +97,7 @@ LW_REGISTER_RESOURCE_FACTORY(
 
 // -------------------------------------------------------------------------- //
 
+namespace {
 template <typename Func>
 void run(Func&& func) {
   co::Scheduler::this_thread().schedule([&]() -> co::Task<void> {
@@ -155,6 +177,27 @@ TEST(ServerResource, RecursivelyConstructDependencies) {
       EXPECT_NE(resource.value, first_value)
         << "Constructing a second time should call factory again.";
     }
+  });
+}
+
+TEST(ServerResource, ResolvesConvergentDependencyTrees) {
+  run([]() -> co::Future<void> {
+    const std::type_info& info =
+      typeid(DependencyConvergenceTestServerResource);
+
+    ServerResourceContext context;
+    auto resource_ptr = co_await construct_server_resource(info, context);
+    DependencyConvergenceTestServerResource& resource =
+      static_cast<DependencyConvergenceTestServerResource&>(*resource_ptr);
+    EXPECT_EQ(
+      context.unsafe_get<DependentTestServerResource<int>>().value,
+      context.unsafe_get<OtherDependentTestServerResource>().value
+    );
+    EXPECT_EQ(
+      resource.value,
+      context.unsafe_get<DependentTestServerResource<int>>().value *
+      context.unsafe_get<OtherDependentTestServerResource>().value
+    );
   });
 }
 

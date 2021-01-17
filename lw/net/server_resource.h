@@ -30,8 +30,8 @@ class ServerResourceContext;
 
 /**
  * Base for server resources. Final server resources should inherit from the
- * ServerResource template, specifying their dependencies as a tuple argument to
- * that class.
+ * ServerResource template, specifying their dependencies in a tuple as the
+ * template parameter to that class.
  */
 class ServerResourceBase {
 public:
@@ -75,22 +75,31 @@ public:
   ServerResourceContext(ServerResourceContext&&) = default;
   ServerResourceContext& operator=(ServerResourceContext&&) = default;
 
+  /**
+   * Fetches the identified resource. If this is the first time the resource is
+   * requested, it is constructed first.
+   */
   template <typename T>
   co::Future<T*> create_and_get();
 
+  /**
+   * Fetches the identified resource without performing any check for its
+   * existence first.
+   */
   template <typename T>
   T& unsafe_get() {
-    return *_dependencies.at({typeid(T)});
+    return *static_cast<T*>(_dependencies.at({typeid(T)}).get());
   }
-
   template <typename T>
   const T& unsafe_get() const {
-    return *_dependencies.at({typeid(T)});
+    return *static_cast<T*>(_dependencies.at({typeid(T)}).get());
   }
 
 private:
   std::unordered_map<std::type_index, std::unique_ptr<ServerResourceBase>>
   _dependencies;
+
+  std::unordered_multimap<std::type_index, co::Promise<void>> _construction;
 };
 
 // -------------------------------------------------------------------------- //
@@ -118,24 +127,6 @@ template <typename... Unwrapped, typename Next, typename... Rest>
 struct TupleFlatten<std::tuple<Unwrapped...>, Next, Rest...>:
   public TupleFlatten<std::tuple<Unwrapped..., Next>, Rest...>
 {};
-
-// -------------------------------------------------------------------------- //
-
-template <typename DependencyTuple>
-struct ConstructAllDeps;
-
-template <>
-struct ConstructAllDeps<std::tuple<>> {
-  static void construct(ServerResourceContext& context) {}
-};
-
-template <typename Dependency, typename... Rest>
-struct ConstructAllDeps<std::tuple<Dependency, Rest...>> {
-  static void construct(ServerResourceContext& context) {
-    context.create_and_get<Dependency>();
-    ConstructAllDeps<std::tuple<Rest...>>::construct(context);
-  }
-};
 
 // -------------------------------------------------------------------------- //
 
@@ -188,6 +179,19 @@ class FactoryIsAsynchronous:
 template <typename ServerResource, typename DependenciesTuple>
 struct FetchDependenciesAndInvoke;
 
+template <typename ServerResource>
+struct FetchDependenciesAndInvoke<ServerResource, std::tuple<>> {
+  template <typename Factory>
+  static co::Future<std::unique_ptr<ServerResourceBase>> invoke(
+    Factory& factory,
+    ServerResourceContext& context
+  ) {
+    auto resource = co_await factory();
+    resource->server_resource_context(context);
+    co_return std::move(resource);
+  }
+};
+
 template <typename ServerResource, typename... Dependencies>
 struct FetchDependenciesAndInvoke<ServerResource, std::tuple<Dependencies...>> {
   template <typename Factory>
@@ -195,8 +199,9 @@ struct FetchDependenciesAndInvoke<ServerResource, std::tuple<Dependencies...>> {
     Factory& factory,
     ServerResourceContext& context
   ) {
-    auto resource = co_await factory(
-      (*(co_await context.create_and_get<Dependencies>()))...
+    auto resource = co_await std::apply(
+      [&](auto... deps) { return factory((*deps)...); },
+      co_await co::all(context.create_and_get<Dependencies>()...)
     );
 
     resource->server_resource_context(context);
@@ -263,12 +268,7 @@ public:
   typedef internal::TupleFlatten<std::tuple<>, Dependencies...>::flattened_types
     dependency_types;
 
-  void initialize_dependencies() {
-    internal::ConstructAllDeps<dependency_types>::construct(
-      server_resource_context()
-    );
-  }
-
+protected:
   template <typename T>
   T& get() {
     static_assert(
@@ -336,7 +336,21 @@ co::Future<T*> ServerResourceContext::create_and_get() {
   const std::type_info& info{typeid(T)};
   std::type_index idx{info};
   if (!_dependencies.contains(idx)) {
-    _dependencies[idx] = co_await construct_server_resource(info, *this);
+    if (_construction.contains(idx)) {
+      // The dependency is currently under construction. Add ourselves to the
+      // notification queue to await its completion.
+      auto itr = _construction.emplace(idx, co::Promise<void>{});
+      co_await itr->second.get_future();
+    } else {
+      // The dependency is not yet being built. Tag the type as under
+      // construction, build it, and then notify everyone waiting for its
+      // completion.
+      _construction.emplace(idx, co::Promise<void>{});
+      _dependencies[idx] = co_await construct_server_resource(info, *this);
+      auto [itr, end] = _construction.equal_range(idx);
+      for (; itr != end; ++itr) itr->second.set_value();
+      _construction.erase(idx);
+    }
   }
   co_return static_cast<T*>(_dependencies.at(idx).get());
 }
