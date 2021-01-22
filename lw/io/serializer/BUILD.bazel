@@ -1,0 +1,24 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+  name = "serializer",
+  visibility = ["//visibility:public"],
+  hdrs = [
+    "serializer.h",
+    "concepts.h",
+  ],
+  deps = [
+    "//lw/base:concepts",
+    "//lw/co:future",
+  ],
+)
+
+cc_test(
+  name = "serializer_test",
+  srcs = ["serializer_test.cpp"],
+  deps = [
+    ":serializer",
+    "@gtest//:gtest_main",
+    "//lw/io/serializer/testing:mock_formatter",
+  ],
+)

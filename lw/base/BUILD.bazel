@@ -1,9 +1,16 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
   name = "base",
   visibility = ["//visibility:public"],
   hdrs = ["base.h"],
   deps = [":init"]
+)
+
+cc_library(
+  name = "concepts",
+  visibility = ["//visibility:public"],
+  hdrs = ["concepts.h"],
 )
 
 cc_library(
