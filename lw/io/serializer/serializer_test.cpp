@@ -10,9 +10,45 @@
 #include "lw/io/serializer/testing/mock_formatter.h"
 
 namespace lw::io {
+
+struct ObjectTagged {
+  int a;
+  int b;
+  int c;
+};
+
+struct ListTagged {
+  int a;
+  int b;
+  int c;
+};
+
+template <>
+struct Serialize<ObjectTagged> {
+  typedef ObjectTag serialization_category;
+
+  void serialize(Serializer& serializer, const ObjectTagged& value) {
+    serializer.write("a", value.a);
+    serializer.write("b", value.b);
+    serializer.write("c", value.c);
+  }
+};
+
+template <>
+struct Serialize<ListTagged> {
+  typedef ListTag serialization_category;
+
+  void serialize(Serializer& serializer, const ListTagged& value) {
+    serializer.write(value.a);
+    serializer.write(value.b);
+    serializer.write(value.c);
+  }
+};
+
 namespace {
 
 using ::lw::io::testing::MockFormatter;
+using ::testing::_;
 using ::testing::StrictMock;
 
 TEST(Serializer, WriteNull) {
@@ -67,7 +103,17 @@ TEST(Serializer, WriteString) {
   s.write(std::string{"bang"});
 }
 
-TEST(Serializer, WriteList) {
+TEST(Serializer, WriteListNumber) {
+  auto formatter = std::make_unique<StrictMock<MockFormatter>>();
+  EXPECT_CALL(*formatter, put_signed_integer(42)).Times(3);
+  EXPECT_CALL(*formatter, start_list()).Times(1);
+  EXPECT_CALL(*formatter, end_list()).Times(1);
+
+  Serializer s{std::move(formatter)};
+  s.write(std::vector<int>{{42, 42, 42}});
+}
+
+TEST(Serializer, WriteListString) {
   auto formatter = std::make_unique<StrictMock<MockFormatter>>();
   EXPECT_CALL(*formatter, put_string(std::string_view{"foo"})).Times(3);
   EXPECT_CALL(*formatter, start_list()).Times(1);
@@ -93,6 +139,22 @@ TEST(Serializer, WriteListOfList) {
   );
 }
 
+TEST(Serializer, WriteListTagged) {
+  auto formatter = std::make_unique<StrictMock<MockFormatter>>();
+  EXPECT_CALL(*formatter, put_signed_integer(_)).Times(3);
+  EXPECT_CALL(*formatter, start_list()).Times(1);
+  EXPECT_CALL(*formatter, end_list()).Times(1);
+
+  Serializer s{std::move(formatter)};
+  s.write(
+    ListTagged{
+      .a = 1,
+      .b = 2,
+      .c = 3
+    }
+  );
+}
+
 TEST(Serializer, WriteObject) {
   auto formatter = std::make_unique<StrictMock<MockFormatter>>();
   EXPECT_CALL(*formatter, put_string(std::string_view{"foo"})).Times(1);
@@ -110,6 +172,26 @@ TEST(Serializer, WriteObject) {
     std::map<std::string_view, std::string_view>{
       {"foo", "bar"},
       {"fizz", "bang"}
+    }
+  );
+}
+
+TEST(Serializer, WriteObjectTagged) {
+  auto formatter = std::make_unique<StrictMock<MockFormatter>>();
+  EXPECT_CALL(*formatter, put_string(_)).Times(3);
+  EXPECT_CALL(*formatter, put_signed_integer(_)).Times(3);
+  EXPECT_CALL(*formatter, start_object()).Times(1);
+  EXPECT_CALL(*formatter, start_pair_key()).Times(3);
+  EXPECT_CALL(*formatter, end_pair_key()).Times(3);
+  EXPECT_CALL(*formatter, end_pair()).Times(3);
+  EXPECT_CALL(*formatter, end_object()).Times(1);
+
+  Serializer s{std::move(formatter)};
+  s.write(
+    ObjectTagged{
+      .a = 1,
+      .b = 2,
+      .c = 3
     }
   );
 }

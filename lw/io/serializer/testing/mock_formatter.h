@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gmock/gmock.h"
-#include "lw/io/serializer/serializer.h"
+#include "lw/io/serializer/formatter.h"
 
 namespace lw::io::testing {
 

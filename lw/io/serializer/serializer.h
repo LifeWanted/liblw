@@ -1,12 +1,12 @@
 #pragma once
 
 #include <concepts>
-#include <cstdint>
 #include <memory>
 #include <string_view>
 
 #include "lw/co/future.h"
 #include "lw/io/serializer/concepts.h"
+#include "lw/io/serializer/formatter.h"
 
 namespace lw::io {
 
@@ -56,28 +56,6 @@ public:
 
   template <typename T>
   T as();
-};
-
-class SerializationFormatter {
-public:
-  SerializationFormatter() = default;
-  virtual ~SerializationFormatter() = default;
-
-  virtual void put_null() = 0;
-  virtual void put_boolean(bool boolean) = 0;
-  virtual void put_char(char c) = 0;
-  virtual void put_signed_integer(std::int64_t number) = 0;
-  virtual void put_unsigned_integer(std::uint64_t number) = 0;
-  virtual void put_floating_point(double number) = 0;
-  virtual void put_string(std::string_view str) = 0;
-
-  virtual void start_list() = 0;
-  virtual void end_list() = 0;
-  virtual void start_object() = 0;
-  virtual void end_object() = 0;
-  virtual void start_pair_key() = 0;
-  virtual void end_pair_key() = 0;
-  virtual void end_pair() = 0;
 };
 
 class Serializer {
