@@ -1,0 +1,10 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test", "cc_binary")
+
+cc_binary(
+  name = "renderer",
+  srcs = ["renderer.cpp"],
+  deps = [
+    "//lw/err",
+    "//lw/err:system",
+  ],
+)
