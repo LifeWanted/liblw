@@ -47,6 +47,7 @@ concept ListSerializationTagged =
 template <typename T, typename SerializationResult>
 concept ListSerializationCapable =
   ForwardIterable<T> &&
+  !ForwardIterableAs<T, char> &&
   requires(const T& a) {
     { *a.begin() } -> BasicSerializable<SerializationResult>;
   };
@@ -74,7 +75,9 @@ concept ObjectSerializationCapable =
 }
 
 template <typename T>
-concept NumericSerializable = std::integral<T> || std::floating_point<T>;
+concept NumericSerializable =
+  std::integral<std::remove_reference_t<T>> ||
+  std::floating_point<std::remove_reference_t<T>>;
 
 template <typename T>
 concept StringSerializable = ForwardIterableAs<T, char>;
