@@ -8,43 +8,9 @@
 
 #include "gtest/gtest.h"
 #include "lw/io/serializer/testing/mock_formatter.h"
+#include "lw/io/serializer/testing/tagged_types.h"
 
 namespace lw::io {
-
-struct ObjectTagged {
-  int a;
-  int b;
-  int c;
-};
-
-struct ListTagged {
-  int a;
-  int b;
-  int c;
-};
-
-template <>
-struct Serialize<ObjectTagged> {
-  typedef ObjectTag serialization_category;
-
-  void serialize(Serializer& serializer, const ObjectTagged& value) {
-    serializer.write("a", value.a);
-    serializer.write("b", value.b);
-    serializer.write("c", value.c);
-  }
-};
-
-template <>
-struct Serialize<ListTagged> {
-  typedef ListTag serialization_category;
-
-  void serialize(Serializer& serializer, const ListTagged& value) {
-    serializer.write(value.a);
-    serializer.write(value.b);
-    serializer.write(value.c);
-  }
-};
-
 namespace {
 
 using ::lw::io::testing::MockFormatter;
@@ -146,13 +112,7 @@ TEST(Serializer, WriteListTagged) {
   EXPECT_CALL(*formatter, end_list()).Times(1);
 
   Serializer s{std::move(formatter)};
-  s.write(
-    ListTagged{
-      .a = 1,
-      .b = 2,
-      .c = 3
-    }
-  );
+  s.write(testing::ListTagged{.a = 1, .b = 2, .c = 3});
 }
 
 TEST(Serializer, WriteObject) {
@@ -187,13 +147,7 @@ TEST(Serializer, WriteObjectTagged) {
   EXPECT_CALL(*formatter, end_object()).Times(1);
 
   Serializer s{std::move(formatter)};
-  s.write(
-    ObjectTagged{
-      .a = 1,
-      .b = 2,
-      .c = 3
-    }
-  );
+  s.write(testing::ObjectTagged{.a = 1, .b = 2, .c = 3});
 }
 
 }

@@ -10,3 +10,16 @@ cc_library(
     "//lw/io/serializer",
   ],
 )
+
+cc_library(
+  name = "tagged_types",
+  hdrs = ["tagged_types.h"],
+  visibility = [
+    "//lw/io/serializer:__subpackages__",
+    "//lw/mime:__subpackages__",
+  ],
+  testonly = True,
+  deps = [
+    "//lw/io/serializer",
+  ],
+)

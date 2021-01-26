@@ -21,5 +21,6 @@ cc_test(
     ":serializer",
     "@gtest//:gtest_main",
     "//lw/io/serializer/testing:mock_formatter",
+    "//lw/io/serializer/testing:tagged_types",
   ],
 )
