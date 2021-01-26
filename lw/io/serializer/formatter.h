@@ -5,6 +5,14 @@
 
 namespace lw::io {
 
+/**
+ * Interface for serialization formats.
+ *
+ * New formats to be used with `lw::io::Serializer` must implement this
+ * interface.
+ *
+ * @see lw::mime::JSONSerializationFormatter
+ */
 class SerializationFormatter {
 public:
   SerializationFormatter() = default;

@@ -61,6 +61,8 @@ private:
   std::ostream& _output;
 };
 
+// -------------------------------------------------------------------------- //
+
 class JSONSerializer: public MimeSerializer {
 public:
   std::unique_ptr<io::SerializationFormatter> make_formatter(

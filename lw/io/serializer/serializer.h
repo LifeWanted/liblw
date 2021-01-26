@@ -10,7 +10,51 @@
 
 namespace lw::io {
 
+/**
+ * Tag to be used by specializations of `::lw::io::Serialize` to trigger object
+ * formatting in the serializer.
+ *
+ * For example, in JSON formatting, this tag results in `{` being inserted
+ * before calling the `Serialize::serialize` method, and `}` being inserted
+ * afterwards. When in object-formatting, the JSON formatter will also know to
+ * expect 2 values and insert a `:` between them along with a `,` before the 2nd
+ * through nth pairs.
+ *
+ * `Serialize` specializations with `typedef ObjectTag serialization_category`
+ * match the `ObjectSerializable` concept.
+ *
+ * @example{.cpp}
+ *  template<>
+ *  struct Serialize<MyObjectClass> {
+ *    typedef ObjectTag serialization_category; // <-- Object Tagged
+ *
+ *    void serialize(Serializer& serializer, const MyObjectClass&);
+ *    MyObjectClass deserialize(SerializedValue&);
+ *  };
+ */
 struct ObjectTag {};
+
+/**
+ * Tag to be used by specializations of `::lw::io::Serialize` to trigger list
+ * formatting in the serializer.
+ *
+ * For example, in JSON formatting, this tag results in `[` being inserted
+ * before calling the `Serialize::serialize` method, and `]` being inserted
+ * afterwards. When in list-formatting, the JSON formatter will also know to
+ * put a `,` before the 2nd through nth values.
+ *
+ * `Serialize` specializations with `typedef ListTag serialization_category`
+ * match the `ListSerializable` concept.
+ *
+ * @example{.cpp}
+ *  template<>
+ *  struct Serialize<MyListClass> {
+ *    typedef ListTag serialization_category; // <-- List Tagged
+ *
+ *    void serialize(Serializer& serializer, const MyListClass&);
+ *    MyListClass deserialize(SerializedValue&);
+ *  };
+ */
 struct ListTag {};
 
 /**
@@ -24,9 +68,10 @@ struct ListTag {};
  *    float baz;
  *  };
  *
+ *  namespace lw::io {
  *  template <>
  *  struct Serialize<Foo> {
- *    typedef ::lw::io::ObjectTag serialization_category;
+ *    typedef ObjectTag serialization_category;
  *
  *    void serialize(Serializer& serializer, const Foo& foo) {
  *      serializer.write("bar", foo.bar);
@@ -40,6 +85,7 @@ struct ListTag {};
  *      };
  *    }
  *  };
+ *  }
  */
 template <typename T>
 struct Serialize;
@@ -58,6 +104,23 @@ public:
   T as();
 };
 
+/**
+ * Type-aware serialization interface that bridges the gap between serializable
+ * types and formatters.
+ *
+ * Serializer::write comes in 4 forms:
+ *  - `void write(Serializable value)`
+ *  - `void write(Serializable key, Serializable value)`
+ *  - `co::Future<void> write(AsyncSerializable value)`
+ *  - `co::Future<void> write(Serializable key, AsyncSerializable value)`
+ *
+ * Where `Serializable` and `AsyncSerializable` match their respective concepts.
+ * There are also key-value versions that take `std::pair` to make working with
+ * STL maps easier.
+ *
+ * The key-value versions should only be used by `Serialize` specializations
+ * that specify `typedef ObjectTag serialization_category`.
+ */
 class Serializer {
 public:
   Serializer(std::unique_ptr<SerializationFormatter> formatter):
@@ -128,6 +191,17 @@ public:
     _formatter->end_object();
   }
 
+  template <AsyncSerializeable Value>
+  co::Future<void> write(const Value& value) {
+    Serialize<Value> s;
+    co_await s.serialize(*this, value);
+  }
+
+  /**
+   * Specialization for key-value pairs using `std::pair`.
+   *
+   * @see ::lw::io::ObjectTag
+   */
   template <Serializeable Key, Serializeable Value>
   void write(const std::pair<Key, Value>& pair) {
     _formatter->start_pair_key();
@@ -137,6 +211,11 @@ public:
     _formatter->end_pair();
   }
 
+  /**
+   * Specialization for key-value pairs using `std::pair`.
+   *
+   * @see ::lw::io::ObjectTag
+   */
   template <Serializeable Key, AsyncSerializeable Value>
   co::Future<void> write(const std::pair<Key, Value>& pair) {
     _formatter->start_pair_key();
@@ -146,6 +225,11 @@ public:
     _formatter->end_pair();
   }
 
+  /**
+   * Key-value pair writing for custom object serialization.
+   *
+   * @see ::lw::io::ObjectTag
+   */
   template <Serializeable Key, Serializeable Value>
   void write(const Key& key, const Value& value) {
     _formatter->start_pair_key();
@@ -155,6 +239,11 @@ public:
     _formatter->end_pair();
   }
 
+  /**
+   * Key-value pair writing for custom object serialization.
+   *
+   * @see ::lw::io::ObjectTag
+   */
   template <Serializeable Key, AsyncSerializeable Value>
   co::Future<void> write(const Key& key, const Value& value) {
     _formatter->start_pair_key();
@@ -162,12 +251,6 @@ public:
     _formatter->end_pair_key();
     co_await write(value);
     _formatter->end_pair();
-  }
-
-  template <AsyncSerializeable Value>
-  co::Future<void> write(const Value& value) {
-    Serialize<Value> s;
-    co_await s.serialize(*this, value);
   }
 
 private:
