@@ -4,6 +4,7 @@
 #include <coroutine>
 #include <exception>
 #include <memory>
+#include <optional>
 #include <tuple>
 
 #include "lw/co/scheduler.h"
@@ -33,7 +34,7 @@ struct SharedPromiseState<void> {
 
 template <typename T>
 struct SharedPromiseState: public SharedPromiseState<void> {
-  std::unique_ptr<T> value;
+  std::optional<T> value;
   std::shared_ptr<SharedPromiseState<T>> chain_state = nullptr;
 };
 
@@ -173,12 +174,9 @@ public:
     return Future<T>{_state};
   }
 
-  void set_value(const T& value) {
-    _do_set_value(std::make_unique<T>(value));
-  }
-
-  void set_value(T&& value) {
-    _do_set_value(std::make_unique<T>(std::move(value)));
+  template <typename U>
+  void set_value(U&& value) {
+    _do_set_value(std::forward<U>(value));
   }
 
   void set_exception(std::exception_ptr err) {
@@ -230,10 +228,11 @@ public:
 private:
   using state_ptr = std::shared_ptr<internal::SharedPromiseState<T>>;
 
-  void _do_set_value(std::unique_ptr<T>&& value) {
+  template <typename U>
+  void _do_set_value(U&& value) {
     auto state = _get_state();
     _claim_state_set(state);
-    state->value = std::move(value);
+    state->value = std::forward<U>(value);
     _schedule_task(state);
   }
 
