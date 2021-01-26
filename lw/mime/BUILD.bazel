@@ -25,5 +25,7 @@ cc_test(
   deps = [
     ":json",
     "@gtest//:gtest_main",
+    "//lw/io/serializer",
+    "//lw/io/serializer/testing:tagged_types",
   ],
 )

@@ -5,11 +5,17 @@
 #include <string>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "lw/io/serializer/serializer.h"
+#include "lw/io/serializer/testing/tagged_types.h"
 
 namespace lw::mime {
 namespace {
+
+using ::lw::io::testing::ListTagged;
+using ::lw::io::testing::ObjectTagged;
+using ::testing::MatchesRegex;
 
 template <typename T>
 std::string serialize(const T& value) {
@@ -50,6 +56,24 @@ TEST(JSONSerializer, Boolean) {
 
 TEST(JSONSerializer, List) {
   EXPECT_EQ(serialize(std::vector<int>{{1, 2, 3}}), "[1,2,3]");
+}
+
+TEST(JSONSerializer, ListTagged) {
+  EXPECT_EQ(serialize(ListTagged{.a = 1, .b = 2, .c = 3}), "[1,2,3]");
+}
+
+TEST(JSONSerializer, Object) {
+  EXPECT_THAT(
+    serialize(std::map<std::string, int>{{"foo", 1}, {"bar", 2}}),
+    MatchesRegex(R"(\{"foo":1,"bar":2\}|\{"bar":2,"foo":1\})")
+  );
+}
+
+TEST(JSONSerializer, ObjectTagged) {
+  EXPECT_EQ(
+    serialize(ObjectTagged{.a = 1, .b = 2, .c = 3}),
+    R"({"a":1,"b":2,"c":3})"
+  );
 }
 
 }

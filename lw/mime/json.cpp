@@ -95,6 +95,7 @@ void JSONSerializationFormatter::start_pair_key() {
     throw FailedPrecondition()
       << "Unexpected start of object key while formatting JSON.";
   }
+  _maybe_comma();
   _state.push(State::KEY_STARTED);
 }
 
@@ -113,6 +114,7 @@ void JSONSerializationFormatter::end_pair() {
     throw FailedPrecondition()
       << "Unexpected end of object value while formatting JSON.";
   }
+  _value_added();
 }
 
 void JSONSerializationFormatter::_maybe_comma() {
@@ -152,19 +154,30 @@ void JSONSerializationFormatter::_check_can_add_string(
 }
 
 void JSONSerializationFormatter::_value_added() {
-  if (_state.top() == State::LIST) {
-    _state.pop();
-    _state.push(State::LIST_VALUE);
-  } else if (_state.top() == State::OBJECT) {
-    _state.pop();
-    _state.push(State::OBJECT_VALUE);
-  } else if (
-    _state.top() == State::VALUE ||
-    _state.top() == State::KEY_ENDED
-  ) {
-    _state.pop();
-  } else {
-    throw Internal() << "Invalid state reached for adding a value.";
+  switch (_state.top()) {
+    case State::LIST: {
+      _state.pop();
+      _state.push(State::LIST_VALUE);
+      break;
+    }
+    case State::OBJECT: {
+      _state.pop();
+      _state.push(State::OBJECT_VALUE);
+      break;
+    }
+    case State::VALUE:
+    case State::KEY_ENDED: {
+      _state.pop();
+      break;
+    }
+    case State::LIST_VALUE:
+    case State::OBJECT_VALUE: {
+      // Noop.
+      break;
+    }
+    default: {
+      throw Internal() << "Invalid state reached for adding a value.";
+    }
   }
 }
 
