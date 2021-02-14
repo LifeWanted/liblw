@@ -4,7 +4,22 @@ cc_library(
   name = "base",
   visibility = ["//visibility:public"],
   hdrs = ["base.h"],
-  deps = [":init"]
+  deps = [":init"],
+)
+
+cc_library(
+  name = "host_info",
+  visibility = ["//visibility:public"],
+  hdrs = ["host_info.h"],
+)
+
+cc_test(
+  name = "host_info_test",
+  srcs = ["host_info_test.cpp"],
+  deps = [
+    ":host_info",
+    "@gtest//:gtest_main",
+  ],
 )
 
 cc_library(
@@ -20,7 +35,7 @@ cc_library(
   deps = [
     "//lw/err",
     "//lw/flags",
-  ]
+  ],
 )
 
 cc_test(
@@ -29,7 +44,7 @@ cc_test(
   deps = [
     ":init",
     "@gtest//:gtest_main",
-  ]
+  ],
 )
 
 cc_library(
@@ -38,7 +53,7 @@ cc_library(
   hdrs = ["strings.h"],
   deps = [
     "//lw/err",
-  ]
+  ],
 )
 
 cc_test(
@@ -47,7 +62,7 @@ cc_test(
   deps = [
     ":strings",
     "@gtest//:gtest_main",
-  ]
+  ],
 )
 
 cc_library(
