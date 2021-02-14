@@ -1,7 +1,8 @@
 #include "lw/base/host_info.h"
 
-#include <cctype>
 #include <endian.h>
+
+#include <cctype>
 
 #include "gtest/gtest.h"
 

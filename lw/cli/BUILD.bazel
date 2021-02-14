@@ -25,7 +25,21 @@ cc_binary(
     ":color",
     ":image",
     ":input",
+    ":terminal",
     "//lw/base:host_info",
+    "//lw/err",
+    "//lw/err:system",
+  ],
+)
+
+cc_library(
+  name = "terminal",
+  hdrs = ["terminal.h"],
+  srcs = ["terminal.cpp"],
+  deps = [
+    ":color",
+    ":image",
+    ":input",
     "//lw/err",
     "//lw/err:system",
   ],
