@@ -14,122 +14,12 @@
 #include <variant>
 #include <vector>
 
+#include "lw/base/host_info.h"
+#include "lw/cli/input.h"
 #include "lw/err/canonical.h"
 #include "lw/err/system.h"
 
 namespace lw::cli {
-
-inline bool is_big_endian_byte_order() {
-  union {
-    std::uint16_t test;
-    struct {
-      std::uint8_t big;
-      std::uint8_t little;
-    } endian;
-  } byte_order = {.test = 1};
-  return byte_order.endian.big == 1;
-}
-
-template <std::integral T>
-constexpr T flip_byte_order(T value) {
-  static_assert(
-    sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 || sizeof(T) == 8,
-    "Integral type have power of 2 bytes."
-  );
-
-  if constexpr (sizeof(T) == 1) {
-    return value;
-  } else if constexpr (sizeof(T) == 2) {
-    return ((0x00ff & value) << 8) | ((0xff00 & value) >> 8);
-  } else if constexpr (sizeof(T) == 4) {
-    return (
-      ((0x000000ff & value) << 24) |
-      ((0x0000ff00 & value) << 8) |
-      ((0x00ff0000 & value) >> 8) |
-      ((0xff000000 & value) >> 24)
-    );
-  } else if constexpr (sizeof(T) == 8) {
-    return (
-      ((0x0000000000ff & value) << 40) |
-      ((0x00000000ff00 & value) << 24) |
-      ((0x000000ff0000 & value) << 8) |
-      ((0x0000ff000000 & value) >> 8) |
-      ((0x00ff00000000 & value) >> 24) |
-      ((0xff0000000000 & value) >> 40)
-    );
-  }
-}
-
-template <std::integral T>
-T host_to_big_endian(T value) {
-  if (is_big_endian_byte_order()) return value;
-  return flip_byte_order(value);
-}
-
-struct Input {
-  enum Escape {
-    NUL                 = 0x00,
-    START_OF_HEADING    = 0x01,
-    START_OF_TEXT       = 0x02,
-    END_OF_TEXT         = 0x03,
-    END_OF_TRANSMISSION = 0x04,
-    ENQUIRY             = 0x05,
-    ACKNOWLEDGE         = 0x06,
-    BELL                = 0x07,
-    BACKSPACE           = 0x08,
-    TAB                 = 0x09,
-    LINE_FEED           = 0x0a,
-    VERTICAL_TAB        = 0x0b,
-    NEW_PAGE            = 0x0c,
-    CARRIAGE_RETURN     = 0x0d,
-    SHIFT_OUT           = 0x0e,
-    SHIFT_IN            = 0x0f,
-    // TODO: Fill in this chart.
-    ESCAPE              = 0x1b, // 27 / 033 -> ESC character
-
-    ARROW_UP            = 0x001b5b41,
-    ARROW_DOWN          = 0x001b5b42,
-    ARROW_RIGHT         = 0x001b5b43,
-    ARROW_LEFT          = 0x001b5b44
-  };
-  std::variant<Escape, char32_t> value;
-
-  bool is_escape() const {
-    return std::holds_alternative<Escape>(value);
-  }
-
-  bool is_glyph() const {
-    return std::holds_alternative<char32_t>(value);
-  }
-};
-
-bool operator==(const Input& input, Input::Escape esc) {
-  if (std::holds_alternative<Input::Escape>(input.value)) {
-    return std::get<Input::Escape>(input.value) == esc;
-  }
-  return false;
-}
-bool operator==(Input::Escape esc, const Input& input) {
-  return input == esc;
-}
-bool operator!=(const Input& input, Input::Escape esc) {
-  return !(input == esc);
-}
-bool operator!=(Input::Escape esc, const Input& input) { return input != esc; }
-
-bool operator==(const Input& input, char32_t glyph) {
-  if (std::holds_alternative<char32_t>(input.value)) {
-    return std::get<char32_t>(input.value) == glyph;
-  }
-  return false;
-}
-bool operator==(char32_t glyph, const Input& input) {
-  return input == glyph;
-}
-bool operator!=(const Input& input, char32_t glyph) {
-  return !(input == glyph);
-}
-bool operator!=(char32_t glyph, const Input& input) { return input != glyph; }
 
 struct IVector2d {
   std::int64_t x;
@@ -387,9 +277,9 @@ public:
     std::size_t bytes_read = ::read(_fd, &buff, sizeof(buff));
     if (bytes_read == 1) {
       if (std::isprint(buff[0])) {
-        return {.value = static_cast<char32_t>(buff[0])};
+        return Input{buff[0]};
       }
-      return {.value = static_cast<Input::Escape>(buff[0])};
+      return Input{static_cast<Input::Escape>(buff[0])};
     }
 
     if (buff[0] == Input::ESCAPE) {
@@ -398,11 +288,11 @@ public:
       for (std::size_t i = 0; i < bytes_read && i < ESCAPE_SIZE; ++i) {
         esc[bytes_read - i - 1] = buff[i];
       }
-      return {.value = *reinterpret_cast<Input::Escape*>(esc)};
+      return Input{*reinterpret_cast<Input::Escape*>(esc)};
     }
 
     // TODO: UTF-8 to UTF-32 conversion here.
-    return {.value = static_cast<char32_t>(buff[0])};
+    return Input{buff[0]};
   }
 
 private:
