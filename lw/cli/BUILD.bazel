@@ -19,8 +19,8 @@ cc_library(
 )
 
 cc_binary(
-  name = "renderer",
-  srcs = ["renderer.cpp"],
+  name = "test_render",
+  srcs = ["test_render.cpp"],
   deps = [
     ":color",
     ":image",
