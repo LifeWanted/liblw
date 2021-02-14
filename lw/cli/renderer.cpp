@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "lw/base/host_info.h"
+#include "lw/cli/color.h"
 #include "lw/cli/input.h"
 #include "lw/err/canonical.h"
 #include "lw/err/system.h"
@@ -34,36 +35,6 @@ struct UIVector2d {
 struct Box {
   UIVector2d position;
   UIVector2d size;
-};
-
-struct Color {
-  Color(): Color(0x000000) {}
-  Color(std::uint32_t rgb):
-    r{static_cast<std::uint8_t>((rgb & 0x00ff0000) >> 16)},
-    g{static_cast<std::uint8_t>((rgb & 0x0000ff00) >>  8)},
-    b{static_cast<std::uint8_t>((rgb & 0x000000ff) >>  0)}
-  {}
-  Color(std::uint8_t r, std::uint8_t g, std::uint8_t b): r{r}, g{g}, b{b} {}
-  Color(std::uint8_t a, std::uint8_t r, std::uint8_t g, std::uint8_t b):
-    r{r}, g{g}, b{b}, a{a}
-  {}
-
-  static const Color& transparent() {
-    static const Color c{0, 0, 0, 0};
-    return c;
-  }
-
-  std::uint8_t r;
-  std::uint8_t g;
-  std::uint8_t b;
-  std::uint8_t a = 255;
-
-  bool operator==(const Color& other) const {
-    return (
-      reinterpret_cast<const std::uint32_t&>(*this) ==
-      reinterpret_cast<const std::uint32_t&>(other)
-    );
-  }
 };
 
 struct Pixel {

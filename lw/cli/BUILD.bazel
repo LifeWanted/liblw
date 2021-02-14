@@ -1,6 +1,11 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test", "cc_binary")
 
 cc_library(
+  name = "color",
+  hdrs = ["color.h"],
+)
+
+cc_library(
   name = "input",
   hdrs = ["input.h"],
 )
@@ -9,6 +14,7 @@ cc_binary(
   name = "renderer",
   srcs = ["renderer.cpp"],
   deps = [
+    ":color",
     ":input",
     "//lw/base:host_info",
     "//lw/err",
