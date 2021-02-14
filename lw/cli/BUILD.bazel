@@ -6,6 +6,14 @@ cc_library(
 )
 
 cc_library(
+  name = "image",
+  hdrs = ["image.h"],
+  deps = [
+    ":color",
+  ],
+)
+
+cc_library(
   name = "input",
   hdrs = ["input.h"],
 )
@@ -15,6 +23,7 @@ cc_binary(
   srcs = ["renderer.cpp"],
   deps = [
     ":color",
+    ":image",
     ":input",
     "//lw/base:host_info",
     "//lw/err",
