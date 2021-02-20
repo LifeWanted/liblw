@@ -7,11 +7,12 @@
 #include <ostream>
 
 #include "lw/io/serializer/formatter.h"
+#include "lw/io/serializer/parser.h"
 #include "lw/mime/mime.h"
 
 namespace lw::mime {
 
-class JSONSerializationFormatter: public lw::io::SerializationFormatter {
+class JSONSerializationFormatter: public io::SerializationFormatter {
 public:
   JSONSerializationFormatter(std::ostream& output);
 
@@ -63,12 +64,25 @@ private:
 
 // -------------------------------------------------------------------------- //
 
+class JSONDeserializationParser: public io::DeserializationParser {
+public:
+  std::unique_ptr<io::DeserializationToken> parse(
+    std::string_view str
+  ) const override;
+};
+
+// -------------------------------------------------------------------------- //
+
 class JSONSerializer: public MimeSerializer {
 public:
   std::unique_ptr<io::SerializationFormatter> make_formatter(
     std::ostream& output
   ) override {
     return std::make_unique<JSONSerializationFormatter>(output);
+  }
+
+  std::unique_ptr<io::DeserializationParser> make_parser() override {
+    return std::make_unique<JSONDeserializationParser>();
   }
 };
 

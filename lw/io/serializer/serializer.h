@@ -90,19 +90,7 @@ struct ListTag {};
 template <typename T>
 struct Serialize;
 
-class SerializedValue {
-public:
-  bool has(std::string_view key);
-
-  template <typename T>
-  T get(std::string_view key);
-
-  template <typename T>
-  T get(std::string_view key, T default_value);
-
-  template <typename T>
-  T as();
-};
+// -------------------------------------------------------------------------- //
 
 /**
  * Type-aware serialization interface that bridges the gap between serializable
@@ -322,6 +310,12 @@ struct Serialize<T> {
   void serialize(Serializer& serializer, const T& value) {
     serializer.write(value);
   }
+};
+
+// -------------------------------------------------------------------------- //
+
+class Deserializer {
+public:
 };
 
 }

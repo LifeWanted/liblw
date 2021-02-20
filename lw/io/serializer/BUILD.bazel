@@ -6,6 +6,8 @@ cc_library(
   hdrs = [
     "concepts.h",
     "formatter.h",
+    "parser.h",
+    "serialized_value.h",
     "serializer.h",
   ],
   deps = [
