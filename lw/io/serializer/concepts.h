@@ -75,9 +75,24 @@ concept ObjectSerializationCapable =
 }
 
 template <typename T>
+concept SignedIntegerSerializable =
+  std::signed_integral<std::remove_reference_t<T>> &&
+  !std::same_as<std::remove_reference_t<T>, bool> &&
+  !std::same_as<std::remove_reference_t<T>, char>;
+
+template <typename T>
+concept UnsignedIntegerSerializable =
+  std::unsigned_integral<std::remove_reference_t<T>> &&
+  !std::same_as<std::remove_reference_t<T>, bool> &&
+  !std::same_as<std::remove_reference_t<T>, char>;
+
+template <typename T>
+concept IntegerSerializable =
+  SignedIntegerSerializable<T> || UnsignedIntegerSerializable<T>;
+
+template <typename T>
 concept NumericSerializable =
-  std::integral<std::remove_reference_t<T>> ||
-  std::floating_point<std::remove_reference_t<T>>;
+  IntegerSerializable<T> || std::floating_point<std::remove_reference_t<T>>;
 
 template <typename T>
 concept StringSerializable = ForwardIterableAs<T, char>;
