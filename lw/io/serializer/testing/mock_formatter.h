@@ -7,7 +7,6 @@ namespace lw::io::testing {
 
 class MockFormatter: public SerializationFormatter {
 public:
-
   MOCK_METHOD(void, put_null, (), (override));
   MOCK_METHOD(void, put_boolean, (bool boolean), (override));
   MOCK_METHOD(void, put_char, (char c), (override));

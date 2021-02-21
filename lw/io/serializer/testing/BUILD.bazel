@@ -12,6 +12,17 @@ cc_library(
 )
 
 cc_library(
+  name = "mock_parser",
+  hdrs = ["mock_parser.h"],
+  visibility = ["//lw/io/serializer:__subpackages__"],
+  testonly = True,
+  deps = [
+    "@gtest//:gtest",
+    "//lw/io/serializer",
+  ],
+)
+
+cc_library(
   name = "tagged_types",
   hdrs = ["tagged_types.h"],
   visibility = [
