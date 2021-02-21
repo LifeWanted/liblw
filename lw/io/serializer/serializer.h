@@ -284,6 +284,8 @@ private:
   std::unique_ptr<SerializationFormatter> _formatter;
 };
 
+// -------------------------------------------------------------------------- //
+
 template <DirectlySerializable T>
 struct Serialize<T> {
   void serialize(Serializer& serializer, const T& value) {
@@ -310,12 +312,6 @@ struct Serialize<T> {
   void serialize(Serializer& serializer, const T& value) {
     serializer.write(value);
   }
-};
-
-// -------------------------------------------------------------------------- //
-
-class Deserializer {
-public:
 };
 
 }

@@ -4,8 +4,6 @@
 #include <memory>
 #include <string_view>
 
-#include "lw/io/serializer/serialized_value.h"
-
 namespace lw::io {
 
 class DeserializationToken {

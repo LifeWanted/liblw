@@ -26,3 +26,14 @@ cc_test(
     "//lw/io/serializer/testing:tagged_types",
   ],
 )
+
+cc_test(
+  name = "serialized_value_test",
+  srcs = ["serialized_value_test.cpp"],
+  deps = [
+    ":serializer",
+    "@gtest//:gtest_main",
+    "//lw/io/serializer/testing:mock_parser",
+    "//lw/io/serializer/testing:tagged_types",
+  ],
+)
