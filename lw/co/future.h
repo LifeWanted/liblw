@@ -374,6 +374,7 @@ Future<T> make_resolved_future(std::exception_ptr err) {
  */
 template <typename... Args>
 co::Future<std::tuple<Args...>> all(co::Future<Args>... futures) {
+  // TODO(#14): Implement this method for `co::Future<void>`.
   co_return std::make_tuple((co_await futures)...);
 }
 
