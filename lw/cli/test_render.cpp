@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "lw/base/host_info.h"
+#include "lw/base/math.h"
 #include "lw/cli/color.h"
 #include "lw/cli/image.h"
 #include "lw/cli/input.h"
@@ -158,16 +159,6 @@ private:
 
 }
 
-template <std::integral T>
-constexpr T lerp(T a, T b, double x) {
-  return a + (x * static_cast<double>(b - a));
-}
-
-template <std::floating_point T>
-constexpr T lerp(T a, T b, T x) {
-  return a + (x * (b - a));
-}
-
 void print_bg_gradient(
   lw::cli::Renderer& renderer,
   const lw::cli::Color& start,
@@ -179,9 +170,9 @@ void print_bg_gradient(
   for (std::size_t i = 0; i < width; ++i) {
     double x = step * i;
     lw::cli::Color color{
-      lerp(start.r, end.r, x),
-      lerp(start.g, end.g, x),
-      lerp(start.b, end.b, x)
+      lw::lerp(start.r, end.r, x),
+      lw::lerp(start.g, end.g, x),
+      lw::lerp(start.b, end.b, x)
     };
     renderer.draw({color, lw::cli::Color::transparent(), static_cast<char32_t>(c)});
   }
