@@ -6,6 +6,17 @@ cc_library(
 )
 
 cc_library(
+  name = "components",
+  hdrs = ["components.h"],
+  srcs = ["components.cpp"],
+  deps = [
+    ":color",
+    ":image",
+    ":renderer",
+  ],
+)
+
+cc_library(
   name = "image",
   hdrs = ["image.h"],
   deps = [
@@ -46,6 +57,7 @@ cc_binary(
   srcs = ["test_render.cpp"],
   deps = [
     ":color",
+    ":components",
     ":image",
     ":input",
     ":renderer",
