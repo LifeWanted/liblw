@@ -48,6 +48,21 @@ cc_test(
 )
 
 cc_library(
+  name = "math",
+  visibility = ["//visibility:public"],
+  hdrs = ["math.h"],
+)
+
+cc_test(
+  name = "math_test",
+  srcs = ["math_test.cpp"],
+  deps = [
+    ":math",
+    "@gtest//:gtest_main",
+  ],
+)
+
+cc_library(
   name = "strings",
   visibility = ["//visibility:public"],
   hdrs = ["strings.h"],

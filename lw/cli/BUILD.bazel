@@ -51,6 +51,7 @@ cc_binary(
     ":renderer",
     ":terminal",
     "//lw/base:host_info",
+    "//lw/base:math",
     "//lw/err",
     "//lw/err:system",
   ],
