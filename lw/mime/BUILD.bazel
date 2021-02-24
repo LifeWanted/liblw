@@ -1,0 +1,31 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+  name = "mime",
+  hdrs = ["mime.h"],
+  deps = [
+    "//lw/io/serializer",
+  ],
+)
+
+cc_library(
+  name = "json",
+  hdrs = ["json.h"],
+  srcs = ["json.cpp"],
+  deps = [
+    ":mime",
+    "//lw/err",
+    "//lw/io/serializer",
+  ]
+)
+
+cc_test(
+  name = "json_test",
+  srcs = ["json_test.cpp"],
+  deps = [
+    ":json",
+    "@gtest//:gtest_main",
+    "//lw/io/serializer",
+    "//lw/io/serializer/testing:tagged_types",
+  ],
+)

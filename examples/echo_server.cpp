@@ -1,7 +1,9 @@
 /**
- * @file
- *  An example http echo server which responds to `POST /echo` requests with the
- *  contents of the request.
+ * An example HTTP echo server which responds to `POST /echo` requests with the
+ * contents of the request and `GET /echo` with the query parameters.
+ *
+ * If `--tls-cert-path` and `--tls-key-path` are provided, then an HTTPS server
+ * will be created. Otherwise an HTTP server (no encryption) is started.
  */
 
 #include <memory>

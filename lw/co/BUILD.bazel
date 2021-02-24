@@ -45,6 +45,9 @@ cc_library(
   name = "generator",
   hdrs = ["generator.h"],
   visibility = ["//visibility:public"],
+  deps = [
+    ":future",
+  ],
 )
 
 cc_test(
@@ -52,7 +55,11 @@ cc_test(
   srcs = ["generator_test.cpp"],
   deps = [
     ":generator",
+    ":future",
+    ":scheduler",
+    ":task",
     "@gtest//:gtest_main",
+    "//lw/co/testing:destroy_scheduler",
   ],
 )
 

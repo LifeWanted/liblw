@@ -122,6 +122,45 @@ TEST(PromiseInt, FutureCoroutine) {
   destroy_all_schedulers();
 }
 
+TEST(PromiseInt, CoReturnSetFuture) {
+  auto next_tick_coro = [](int i) -> Future<int> {
+    co_return i * 2;
+  };
+  auto coro = [&](int i) -> Future<int> {
+    co_return next_tick_coro(i);
+  };
+  int result = 0;
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    result += 2;
+    result = co_await coro(result);
+    ++result;
+    EXPECT_EQ(result, 5);
+  });
+  Scheduler::this_thread().run();
+  EXPECT_EQ(result, 5);
+  destroy_all_schedulers();
+}
+
+TEST(PromiseInt, CoReturnSuspendedFuture) {
+  auto next_tick_coro = [](int i) -> Future<int> {
+    co_await next_tick();
+    co_return i * 2;
+  };
+  auto coro = [&](int i) -> Future<int> {
+    co_return next_tick_coro(i);
+  };
+  int result = 0;
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    result += 2;
+    result = co_await coro(result);
+    ++result;
+    EXPECT_EQ(result, 5);
+  });
+  Scheduler::this_thread().run();
+  EXPECT_EQ(result, 5);
+  destroy_all_schedulers();
+}
+
 TEST(PromiseInt, ThrowingFutureCoroutine) {
   auto coro = []() -> Future<int> {
     co_await next_tick();
@@ -136,6 +175,30 @@ TEST(PromiseInt, ThrowingFutureCoroutine) {
       EXPECT_THAT(err.what(), HasSubstr("On noes"));
       ++result;
     }
+  });
+  Scheduler::this_thread().run();
+  EXPECT_EQ(result, 2);
+  destroy_all_schedulers();
+}
+
+TEST(PromiseInt, CoReturnThrownFuture) {
+  auto next_tick_coro = [](int i) -> Future<int> {
+    throw InvalidArgument() << "On noes!";
+  };
+  auto coro = [&](int i) -> Future<int> {
+    co_return next_tick_coro(i);
+  };
+  int result = 0;
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    ++result;
+    try {
+      result = co_await coro(result);
+      result += 2;
+    } catch (const InvalidArgument& err) {
+      EXPECT_THAT(err.what(), HasSubstr("On noes"));
+      ++result;
+    }
+    EXPECT_EQ(result, 2);
   });
   Scheduler::this_thread().run();
   EXPECT_EQ(result, 2);
@@ -294,6 +357,76 @@ TEST(MakeFuture, RejectAValue) {
   );
   EXPECT_TRUE(f.await_ready());
   EXPECT_THROW(f.await_resume(), InvalidArgument);
+}
+
+TEST(AwaitAll, AllResolve) {
+  Scheduler::this_thread().schedule([]() -> Task<void> {
+    std::tuple<int, float, double> res = co_await all(
+      make_resolved_future<int>(1),
+      make_resolved_future<float>(2.0f),
+      make_resolved_future<double>(3.14)
+    );
+    EXPECT_EQ(std::get<int>(res), 1);
+    EXPECT_EQ(std::get<float>(res), 2.0f);
+    EXPECT_EQ(std::get<double>(res), 3.14);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+// TODO(#14): Implement support for Future<void> in co::all.
+// TEST(AwaitAll, AllVoid) {
+//   int counter = 0;
+//   auto coro0 = [&]() -> Future<void> {
+//     co_await next_tick();
+//     EXPECT_EQ(++counter, 1);
+//   };
+//   auto coro1 = [&]() -> Future<void> {
+//     co_await next_tick();
+//     EXPECT_EQ(++counter, 2);
+//   };
+//   auto coro2 = [&]() -> Future<void> {
+//     co_await next_tick();
+//     EXPECT_EQ(++counter, 3);
+//   };
+
+//   Scheduler::this_thread().schedule([&]() -> Task<void> {
+//     co_await all(coro0(), coro1(), coro2());
+//     EXPECT_EQ(counter, 3);
+//   });
+//   Scheduler::this_thread().run();
+//   destroy_all_schedulers();
+// }
+
+TEST(AwaitAll, ResolveOutOfOrder) {
+  int counter = 0;
+  auto coro0 = [&]() -> Future<int> {
+    EXPECT_EQ(counter, 0);
+    co_await next_tick();
+    EXPECT_EQ(counter, 1);
+    co_await next_tick();
+    EXPECT_EQ(counter, 2);
+    co_return ++counter;
+  };
+  auto coro1 = [&]() -> Future<int> {
+    EXPECT_EQ(counter, 0);
+    co_await next_tick();
+    EXPECT_EQ(counter, 1);
+    co_return ++counter;
+  };
+  auto coro2 = [&]() -> Future<int> {
+    EXPECT_EQ(counter, 0);
+    co_return ++counter;
+  };
+
+  Scheduler::this_thread().schedule([&]() -> Task<void> {
+    auto res = co_await all(coro0(), coro1(), coro2());
+    EXPECT_EQ(std::get<0>(res), 3);
+    EXPECT_EQ(std::get<1>(res), 2);
+    EXPECT_EQ(std::get<2>(res), 1);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
 }
 
 }
