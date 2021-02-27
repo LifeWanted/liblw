@@ -27,6 +27,7 @@ cc_library(
   hdrs = ["server_resource.h"],
   srcs = ["server_resource.cpp"],
   deps = [
+    "//lw/base:tuple",
     "//lw/co:future",
     "//lw/err",
   ],
