@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include "lw/base/tuple.h"
 #include "lw/co/future.h"
 
 #define _LW_CONCAT_INNER(x, y) x ## y
@@ -105,30 +106,6 @@ private:
 // -------------------------------------------------------------------------- //
 
 namespace internal {
-
-template <typename... Dependencies>
-struct TupleFlatten;
-
-template <typename... Unwrapped>
-struct TupleFlatten<std::tuple<Unwrapped...>> {
-  typedef std::tuple<std::remove_cvref_t<Unwrapped>...> flattened_types;
-};
-
-template <typename... Unwrapped, typename... NextTuple, typename... Rest>
-struct TupleFlatten<
-  std::tuple<Unwrapped...>,
-  std::tuple<NextTuple...>,
-  Rest...
->:
-  public TupleFlatten<std::tuple<Unwrapped...>, NextTuple..., Rest...>
-{};
-
-template <typename... Unwrapped, typename Next, typename... Rest>
-struct TupleFlatten<std::tuple<Unwrapped...>, Next, Rest...>:
-  public TupleFlatten<std::tuple<Unwrapped..., Next>, Rest...>
-{};
-
-// -------------------------------------------------------------------------- //
 
 template <typename ServerResource, typename DependenciesTuple>
 struct ServerResourceFactoryTypes;
@@ -265,8 +242,7 @@ private:
 template <typename... Dependencies>
 class ServerResource: public ServerResourceBase {
 public:
-  typedef internal::TupleFlatten<std::tuple<>, Dependencies...>::flattened_types
-    dependency_types;
+  typedef sanitize_tuple_t<std::tuple<Dependencies...>> dependency_types;
 
 protected:
   template <typename T>
