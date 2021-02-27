@@ -49,3 +49,18 @@ cc_test(
     "@gtest//:gtest_main",
   ]
 )
+
+cc_library(
+  name = "tuple",
+  visibility = ["//visibility:public"],
+  hdrs = ["tuple.h"],
+)
+
+cc_test(
+  name = "tuple_test",
+  srcs = ["tuple_test.cc"],
+  deps = [
+    ":tuple",
+    "@gtest//:gtest_main",
+  ],
+)
