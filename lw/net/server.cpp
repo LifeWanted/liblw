@@ -14,7 +14,7 @@
 namespace lw::net {
 namespace {
 
-co::Task<void> accept_loop(std::atomic_bool* running, Router* router, Socket* socket) {
+co::Task accept_loop(std::atomic_bool* running, Router* router, Socket* socket) {
   while (*running) {
     Socket client = co_await socket->accept();
     co::Scheduler::this_thread().schedule(

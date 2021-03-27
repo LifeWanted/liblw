@@ -19,7 +19,7 @@ void run(Func&& coroutine) {
 }
 
 TEST(HttpRequestReadHeader, ParsesHeader) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "GET /foo/bar HTTP/1.1\r\n"
       "Host: test.com\r\n"
@@ -39,7 +39,7 @@ TEST(HttpRequestReadHeader, ParsesHeader) {
 }
 
 TEST(HttpRequestReadHeader, ParsesContentLength) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "GET /foo/bar HTTP/1.1\r\n"
       "Host: test.com\r\n"
@@ -54,7 +54,7 @@ TEST(HttpRequestReadHeader, ParsesContentLength) {
 }
 
 TEST(HttpRequestReadHeader, ParsesQueryString) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "GET /foo/bar?fizz=bang&&foo=&bar=42&life&another HTTP/1.1\r\n"
       "Host: test.com\r\n"
@@ -77,7 +77,7 @@ TEST(HttpRequestReadHeader, ParsesQueryString) {
 }
 
 TEST(HttpRequestHeaders, HasHeaderIsTrueForProvidedHeaders) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "GET /foo/bar HTTP/1.1\r\n"
       "Host: test.com\r\n"
@@ -91,7 +91,7 @@ TEST(HttpRequestHeaders, HasHeaderIsTrueForProvidedHeaders) {
 }
 
 TEST(HttpRequestHeaders, HasHeaderIsFalseForMissingHeaders) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "GET /foo/bar HTTP/1.1\r\n"
       "Host: test.com\r\n"
@@ -105,7 +105,7 @@ TEST(HttpRequestHeaders, HasHeaderIsFalseForMissingHeaders) {
 }
 
 TEST(HttpRequestHeaders, IncludeEmptyHeaders) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "GET /foo/bar HTTP/1.1\r\n"
       "Host: test.com\r\n"
@@ -125,7 +125,7 @@ TEST(HttpRequestHeaders, IncludeEmptyHeaders) {
 }
 
 TEST(HttpRequestHeaders, AreCaseInsensitive) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "GET /foo/bar HTTP/1.1\r\n"
       "Host: test.com\r\n"
@@ -147,7 +147,7 @@ TEST(HttpRequestHeaders, AreCaseInsensitive) {
 }
 
 TEST(HttpRequestBody, IsReadableFromContentLength) {
-  run([]() -> co::Task<void> {
+  run([]() -> co::Task {
     StringReader input{
       "POST /foo/bar HTTP/1.1\r\n"
       "Host: test.com\r\n"

@@ -103,7 +103,7 @@ void HttpRouter::attach_routes() {
   }
 }
 
-co::Task<void> HttpRouter::run(std::unique_ptr<io::CoStream> conn) {
+co::Task HttpRouter::run(std::unique_ptr<io::CoStream> conn) {
   ++_connection_counter;
   log(INFO)
     << "HttpRouter handling " << _connection_counter << " concurrent requests.";

@@ -44,7 +44,7 @@ TEST(Generator, RangeForGeneration) {
 }
 
 TEST(AsyncGenerator, AsyncGeneration) {
-  Scheduler::this_thread().schedule([]() -> Task<void> {
+  Scheduler::this_thread().schedule([]() -> Task {
     auto gen = yield_async();
     int expected = 1;
     while (co_await gen.next()) {

@@ -40,7 +40,7 @@ TEST(PromiseInt, DetectsReadiness) {
 }
 
 TEST(PromiseInt, SignalsForSuspensionWhenNotReady) {
-  Scheduler::this_thread().schedule([]() -> Task<void> {
+  Scheduler::this_thread().schedule([]() -> Task {
     Promise<int> p;
     Future<int> f = p.get_future();
     EXPECT_FALSE(f.await_ready());
@@ -52,7 +52,7 @@ TEST(PromiseInt, SignalsForSuspensionWhenNotReady) {
 }
 
 TEST(PromiseInt, SignalsNoSuspensionWhenReady) {
-  Scheduler::this_thread().schedule([]() -> Task<void> {
+  Scheduler::this_thread().schedule([]() -> Task {
     Promise<int> p;
     Future<int> f = p.get_future();
     p.set_value(42);
@@ -67,13 +67,13 @@ TEST(PromiseInt, SignalsNoSuspensionWhenReady) {
 TEST(PromiseInt, FutureIsAwaitable) {
   Promise<int> p;
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 0);
     result = 2;
     result = co_await p.get_future();
     EXPECT_EQ(result, 42);
   });
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     co_await next_tick();
     EXPECT_EQ(result, 2);
     p.set_value(42);
@@ -86,14 +86,14 @@ TEST(PromiseInt, FutureIsAwaitable) {
 TEST(PromiseInt, ExceptionsAreThrown) {
   Promise<int> p;
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 0);
     result = 2;
     EXPECT_THROW(result = co_await p.get_future(), InvalidArgument);
     EXPECT_EQ(result, 2);
     result = 3;
   });
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     co_await next_tick();
     EXPECT_EQ(result, 2);
     p.set_exception(std::make_exception_ptr(InvalidArgument() << "error!"));
@@ -108,7 +108,7 @@ TEST(PromiseInt, FutureCoroutine) {
     co_return i * 2;
   };
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     ++result;
     co_await next_tick();
     ++result;
@@ -130,7 +130,7 @@ TEST(PromiseInt, CoReturnSetFuture) {
     co_return next_tick_coro(i);
   };
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     result += 2;
     result = co_await coro(result);
     ++result;
@@ -150,7 +150,7 @@ TEST(PromiseInt, CoReturnSuspendedFuture) {
     co_return next_tick_coro(i);
   };
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     result += 2;
     result = co_await coro(result);
     ++result;
@@ -167,7 +167,7 @@ TEST(PromiseInt, ThrowingFutureCoroutine) {
     throw InvalidArgument() << "On noes!";
   };
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     ++result;
     try {
       co_await coro();
@@ -189,7 +189,7 @@ TEST(PromiseInt, CoReturnThrownFuture) {
     co_return next_tick_coro(i);
   };
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     ++result;
     try {
       result = co_await coro(result);
@@ -232,7 +232,7 @@ TEST(PromiseVoid, DetectsReadiness) {
 }
 
 TEST(PromiseVoid, SignalsForSuspensionWhenNotReady) {
-  Scheduler::this_thread().schedule([]() -> Task<void> {
+  Scheduler::this_thread().schedule([]() -> Task {
     Promise<void> p;
     Future<void> f = p.get_future();
     EXPECT_FALSE(f.await_ready());
@@ -244,7 +244,7 @@ TEST(PromiseVoid, SignalsForSuspensionWhenNotReady) {
 }
 
 TEST(PromiseVoid, SignalsNoSuspensionWhenReady) {
-  Scheduler::this_thread().schedule([]() -> Task<void> {
+  Scheduler::this_thread().schedule([]() -> Task {
     Promise<void> p;
     Future<void> f = p.get_future();
     p.set_value();
@@ -259,14 +259,14 @@ TEST(PromiseVoid, SignalsNoSuspensionWhenReady) {
 TEST(PromiseVoid, FutureIsAwaitable) {
   Promise<void> p;
   int result = 1;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 1);
     result += result;
     co_await p.get_future();
     EXPECT_EQ(result, 4);
     result += result;
   });
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     co_await next_tick();
     EXPECT_EQ(result, 2);
     result += result;
@@ -280,14 +280,14 @@ TEST(PromiseVoid, FutureIsAwaitable) {
 TEST(PromiseVoid, ExceptionsAreThrown) {
   Promise<void> p;
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 0);
     result = 2;
     EXPECT_THROW(co_await p.get_future(), InvalidArgument);
     EXPECT_EQ(result, 2);
     result = 3;
   });
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     co_await next_tick();
     EXPECT_EQ(result, 2);
     p.set_exception(std::make_exception_ptr(InvalidArgument() << "error!"));
@@ -303,7 +303,7 @@ TEST(PromiseVoid, FutureCoroutine) {
     co_return;
   };
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     ++result;
     co_await next_tick();
     ++result;
@@ -323,7 +323,7 @@ TEST(PromiseVoid, ThrowingFutureCoroutine) {
     throw InvalidArgument() << "On noes!";
   };
   int result = 0;
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     ++result;
     try {
       co_await coro();
@@ -360,7 +360,7 @@ TEST(MakeFuture, RejectAValue) {
 }
 
 TEST(AwaitAll, AllResolve) {
-  Scheduler::this_thread().schedule([]() -> Task<void> {
+  Scheduler::this_thread().schedule([]() -> Task {
     std::tuple<int, float, double> res = co_await all(
       make_resolved_future<int>(1),
       make_resolved_future<float>(2.0f),
@@ -390,7 +390,7 @@ TEST(AwaitAll, AllResolve) {
 //     EXPECT_EQ(++counter, 3);
 //   };
 
-//   Scheduler::this_thread().schedule([&]() -> Task<void> {
+//   Scheduler::this_thread().schedule([&]() -> Task {
 //     co_await all(coro0(), coro1(), coro2());
 //     EXPECT_EQ(counter, 3);
 //   });
@@ -419,7 +419,7 @@ TEST(AwaitAll, ResolveOutOfOrder) {
     co_return ++counter;
   };
 
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     auto res = co_await all(coro0(), coro1(), coro2());
     EXPECT_EQ(std::get<0>(res), 3);
     EXPECT_EQ(std::get<1>(res), 2);

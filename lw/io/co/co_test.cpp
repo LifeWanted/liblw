@@ -11,7 +11,7 @@ namespace {
 using ::lw::io::testing::StringReadable;
 
 TEST(CoReader, IsGood) {
-  co::Scheduler::this_thread().schedule([]() -> co::Task<void> {
+  co::Scheduler::this_thread().schedule([]() -> co::Task {
     StringReadable readable{"foobar"};
     CoReader<StringReadable> reader{readable};
     EXPECT_TRUE(reader.good());
@@ -28,7 +28,7 @@ TEST(CoReader, IsGood) {
 }
 
 TEST(CoReader, ReadBytes) {
-  co::Scheduler::this_thread().schedule([]() -> co::Task<void> {
+  co::Scheduler::this_thread().schedule([]() -> co::Task {
     StringReadable readable{"foobar"};
     CoReader<StringReadable> reader{readable};
     Buffer b = co_await reader.read(3);
@@ -45,7 +45,7 @@ TEST(CoReader, ReadBytes) {
 }
 
 TEST(CoReader, ReadUntilChar) {
-  co::Scheduler::this_thread().schedule([]() -> co::Task<void> {
+  co::Scheduler::this_thread().schedule([]() -> co::Task {
     StringReadable readable{"foobar"};
     CoReader<StringReadable> reader{readable};
     Buffer b = co_await reader.read_until('b');
@@ -57,7 +57,7 @@ TEST(CoReader, ReadUntilChar) {
 }
 
 TEST(CoReader, ReadUntilString) {
-  co::Scheduler::this_thread().schedule([]() -> co::Task<void> {
+  co::Scheduler::this_thread().schedule([]() -> co::Task {
     StringReadable readable{"foobar"};
     CoReader<StringReadable> reader{readable};
     Buffer b = co_await reader.read_until("bar");
