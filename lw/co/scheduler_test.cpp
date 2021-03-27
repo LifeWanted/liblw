@@ -44,7 +44,7 @@ TEST_F(SchedulerTest, StartAndStop) {
   std::atomic_int* ticks_ptr = &ticks;
   std::jthread scheduler_thread{[ticks_ptr]() {
     // Schedule an infinite task that will keep the scheduler running.
-    Scheduler::this_thread().schedule([ticks_ptr]() -> Task<void> {
+    Scheduler::this_thread().schedule([ticks_ptr]() -> Task {
       while (true) {
         ++(*ticks_ptr);
         int timer = create_timer(std::chrono::milliseconds(1));
@@ -68,7 +68,7 @@ TEST_F(SchedulerTest, StartAndStop) {
 
 TEST_F(SchedulerTest, NextTick) {
   int result = 0;
-  auto co = [&](int expect) -> Task<void> {
+  auto co = [&](int expect) -> Task {
     EXPECT_EQ(result, expect);
     ++result;
     co_await next_tick();
@@ -84,7 +84,7 @@ TEST_F(SchedulerTest, NextTick) {
 
 TEST_F(SchedulerTest, FDEvents) {
   auto sleep = std::chrono::milliseconds(15);
-  Scheduler::this_thread().schedule([&]() -> Task<void> {
+  Scheduler::this_thread().schedule([&]() -> Task {
     int handle = create_timer(sleep);
     co_await fd_readable(handle);
     ::close(handle);
@@ -93,6 +93,21 @@ TEST_F(SchedulerTest, FDEvents) {
   Scheduler::this_thread().run();
   auto end = high_resolution_clock::now();
   EXPECT_GT(end, start + sleep);
+}
+
+TEST_F(SchedulerTest, TaskCallback) {
+  int callback_called = 0;
+  Scheduler::this_thread().schedule(
+    []() -> Task {
+      int handle = create_timer(std::chrono::milliseconds(1));
+      co_await fd_readable(handle);
+      ::close(handle);
+    },
+    [&]() { ++callback_called; }
+  );
+  EXPECT_EQ(callback_called, 0);
+  Scheduler::this_thread().run();
+  EXPECT_EQ(callback_called, 1);
 }
 
 }

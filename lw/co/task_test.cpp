@@ -7,17 +7,10 @@
 namespace lw::co {
 namespace {
 
-Task<void> test_task(int& counter) {
+Task test_task(int& counter) {
   ++counter;
   co_await std::suspend_always{};
   ++counter;
-}
-
-Task<int> test_int_task(int& counter) {
-  ++counter;
-  co_await std::suspend_always{};
-  ++counter;
-  co_return counter + 1;
 }
 
 TEST(VoidTask, BasicUsage) {
@@ -34,18 +27,15 @@ TEST(VoidTask, BasicUsage) {
   EXPECT_NO_THROW(task.get());
 }
 
-TEST(IntTask, BasicUsage) {
+TEST(VoidTask, Callback) {
   int counter = 0;
-  auto task = test_int_task(counter);
-  EXPECT_FALSE(task.done());
-  EXPECT_EQ(counter, 0);
-  EXPECT_TRUE(task.resume());
-  EXPECT_FALSE(task.done());
-  EXPECT_EQ(counter, 1);
-  EXPECT_FALSE(task.resume());
-  EXPECT_TRUE(task.done());
-  EXPECT_EQ(counter, 2);
-  EXPECT_EQ(task.get(), 3);
+  int cb_called = 0;
+  auto task = test_task(counter);
+  task.then([&]() { ++cb_called; });
+
+  EXPECT_EQ(cb_called, 0);
+  while (!task.done()) task.resume();
+  EXPECT_EQ(cb_called, 1);
 }
 
 }

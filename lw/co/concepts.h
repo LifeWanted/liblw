@@ -6,6 +6,7 @@
 namespace lw::co {
 
 class Scheduler;
+class Task;
 
 template <typename T>
 concept Awaitable = requires(T a) {
@@ -27,7 +28,7 @@ concept ValueAwaitable = Awaitable<T> && requires(T a) {
  */
 template <typename T>
 concept CallableCoroutine = requires(T a) {
-  { a() };
+  { a() } -> std::same_as<Task>;
 };
 
 }
