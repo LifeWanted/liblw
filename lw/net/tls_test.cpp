@@ -67,24 +67,24 @@ protected:
 };
 
 TEST_F(TLSStreamTest, HandshakesFinish) {
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     co_await _client->handshake();
   });
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     co_await _server->handshake();
   });
   scheduler().run();
 }
 
 TEST_F(TLSStreamTest, CanSendDataFromClientToServer) {
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     co_await _client->handshake();
     Buffer buff{6};
     buff.copy("foobar", 6);
     std::size_t written = co_await _client->write(buff);
     EXPECT_EQ(written, 6);
   });
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     co_await _server->handshake();
     Buffer buff{10};
     std::size_t read = co_await _server->read(buff);
@@ -95,14 +95,14 @@ TEST_F(TLSStreamTest, CanSendDataFromClientToServer) {
 }
 
 TEST_F(TLSStreamTest, CanSendDataFromServerToClient) {
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     co_await _client->handshake();
     Buffer buff{10};
     std::size_t read = co_await _client->read(buff);
     EXPECT_EQ(read, 6);
     EXPECT_EQ(static_cast<std::string_view>(buff).substr(0, 6), "foobar");
   });
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     co_await _server->handshake();
     Buffer buff{6};
     buff.copy("foobar", 6);

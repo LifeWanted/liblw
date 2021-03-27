@@ -25,6 +25,8 @@ struct SharedPromiseState;
 
 template <>
 struct SharedPromiseState<void> {
+  virtual ~SharedPromiseState() = default;
+
   std::atomic_bool state_set = false;
   std::atomic_bool future_suspended = false;
   std::exception_ptr exception = nullptr;

@@ -15,17 +15,17 @@ using ::std::chrono::milliseconds;
 using ::std::chrono::steady_clock;
 
 template <typename TimePoint>
-Task<void> test_sleep_until(const TimePoint& time_point) {
+Task test_sleep_until(const TimePoint& time_point) {
   co_await sleep_until(time_point);
 }
 
 template <typename Rep, typename Period>
-Task<void> test_sleep_for(const std::chrono::duration<Rep, Period>& duration) {
+Task test_sleep_for(const std::chrono::duration<Rep, Period>& duration) {
   co_await sleep_for(duration);
 }
 
 template <typename Rep, typename Period>
-Task<void> test_observe_sleep_for(
+Task test_observe_sleep_for(
   int& counter,
   const std::chrono::duration<Rep, Period>& duration
 ) {

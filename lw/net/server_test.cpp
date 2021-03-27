@@ -20,7 +20,7 @@ public:
     routes_attached = true;
   }
 
-  co::Task<void> run(std::unique_ptr<io::CoStream> conn) override {
+  co::Task run(std::unique_ptr<io::CoStream> conn) override {
     connection = std::move(conn);
     co_return;
   }
@@ -41,7 +41,7 @@ std::jthread run_in_background(Server* server, Router* router) {
   }};
 }
 
-co::Task<void> connect_and_shutdown(Server* server) {
+co::Task connect_and_shutdown(Server* server) {
   Socket sock;
   co_await sock.connect({.hostname = "localhost", .service = "8080"});
   co_await co::next_tick();

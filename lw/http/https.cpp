@@ -14,7 +14,7 @@ HttpsRouter::HttpsRouter(const Options& options):
   }}
 {}
 
-co::Task<void> HttpsRouter::run(std::unique_ptr<io::CoStream> conn) {
+co::Task HttpsRouter::run(std::unique_ptr<io::CoStream> conn) {
   ++_connection_counter;
   log(INFO)
     << "HttpsRouter handling " << _connection_counter

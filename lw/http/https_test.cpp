@@ -89,7 +89,7 @@ TEST_F(HttpsRouterTest, ExecutesRegisteredHandlers) {
   auto [client, server] = make_connection();
 
   scheduler().schedule(_router.run(std::move(server)));
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     std::string response = co_await send_request(
       *client,
       "GET /test/foobar HTTP/1.1\r\n"
@@ -112,7 +112,7 @@ TEST_F(HttpsRouterTest, RespondsNotFound) {
   auto [client, server] = make_connection();
 
   scheduler().schedule(_router.run(std::move(server)));
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     std::string response = co_await send_request(
       *client,
       "GET /gibberish HTTP/1.1\r\n"
