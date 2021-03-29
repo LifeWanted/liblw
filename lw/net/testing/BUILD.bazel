@@ -7,6 +7,16 @@ package(
   ],
 )
 
+cc_library(
+  name = "mock_router",
+  hdrs = ["mock_router.h"],
+  testonly = True,
+  deps = [
+    "@gtest//:gtest",
+    "//lw/net:router",
+  ],
+)
+
 filegroup(
   name = "tls_credential_files",
   testonly = True,
