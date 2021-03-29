@@ -94,15 +94,9 @@ cc_library(
   name = "https",
   visibility = ["//visibility:public"],
   hdrs = ["https.h"],
-  srcs = ["https.cpp"],
   deps = [
     ":http",
-    "//lw/co:future",
-    "//lw/co:task",
-    "//lw/io/co",
-    "//lw/log",
-    "//lw/net:router",
-    "//lw/net:tls",
+    "//lw/net:tls_router",
   ],
 )
 
