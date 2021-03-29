@@ -15,13 +15,13 @@
 #include "lw/memory/circular_queue.h"
 
 namespace lw::co {
+
+class Scheduler;
+typedef int Handle;
+
 namespace internal {
 class EPoll;
 }
-
-class Scheduler;
-
-typedef int Handle;
 
 /**
  * A per-thread singleton coroutine scheduling service.
