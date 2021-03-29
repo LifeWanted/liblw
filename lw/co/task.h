@@ -84,7 +84,6 @@ public:
     }
   }
 
-  promise_type& promise() { return _handle.promise(); }
   std::coroutine_handle<> handle() const {
     return static_cast<std::coroutine_handle<>>(_handle);
   }

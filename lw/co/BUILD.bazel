@@ -1,6 +1,16 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
+  name = "await",
+  hdrs = ["await.h"],
+  visibility = ["//visibility:public"],
+  deps = [
+    ":scheduler",
+    ":task",
+  ],
+)
+
+cc_library(
   name = "concepts",
   hdrs = ["concepts.h"],
   visibility = ["//visibility:public"],
