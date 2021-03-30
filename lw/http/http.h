@@ -54,7 +54,7 @@ public:
   co::Future<void> run_once(io::CoStream& conn);
 
 private:
-  http::internal::EndpointTrie _trie;
+  http::internal::EndpointTrie<BaseHttpHandlerFactory> _trie;
   std::size_t _connection_counter = 0;
 };
 

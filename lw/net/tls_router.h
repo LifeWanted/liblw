@@ -29,6 +29,7 @@ struct TLSRouterOptions {
 template <typename BaseRouter, typename Options = ::lw::net::TLSRouterOptions>
 class TLSRouter: public Router {
 public:
+  typedef BaseRouter base_router_t;
   typedef Options options_t;
 
   TLSRouter(const options_t& options):
@@ -64,6 +65,7 @@ private:
 template <typename BaseRouter>
 class TLSRouter<BaseRouter, TLSRouterOptions>: public Router {
 public:
+  typedef BaseRouter base_router_t;
   typedef TLSRouterOptions options_t;
 
   TLSRouter(const options_t& options):

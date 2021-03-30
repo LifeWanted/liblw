@@ -120,20 +120,22 @@ TEST(MountPath, RegexCaptureParameterCapture) {
 
 class EndpointTrieTest: public ::testing::Test {
 protected:
+  typedef HttpHandlerFactory<HttpHandler> Factory;
+
   EndpointTrieTest() {
     endpoints.reserve(10);
   }
 
-  void insert_endpoint(EndpointTrie& trie, std::string_view endpoint) {
+  void insert_endpoint(EndpointTrie<Factory>& trie, std::string_view endpoint) {
     endpoints.emplace_back(endpoint);
     trie.insert(MountPath::parse_endpoint(endpoint), endpoints.back());
   }
 
-  std::vector<HttpHandlerFactory<HttpHandler>> endpoints;
+  std::vector<Factory> endpoints;
 };
 
 TEST_F(EndpointTrieTest, BasicEndpoint) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/foo");
   auto result = trie.match("/foo");
   ASSERT_TRUE(result.has_value());
@@ -146,7 +148,7 @@ TEST_F(EndpointTrieTest, BasicEndpoint) {
 }
 
 TEST_F(EndpointTrieTest, TwoPartEndpoint) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/foo/bar");
   auto result = trie.match("/foo/bar");
   ASSERT_TRUE(result.has_value());
@@ -156,7 +158,7 @@ TEST_F(EndpointTrieTest, TwoPartEndpoint) {
 }
 
 TEST_F(EndpointTrieTest, SimpleParameterCapture) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/:foo");
   auto result = trie.match("/fizz");
   ASSERT_TRUE(result.has_value());
@@ -168,7 +170,7 @@ TEST_F(EndpointTrieTest, SimpleParameterCapture) {
 }
 
 TEST_F(EndpointTrieTest, DoubleParameterCapture) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/:foo/:bar");
   auto result = trie.match("/flim/flam");
   ASSERT_TRUE(result.has_value());
@@ -183,7 +185,7 @@ TEST_F(EndpointTrieTest, DoubleParameterCapture) {
 }
 
 TEST_F(EndpointTrieTest, MixedCaptureNoCapture) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/foo/:foo/bar/:bar/baz");
   auto result = trie.match("/foo/capture/bar/this/baz");
   ASSERT_TRUE(result.has_value());
@@ -196,7 +198,7 @@ TEST_F(EndpointTrieTest, MixedCaptureNoCapture) {
 }
 
 TEST_F(EndpointTrieTest, IntValidatedParameterCapture) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/:[int]foo");
   auto result = trie.match("/1234");
   ASSERT_TRUE(result.has_value());
@@ -215,7 +217,7 @@ TEST_F(EndpointTrieTest, IntValidatedParameterCapture) {
 }
 
 TEST_F(EndpointTrieTest, TwoMountedEndpoints) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/foo");
   insert_endpoint(trie, "/bar");
   auto foo_result = trie.match("/foo");
@@ -228,7 +230,7 @@ TEST_F(EndpointTrieTest, TwoMountedEndpoints) {
 }
 
 TEST_F(EndpointTrieTest, WildcardJumpBack) {
-  EndpointTrie trie;
+  EndpointTrie<Factory> trie;
   insert_endpoint(trie, "/foo/:param2/baz");
   insert_endpoint(trie, "/:param1/:param3/other");
   auto result = trie.match("/foo/something/other");

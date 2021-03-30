@@ -50,7 +50,10 @@ co::Future<void> finish_request(
   }
 }
 
-co::Future<void> run_request(io::CoStream& conn, EndpointTrie& trie) {
+co::Future<void> run_request(
+  io::CoStream& conn,
+  EndpointTrie<BaseHttpHandlerFactory>& trie
+) {
   io::CoReader reader{conn};
   HttpRequest request{reader};
   HttpResponse response;
