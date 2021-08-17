@@ -190,13 +190,8 @@ public:
 
   /*** Coroutine promise hooks ***/
 
-  auto initial_suspend() const {
-    return std::suspend_never{};
-  }
-
-  auto final_suspend() const {
-    return std::suspend_never{};
-  }
+  auto initial_suspend() const noexcept { return std::suspend_never{}; }
+  auto final_suspend() const noexcept { return std::suspend_never{}; }
 
   Future<T> get_return_object() {
     return get_future();

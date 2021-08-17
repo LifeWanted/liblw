@@ -23,8 +23,8 @@ public:
 
   Task get_return_object();
 
-  auto initial_suspend() const { return std::suspend_always{}; }
-  auto final_suspend() const { return std::suspend_always{}; }
+  auto initial_suspend() const noexcept { return std::suspend_always{}; }
+  auto final_suspend() const noexcept { return std::suspend_always{}; }
 
   void unhandled_exception() { _state->error = std::current_exception(); }
   void return_void() {
