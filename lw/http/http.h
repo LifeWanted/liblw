@@ -30,7 +30,7 @@
 #define LW_REGISTER_HTTP_HANDLER(HandlerClass, route) \
   ::lw::HttpRoute http_route_ ## HandlerClass{        \
     ::lw::HttpHandlerFactory<HandlerClass>{route}     \
-  };
+  }
 
 namespace lw {
 
@@ -48,13 +48,13 @@ private:
 class HttpRouter: public net::Router {
 public:
   void attach_routes() override;
-  co::Task<void> run(std::unique_ptr<io::CoStream> conn) override;
+  co::Task run(std::unique_ptr<io::CoStream> conn) override;
   std::size_t connection_count() const override { return _connection_counter; }
 
   co::Future<void> run_once(io::CoStream& conn);
 
 private:
-  http::internal::EndpointTrie _trie;
+  http::internal::EndpointTrie<BaseHttpHandlerFactory> _trie;
   std::size_t _connection_counter = 0;
 };
 

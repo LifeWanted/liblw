@@ -433,30 +433,33 @@ std::optional<HeadersView> MountPath::match(std::string_view url_path) const {
   return parameters;
 }
 
-std::optional<EndpointTrie::MatchResult> EndpointTrie::match(
-  std::string_view url_path
+BaseEndpointTrie::BaseMatchResult BaseEndpointTrie::walk_path(
+  std::string_view path
 ) const {
   HeadersView parameters;
-  const TrieNode* node = &_root;
-  std::vector<std::pair<const TrieNode*, std::size_t>> wildcard_stack;
+  const BaseTrieNode* node = &_root;
+  std::vector<std::pair<const BaseTrieNode*, std::size_t>> wildcard_stack;
   std::size_t i = 0;
-  for (; i < url_path.size(); ++i) {
+  for (; i < path.size(); ++i) {
     if (node->wildcard) wildcard_stack.push_back(std::make_pair(node, i));
-    if (node->children.contains(url_path[i])) {
-      node = node->children.at(url_path[i]).get();
+    const auto& find_itr = node->children.find(path[i]);
+    if (find_itr != node->children.end()) {
+      node = find_itr->second.get();
       continue;
     }
+
+    // No exact match, so walk back the wildcard_stack until we find a match.
     while (!wildcard_stack.empty()) {
       auto [wild_node, wild_i] = wildcard_stack.back();
       wildcard_stack.pop_back();
 
       // Pull out the URL part this matcher will look against.
-      std::size_t sep_pos = url_path.find(SEP, wild_i + 1);
-      if (sep_pos == std::string_view::npos) sep_pos = url_path.size();
-      std::string_view url_part{&url_path[wild_i], &url_path[sep_pos]};
+      std::size_t sep_pos = path.find(SEP, wild_i + 1);
+      if (sep_pos == std::string_view::npos) sep_pos = path.size();
+      std::string_view path_part{&path[wild_i], &path[sep_pos]};
 
       const auto& [matcher, matched_node] = *wild_node->wildcard;
-      std::optional<std::string_view> wild_results = matcher->match(url_part);
+      std::optional<std::string_view> wild_results = matcher->match(path_part);
       if (wild_results) {
         // TODO(alaina): Remove parameters from false path matches.
         //
@@ -479,25 +482,19 @@ std::optional<EndpointTrie::MatchResult> EndpointTrie::match(
     }
 
     // No matches.
-    return std::nullopt;
+    return {.node = nullptr};
 
     for_end:;
   }
 
-  if (node && node->endpoint) {
-    return MatchResult{
-      .parameters = std::move(parameters),
-      .endpoint = *node->endpoint
-    };
-  }
-  return std::nullopt;
+  return {.parameters = std::move(parameters), .node = node};
 }
 
-EndpointTrie::TrieNode* EndpointTrie::_build_path(
+BaseEndpointTrie::BaseTrieNode* BaseEndpointTrie::build_path(
   MountPath&& mount_path,
-  const BaseHttpHandlerFactory& endpoint
+  std::string_view route
 ) {
-  TrieNode* node = &_root;
+  BaseTrieNode* node = &_root;
 
   for (auto& matcher : mount_path._matchers) {
     node = _build_literal_path(node, "/");
@@ -506,41 +503,26 @@ EndpointTrie::TrieNode* EndpointTrie::_build_path(
       continue;
     }
     if (!node->wildcard) {
-      node->wildcard = std::make_pair(
-        std::move(matcher),
-        std::make_unique<TrieNode>()
-      );
-      node->wildcard->second->endpoint = nullptr;
+      node->wildcard = std::make_pair(std::move(matcher), make_node());
     } else if (node->wildcard->first->chunk() != matcher->chunk()) {
       throw AlreadyExists()
-        << "Path parameter " << matcher->chunk() << " for route "
-        << endpoint.route() << " collides with existing path parameter "
+        << "Path parameter " << matcher->chunk() << " for route " << route
+        << " collides with existing path parameter "
         << node->wildcard->first->chunk();
     }
     node = node->wildcard->second.get();
   }
 
-  if (node->endpoint) {
-    if (node->endpoint->route() == endpoint.route()) {
-      throw AlreadyExists()
-        << "A handler already exists for the route " << endpoint.route();
-    } else {
-      throw AlreadyExists()
-        << "Handler route " << endpoint.route()
-        << " collides with existing route " << node->endpoint->route();
-    }
-  }
-
   return node;
 }
 
-EndpointTrie::TrieNode* EndpointTrie::_build_literal_path(
-  TrieNode* root,
+BaseEndpointTrie::BaseTrieNode* BaseEndpointTrie::_build_literal_path(
+  BaseTrieNode* root,
   std::string_view part
 ) {
   for (char c : part) {
     if (!root->children.contains(c)) {
-      root->children.emplace(c, std::make_unique<TrieNode>());
+      root->children.emplace(c, make_node());
     }
     root = root->children[c].get();
   }

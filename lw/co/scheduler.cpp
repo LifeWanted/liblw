@@ -15,8 +15,8 @@
 #include "lw/flags/flags.h"
 
 LW_FLAG(
-  std::size_t, lw_scheduler_queue_size, 100,
-  "Maximum size of the task queue in schedulers."
+  std::size_t, lw_scheduler_queue_size, 1000,
+  "Maximum size of the task queue of schedulers."
 );
 
 namespace lw::co {

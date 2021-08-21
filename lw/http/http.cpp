@@ -50,7 +50,10 @@ co::Future<void> finish_request(
   }
 }
 
-co::Future<void> run_request(io::CoStream& conn, EndpointTrie& trie) {
+co::Future<void> run_request(
+  io::CoStream& conn,
+  EndpointTrie<BaseHttpHandlerFactory>& trie
+) {
   io::CoReader reader{conn};
   HttpRequest request{reader};
   HttpResponse response;
@@ -103,7 +106,7 @@ void HttpRouter::attach_routes() {
   }
 }
 
-co::Task<void> HttpRouter::run(std::unique_ptr<io::CoStream> conn) {
+co::Task HttpRouter::run(std::unique_ptr<io::CoStream> conn) {
   ++_connection_counter;
   log(INFO)
     << "HttpRouter handling " << _connection_counter << " concurrent requests.";

@@ -100,7 +100,7 @@ LW_REGISTER_RESOURCE_FACTORY(
 namespace {
 template <typename Func>
 void run(Func&& func) {
-  co::Scheduler::this_thread().schedule([&]() -> co::Task<void> {
+  co::Scheduler::this_thread().schedule([&]() -> co::Task {
     co_await func();
   });
   co::Scheduler::this_thread().run();

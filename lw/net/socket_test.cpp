@@ -30,7 +30,7 @@ protected:
 };
 
 TEST_F(SocketTest, ConnectToHostAndPort) {
-  scheduler().schedule([]() -> co::Task<void> {
+  scheduler().schedule([]() -> co::Task {
     Socket sock;
     EXPECT_FALSE(sock.is_open());
     co_await sock.connect({.hostname = "www.google.com", .service = "80"});
@@ -42,7 +42,7 @@ TEST_F(SocketTest, ConnectToHostAndPort) {
 }
 
 TEST_F(SocketTest, ConnectToHostAndServiceName) {
-  scheduler().schedule([]() -> co::Task<void> {
+  scheduler().schedule([]() -> co::Task {
     Socket sock;
     EXPECT_FALSE(sock.is_open());
     co_await sock.connect({.hostname = "www.google.com", .service = "http"});
@@ -54,7 +54,7 @@ TEST_F(SocketTest, ConnectToHostAndServiceName) {
 }
 
 TEST_F(SocketTest, SendAndReceive) {
-  scheduler().schedule([]() -> co::Task<void> {
+  scheduler().schedule([]() -> co::Task {
     Socket sock;
     co_await sock.connect({.hostname = "www.google.com", .service = "80"});
 
@@ -91,7 +91,7 @@ TEST_F(SocketTest, AcceptConnection) {
   ASSERT_NE(send_buff, receive_buff);
   Address addr{.hostname = "localhost", .service = "8080"};
 
-  scheduler().schedule([=, this]() -> co::Task<void> {
+  scheduler().schedule([=, this]() -> co::Task {
     Socket server;
     server.listen(addr);
 
@@ -99,7 +99,7 @@ TEST_F(SocketTest, AcceptConnection) {
     std::size_t received_bytes = co_await client.receive(*receive_buff_ptr);
     EXPECT_EQ(received_bytes, receive_buff_ptr->size());
   });
-  scheduler().schedule([&]() -> co::Task<void> {
+  scheduler().schedule([&]() -> co::Task {
     Socket client;
     co_await client.connect(addr);
     EXPECT_EQ(co_await client.send(send_buff), send_buff.size());

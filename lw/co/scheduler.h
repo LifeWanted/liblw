@@ -15,13 +15,13 @@
 #include "lw/memory/circular_queue.h"
 
 namespace lw::co {
+
+class Scheduler;
+typedef int Handle;
+
 namespace internal {
 class EPoll;
 }
-
-class Scheduler;
-
-typedef int Handle;
 
 /**
  * A per-thread singleton coroutine scheduling service.
@@ -31,12 +31,11 @@ typedef int Handle;
  */
 class Scheduler {
 public:
-  ~Scheduler();
-
   Scheduler(Scheduler&&) = delete;
   Scheduler& operator=(Scheduler&&) = delete;
   Scheduler(const Scheduler&) = delete;
   Scheduler& operator=(const Scheduler&) = delete;
+  ~Scheduler();
 
   /**
    * Fetches the Scheduler instance operating on the current thread.
@@ -49,14 +48,27 @@ public:
   static Scheduler& for_thread(std::thread::id thread_id);
 
   /**
+   * Schedules the given task for execution. Upon completion, the callback will
+   * be called with the result of the task.
+   */
+  template <typename Callback>
+  void schedule(Task task, Callback&& callback) {
+    task.then(callback);
+    _add_to_queue(task.handle());
+  }
+
+  /**
    * Invokes the coroutine and schedules the returned coroutine handle for
    * resumption on the next tick of the loop.
    *
    * TODO(alaina): Add type check that Coroutine returns a handle or Task.
    */
   template <CallableCoroutine Coroutine>
-  void schedule(Coroutine&& coroutine) {
-    _add_to_queue(coroutine().handle());
+  void schedule(Coroutine&& coroutine) { schedule(coroutine()); }
+
+  template <CallableCoroutine Coroutine, typename Func>
+  void schedule(Coroutine&& coroutine, Func&& callback) {
+    schedule(coroutine(), std::forward<Func>(callback));
   }
 
   void schedule(std::coroutine_handle<> coro) {
@@ -68,18 +80,9 @@ public:
    *
    * TODO(alaina): Make this thread safe.
    */
-  void schedule(Task<void> task) {
+  void schedule(Task task) {
     _add_to_queue(task.handle());
   }
-
-  /**
-   * Schedules the given task for execution. Upon completion, the callback will
-   * be called with the result of the task.
-   *
-   * TODO(alaina): Implement this functionality. :)
-   */
-  template <typename T, typename Func>
-  void schedule(Task<T> task, Func&& callback);
 
   /**
    * Schedules a resumption of the current task when the given events fire.

@@ -58,13 +58,8 @@ public:
   promise_type& operator=(promise_type&&) = delete;
   promise_type& operator=(const promise_type&) = delete;
 
-  auto initial_suspend() const {
-    return std::suspend_always{};
-  }
-
-  auto final_suspend() const {
-    return std::suspend_always{};
-  }
+  auto initial_suspend() const noexcept { return std::suspend_always{}; }
+  auto final_suspend() const noexcept { return std::suspend_always{}; }
 
   Generator get_return_object() {
     return Generator{handle_type::from_promise(*this)};

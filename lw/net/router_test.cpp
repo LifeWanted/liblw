@@ -12,7 +12,7 @@ namespace {
 class TestRouter: public Router {
 public:
   void attach_routes() override {};
-  co::Task<void> run(std::unique_ptr<io::CoStream> conn) override {
+  co::Task run(std::unique_ptr<io::CoStream> conn) override {
     co_return;
   };
   std::size_t connection_count() const override { return 0; }

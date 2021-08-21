@@ -27,6 +27,7 @@ cc_library(
   hdrs = ["server_resource.h"],
   srcs = ["server_resource.cpp"],
   deps = [
+    "//lw/base:tuple",
     "//lw/co:future",
     "//lw/err",
   ],
@@ -107,6 +108,37 @@ cc_library(
   name = "tls_options",
   visibility = ["//visibility:public"],
   hdrs = ["tls_options.h"],
+)
+
+cc_library(
+  name = "tls_router",
+  visibility = ["//visibility:public"],
+  hdrs = ["tls_router.h"],
+  srcs = ["tls_router.cpp"],
+  deps = [
+    ":router",
+    ":tls_options",
+    ":tls",
+    "//lw/co:await",
+    "//lw/co:future",
+    "//lw/co:task",
+    "//lw/log",
+  ],
+)
+
+cc_test(
+  name = "tls_router_test",
+  srcs = ["tls_router_test.cpp"],
+  deps = [
+    ":tls_router",
+    "@gtest//:gtest_main",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/co/testing:destroy_scheduler",
+    "//lw/io/co/testing:string_connection",
+    "//lw/net/testing:mock_router",
+    "//lw/net/testing:tls_credentials",
+  ],
 )
 
 cc_library(

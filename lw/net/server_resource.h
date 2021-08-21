@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include "lw/base/tuple.h"
 #include "lw/co/future.h"
 
 #define _LW_CONCAT_INNER(x, y) x ## y
@@ -106,37 +107,13 @@ private:
 
 namespace internal {
 
-template <typename... Dependencies>
-struct TupleFlatten;
-
-template <typename... Unwrapped>
-struct TupleFlatten<std::tuple<Unwrapped...>> {
-  typedef std::tuple<std::remove_cvref_t<Unwrapped>...> flattened_types;
-};
-
-template <typename... Unwrapped, typename... NextTuple, typename... Rest>
-struct TupleFlatten<
-  std::tuple<Unwrapped...>,
-  std::tuple<NextTuple...>,
-  Rest...
->:
-  public TupleFlatten<std::tuple<Unwrapped...>, NextTuple..., Rest...>
-{};
-
-template <typename... Unwrapped, typename Next, typename... Rest>
-struct TupleFlatten<std::tuple<Unwrapped...>, Next, Rest...>:
-  public TupleFlatten<std::tuple<Unwrapped..., Next>, Rest...>
-{};
-
-// -------------------------------------------------------------------------- //
-
 template <typename ServerResource, typename DependenciesTuple>
 struct ServerResourceFactoryTypes;
 
 template <typename ServerResource, typename... Dependencies>
 struct ServerResourceFactoryTypes<ServerResource, std::tuple<Dependencies...>> {
   typedef ServerResource server_resource_type;
-  typedef std::tuple<Dependencies...> dependency_types;
+  typedef sanitize_tuple_t<std::tuple<Dependencies...>> dependencies_t;
   typedef std::function<
     co::Future<std::unique_ptr<ServerResource>>(Dependencies&...)
   > factory_type;
@@ -157,7 +134,7 @@ class FactoryIsSynchronous:
   public std::is_same<
     typename FactoryInvocationResult<
       Factory,
-      typename ServerResource::dependency_types
+      typename ServerResource::dependencies_t
     >::type,
     std::unique_ptr<ServerResource>
   >
@@ -168,7 +145,7 @@ class FactoryIsAsynchronous:
   public std::is_same<
     typename FactoryInvocationResult<
       Factory,
-      typename ServerResource::dependency_types
+      typename ServerResource::dependencies_t
     >::type,
     co::Future<std::unique_ptr<ServerResource>>
   >
@@ -229,7 +206,7 @@ class ServerResourceFactoryInvoker {
 public:
   typedef ServerResourceFactoryTypes<
     ServerResource,
-    typename ServerResource::dependency_types
+    typename ServerResource::dependencies_t
   > Types;
 
   template <typename UFactory>
@@ -250,7 +227,7 @@ public:
   ) {
     return internal::FetchDependenciesAndInvoke<
       typename Types::server_resource_type,
-      typename Types::dependency_types
+      typename Types::dependencies_t
     >::invoke(_factory, context);
   }
 
@@ -265,14 +242,13 @@ private:
 template <typename... Dependencies>
 class ServerResource: public ServerResourceBase {
 public:
-  typedef internal::TupleFlatten<std::tuple<>, Dependencies...>::flattened_types
-    dependency_types;
+  typedef sanitize_tuple_t<std::tuple<Dependencies...>> dependencies_t;
 
 protected:
   template <typename T>
   T& get() {
     static_assert(
-      internal::TupleContains<T, dependency_types>::value,
+      internal::TupleContains<T, dependencies_t>::value,
       "Can only fetch explicit dependency resources. Add this type to your "
       "dependency tuple in order to get it."
     );
@@ -282,7 +258,7 @@ protected:
   template <typename T>
   const T& get() const {
     static_assert(
-      internal::TupleContains<T, dependency_types>::value,
+      internal::TupleContains<T, dependencies_t>::value,
       "Can only fetch explicit dependency resources. Add this type to your "
       "dependency tuple in order to get it."
     );

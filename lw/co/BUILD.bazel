@@ -1,15 +1,19 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "concepts",
-  hdrs = ["concepts.h"],
+  name = "await",
+  hdrs = ["await.h"],
   visibility = ["//visibility:public"],
+  deps = [
+    ":scheduler",
+    ":task",
+  ],
 )
 
 cc_library(
-  name = "coroutine_promise",
-  hdrs = ["coroutine_promise.h"],
-  deps = ["//lw/err"],
+  name = "concepts",
+  hdrs = ["concepts.h"],
+  visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -111,10 +115,7 @@ cc_library(
   name = "task",
   hdrs = ["task.h"],
   visibility = ["//visibility:public"],
-  deps = [
-    ":coroutine_promise",
-    "//lw/err",
-  ],
+  deps = ["//lw/err"],
 )
 
 cc_test(
