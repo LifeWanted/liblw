@@ -442,10 +442,13 @@ BaseEndpointTrie::BaseMatchResult BaseEndpointTrie::walk_path(
   std::size_t i = 0;
   for (; i < path.size(); ++i) {
     if (node->wildcard) wildcard_stack.push_back(std::make_pair(node, i));
-    if (node->children.contains(path[i])) {
-      node = node->children.at(path[i]).get();
+    const auto& find_itr = node->children.find(path[i]);
+    if (find_itr != node->children.end()) {
+      node = find_itr->second.get();
       continue;
     }
+
+    // No exact match, so walk back the wildcard_stack until we find a match.
     while (!wildcard_stack.empty()) {
       auto [wild_node, wild_i] = wildcard_stack.back();
       wildcard_stack.pop_back();
