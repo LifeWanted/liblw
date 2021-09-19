@@ -37,6 +37,7 @@ cc_library(
   visibility = ["//visibility:public"],
   hdrs = ["strings.h"],
   deps = [
+    "//lw/base/internal:string_concatenate",
     "//lw/err",
   ]
 )

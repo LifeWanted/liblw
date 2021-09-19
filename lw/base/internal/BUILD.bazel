@@ -1,0 +1,7 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+  name = "string_concatenate",
+  visibility = ["//lw/base:__subpackages__"],
+  hdrs = ["string_concatenate.h"],
+)

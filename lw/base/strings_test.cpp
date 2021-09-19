@@ -1,5 +1,7 @@
 #include "lw/base/strings.h"
 
+#include <cctype>
+#include <limits>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -213,5 +215,61 @@ TEST(CaseInsensitiveMapping, ShouldAllowHetergenousLookup) {
   EXPECT_EQ(test_map.find(str)->second, "new value");
   EXPECT_EQ(test_map.find(view)->second, "new value");
 }
+
+// -------------------------------------------------------------------------- //
+
+TEST(Concatenate, StringLiterals) {
+  EXPECT_EQ(cat("foobar"), "foobar");
+  EXPECT_EQ(cat("foo", "bar"), "foobar");
+  EXPECT_EQ(cat("f", "oo", "b", "ar"), "foobar");
+}
+
+TEST(Concatenate, Strings) {
+  EXPECT_EQ(cat(std::string{"foobar"}), "foobar");
+  EXPECT_EQ(cat(std::string{"foo"}, std::string{"bar"}), "foobar");
+}
+
+TEST(Concatenate, StringViews) {
+  EXPECT_EQ(cat(std::string_view{"foobar"}), "foobar");
+  EXPECT_EQ(cat(std::string_view{"foo"}, std::string_view{"bar"}), "foobar");
+}
+
+TEST(Concatenate, MixedStrings) {
+  EXPECT_EQ(
+    cat("foo", std::string{"bar"}, std::string_view{"bang"}),
+    "foobarbang"
+  );
+}
+
+TEST(Concatenate, Chars) {
+  EXPECT_EQ(cat('f'), "f");
+  EXPECT_EQ(cat('f', 'o', 'o'), "foo");
+}
+
+TEST(Concatenate, Integers) {
+  EXPECT_EQ(cat(1), "1");
+  EXPECT_EQ(cat(-2), "-2");
+  EXPECT_EQ(cat(6, 9), "69");
+}
+
+TEST(Concatenate, IntegerLimits) {
+  EXPECT_EQ(
+    cat(std::numeric_limits<std::uintmax_t>::max()),
+    "18446744073709551615"
+  );
+  EXPECT_EQ(
+    cat(std::numeric_limits<std::intmax_t>::max()),
+    "9223372036854775807"
+  );
+  EXPECT_EQ(
+    cat(std::numeric_limits<std::intmax_t>::min()),
+    "-9223372036854775808"
+  );
+}
+
+TEST(Concatenate, MixedValues) {
+  EXPECT_EQ(cat(1, "fo", 'o', -2, 'b', "ar"), "1foo-2bar");
+}
+
 }
 }

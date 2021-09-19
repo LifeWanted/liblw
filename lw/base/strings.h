@@ -4,9 +4,11 @@
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <string>
 #include <string_view>
 #include <type_traits>
 
+#include "lw/base/internal/string_concatenate.h"
 #include "lw/err/macros.h"
 
 namespace lw {
@@ -14,7 +16,7 @@ namespace lw {
 class CaseInsensitiveHash {
 public:
   using is_transparent = void;
-  std::size_t operator()(std::string_view str) const {
+  constexpr std::size_t operator()(std::string_view str) const {
     const std::size_t prime = 251;  // Prime around the size of character set.
     const std::size_t modulus = std::numeric_limits<std::size_t>::max();
     std::size_t multiplier = 1;
@@ -73,5 +75,24 @@ public:
     return CaseInsensitiveCompare()(lhs, rhs) < 0;
   }
 };
+
+// -------------------------------------------------------------------------- //
+
+/**
+ * Concatenates one or more arguments into one string.
+ *
+ * @param args
+ *  The values to concatenate into a string. May be of any string-convertible
+ *  type.
+ *
+ * @return
+ *  A string containing all the values given, concatenated together.
+ */
+template <typename... Args>
+[[nodiscard]] std::string cat(Args&&... args) {
+  std::string result;
+  internal::do_concatenate(result, std::forward<Args>(args)...);
+  return result;
+}
 
 }
