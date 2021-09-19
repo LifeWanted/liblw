@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <concepts>
 #include <coroutine>
 #include <exception>
 #include <memory>
@@ -362,17 +363,52 @@ Future<T> make_resolved_future(std::exception_ptr err) {
   return promise.get_future();
 }
 
+namespace internal {
+
+template <typename T>
+struct TupleAwaitResult {
+  typedef T result_type;
+  static co::Future<T> await(co::Future<T> future) { return future; }
+};
+
+template <>
+struct TupleAwaitResult<void> {
+  typedef std::nullptr_t result_type;
+  static co::Future<std::nullptr_t> await(co::Future<void> future) {
+    co_await future;
+    co_return nullptr;
+  }
+};
+
+}
+
 /**
  * Await all the provided futures concurrently.
+ *
+ * Any `void` futures will resolve to a `nullptr` in the results tuple.
  *
  * @return
  *  A tuple containing all the resolved values from the futures in the order
  *  they are specified in the arguments.
  */
 template <typename... Args>
-co::Future<std::tuple<Args...>> all(co::Future<Args>... futures) {
-  // TODO(#14): Implement this method for `co::Future<void>`.
-  co_return std::make_tuple((co_await futures)...);
+co::Future<
+  std::tuple<typename internal::TupleAwaitResult<Args>::result_type...>
+> all(co::Future<Args>... futures) {
+  co_return std::make_tuple(
+    (co_await internal::TupleAwaitResult<Args>::await(std::move(futures)))...
+  );
+}
+
+/**
+ * Awaits all of the futures concurrently.
+ *
+ * This method requires all provided futures to be `void` resolving.
+ */
+template <std::same_as<co::Future<void>>... Futures>
+co::Future<void> all_void(Futures&&... futures) {
+  (co_await futures, ...);
+  co_return; // Cover empty parameter pack case.
 }
 
 }

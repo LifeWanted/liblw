@@ -374,29 +374,53 @@ TEST(AwaitAll, AllResolve) {
   destroy_all_schedulers();
 }
 
-// TODO(#14): Implement support for Future<void> in co::all.
-// TEST(AwaitAll, AllVoid) {
-//   int counter = 0;
-//   auto coro0 = [&]() -> Future<void> {
-//     co_await next_tick();
-//     EXPECT_EQ(++counter, 1);
-//   };
-//   auto coro1 = [&]() -> Future<void> {
-//     co_await next_tick();
-//     EXPECT_EQ(++counter, 2);
-//   };
-//   auto coro2 = [&]() -> Future<void> {
-//     co_await next_tick();
-//     EXPECT_EQ(++counter, 3);
-//   };
+TEST(AwaitAll, AllVoid) {
+  int counter = 0;
+  auto coro0 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 1);
+  };
+  auto coro1 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 2);
+  };
+  auto coro2 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 3);
+  };
 
-//   Scheduler::this_thread().schedule([&]() -> Task {
-//     co_await all(coro0(), coro1(), coro2());
-//     EXPECT_EQ(counter, 3);
-//   });
-//   Scheduler::this_thread().run();
-//   destroy_all_schedulers();
-// }
+  Scheduler::this_thread().schedule([&]() -> Task {
+    co_await all_void(coro0(), coro1(), coro2());
+    EXPECT_EQ(counter, 3);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+TEST(AwaitAll, MixVoid) {
+  int counter = 0;
+  auto coro0 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 1);
+  };
+  auto coro1 = [&]() -> Future<int> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 2);
+    co_return 42;
+  };
+  auto coro2 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 3);
+  };
+
+  Scheduler::this_thread().schedule([&]() -> Task {
+    auto [a, b, c ] = co_await all(coro0(), coro1(), coro2());
+    EXPECT_EQ(counter, 3);
+    EXPECT_EQ(b, 42);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
 
 TEST(AwaitAll, ResolveOutOfOrder) {
   int counter = 0;
