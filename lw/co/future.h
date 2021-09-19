@@ -7,6 +7,7 @@
 #include <memory>
 #include <optional>
 #include <tuple>
+#include <type_traits>
 
 #include "lw/co/scheduler.h"
 #include "lw/err/canonical.h"
@@ -409,6 +410,20 @@ template <std::same_as<co::Future<void>>... Futures>
 co::Future<void> all_void(Futures&&... futures) {
   (co_await futures, ...);
   co_return; // Cover empty parameter pack case.
+}
+
+/**
+ * Awaits all futures in a container, disregarding the results.
+ *
+ * All futures must be `void` resolving.
+ */
+template <typename Iterator>
+co::Future<void> all_void(Iterator begin, Iterator end) {
+  static_assert(
+    std::is_same_v<std::decay_t<decltype(*begin)>, co::Future<void>>,
+    "`co::all_void` must be called with only void futures."
+  );
+  for (auto itr = begin; itr != end; ++itr) co_await *itr;
 }
 
 }

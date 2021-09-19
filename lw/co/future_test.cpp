@@ -1,6 +1,7 @@
 #include "lw/co/future.h"
 
 #include <exception>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -448,6 +449,35 @@ TEST(AwaitAll, ResolveOutOfOrder) {
     EXPECT_EQ(std::get<0>(res), 3);
     EXPECT_EQ(std::get<1>(res), 2);
     EXPECT_EQ(std::get<2>(res), 1);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+TEST(AwaitAll, AllVoidContainer) {
+  int counter = 0;
+  auto coro0 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 1);
+  };
+  auto coro1 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 2);
+  };
+  auto coro2 = [&]() -> Future<void> {
+    co_await next_tick();
+    EXPECT_EQ(++counter, 3);
+  };
+
+  Scheduler::this_thread().schedule([&]() -> Task {
+    std::vector<co::Future<void>> futures;
+    futures.reserve(3);
+    futures.push_back(coro0());
+    futures.push_back(coro1());
+    futures.push_back(coro2());
+
+    co_await all_void(futures.begin(), futures.end());
+    EXPECT_EQ(counter, 3);
   });
   Scheduler::this_thread().run();
   destroy_all_schedulers();
