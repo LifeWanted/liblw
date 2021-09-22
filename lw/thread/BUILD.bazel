@@ -1,0 +1,29 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+  name = "thread",
+  visibility = ["//visibility:public"],
+  hdrs = ["thread.h"],
+  srcs = ["thread.cpp"],
+  deps = [
+    "//lw/co:concepts",
+    "//lw/co:events",
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/err",
+    "//lw/err:system",
+  ],
+)
+
+cc_test(
+  name = "thread_test",
+  srcs = ["thread_test.cpp"],
+  deps = [
+    ":thread",
+    "@gtest//:gtest_main",
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/co/testing:destroy_scheduler",
+  ],
+)
