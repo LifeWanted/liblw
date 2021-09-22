@@ -1,0 +1,59 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+package(default_visibility = ["//lw/grpc:__subpackages__"])
+
+cc_library(
+  name = "server_wrapper",
+  srcs = ["server_wrapper.cpp"],
+  hdrs = ["server_wrapper.h"],
+  deps = [
+    ":service_wrapper",
+    "//lw/base:strings",
+    "//lw/err",
+    "//lw/log",
+    "//third_party/grpc",
+  ]
+)
+
+cc_test(
+  name = "server_wrapper_test",
+  srcs = ["server_wrapper_test.cpp"],
+  deps = [
+    ":server_wrapper",
+    ":service_wrapper",
+    "@gtest//:gtest_main",
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/co/testing:destroy_scheduler",
+    "//lw/grpc/testing/proto:greeter_service_cc_grpc",
+    "//lw/log",
+    "//lw/thread",
+    "//third_party/grpc",
+  ],
+)
+
+cc_library(
+  name = "service_wrapper",
+  srcs = ["service_wrapper.cpp"],
+  hdrs = ["service_wrapper.h"],
+  deps = [
+    "//lw/co:future",
+    "//lw/err",
+    "//lw/log",
+    "//third_party/grpc",
+  ]
+)
+
+cc_test(
+  name = "service_wrapper_test",
+  srcs = ["service_wrapper_test.cpp"],
+  deps = [
+    ":service_wrapper",
+    "@gtest//:gtest_main",
+    "//lw/co:future",
+    "//lw/co:scheduler",
+    "//lw/co:task",
+    "//lw/co/testing:destroy_scheduler",
+  ]
+)
