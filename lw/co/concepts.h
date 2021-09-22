@@ -5,9 +5,6 @@
 
 namespace lw::co {
 
-class Scheduler;
-class Task;
-
 template <typename T>
 concept Awaitable = requires(T a) {
   { a.await_ready() } -> std::convertible_to<bool>;
@@ -20,15 +17,26 @@ concept ValueAwaitable = Awaitable<T> && requires(T a) {
   { a.await_resume() } -> std::convertible_to<Result>;
 };
 
+template <typename T>
+concept Scheduleable = requires(T a) {
+  { a.handle() } -> std::convertible_to<std::coroutine_handle<>>;
+};
+
+template <typename T>
+concept CallbackScheduleable =
+  Scheduleable<T> &&
+  requires(T a) {
+    { a.then(std::declval<void(*)()>()) };
+  };
+
+
 /**
  * A CallbackCoroutine is a functor that returns either an `lw::co::Task<void>`
  * or a `std::coroutine_handle<>`.
- *
- * TODO(alaina): Add restrictions on return type of the functor.
  */
 template <typename T>
 concept CallableCoroutine = requires(T a) {
-  { a() } -> std::same_as<Task>;
+  { a() } -> Scheduleable;
 };
 
 }
