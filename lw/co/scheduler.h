@@ -11,7 +11,6 @@
 
 #include "lw/co/concepts.h"
 #include "lw/co/events.h"
-#include "lw/co/task.h"
 #include "lw/memory/circular_queue.h"
 
 namespace lw::co {
@@ -51,7 +50,7 @@ public:
    * Schedules the given task for execution. Upon completion, the callback will
    * be called with the result of the task.
    */
-  template <typename Callback>
+  template <CallbackScheduleable Task, typename Callback>
   void schedule(Task task, Callback&& callback) {
     task.then(callback);
     _add_to_queue(task.handle());
@@ -80,6 +79,7 @@ public:
    *
    * TODO(alaina): Make this thread safe.
    */
+  template <Scheduleable Task>
   void schedule(Task task) {
     _add_to_queue(task.handle());
   }

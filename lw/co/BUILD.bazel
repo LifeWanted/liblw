@@ -75,7 +75,6 @@ cc_library(
   deps = [
     ":concepts",
     ":events",
-    ":task",
     "//lw/co/systems:epoll",
     "//lw/err",
     "//lw/flags",
