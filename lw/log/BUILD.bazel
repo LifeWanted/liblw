@@ -5,7 +5,10 @@ cc_library(
   hdrs = ["log.h"],
   srcs = ["log.cpp"],
   visibility = ["//visibility:public"],
-  deps = ["//lw/flags"],
+  deps = [
+    "//lw/err",
+    "//lw/flags",
+  ],
 )
 
 cc_test(

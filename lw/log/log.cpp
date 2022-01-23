@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include "lw/flags/flags.h"
+#include "lw/err/error.h"
 
 LW_FLAG(
   bool, enable_trace_logs, false,
@@ -18,6 +19,10 @@ LW_FLAG(
 LW_FLAG(
   bool, enable_logs, true,
   "Controls whether any log messages are captured."
+);
+LW_FLAG(
+  bool, enable_error_stacks, true,
+  "When true, errors will write their full stack to output streams."
 );
 
 namespace lw {
@@ -68,6 +73,18 @@ LogWriter log(LogLevel level, std::experimental::source_location loc) {
     return LogWriter{nullptr};
   }
   return LogWriter{&Logger::instance().sink().start_log(level, loc)};
+}
+
+std::ostream& operator<<(std::ostream& stream, const Error& err) {
+  if (flags::enable_error_stacks) {
+    for (const ErrorStack& frame : err.stack()) {
+      stream << "  -> " << frame.message() << "\n";
+    }
+    stream << "\n";
+  } else {
+    stream << err;
+  }
+  return stream;
 }
 
 }

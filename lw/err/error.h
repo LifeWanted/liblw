@@ -135,6 +135,14 @@ Error&& operator<<(Error&& err, T&& val) {
   return std::move(err);
 }
 
+inline Error& operator<<(Error& err, const Error& rhs) {
+  return err << rhs.what_string();
+}
+
+inline Error&& operator<<(Error&& err, const Error& rhs) {
+  return std::move(err) << rhs.what_string();
+}
+
 template <
   typename ErrorType,
   typename T,

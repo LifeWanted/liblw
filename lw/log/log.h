@@ -7,6 +7,8 @@
 
 namespace lw {
 
+class Error;
+
 enum LogLevel {
   TRACE   = 0,
   DEBUG   = 1,
@@ -64,5 +66,7 @@ LogWriter log(
   std::experimental::source_location loc =
     std::experimental::source_location::current()
 );
+
+std::ostream& operator<<(std::ostream& stream, const Error& err);
 
 }
