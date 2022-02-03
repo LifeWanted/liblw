@@ -20,15 +20,15 @@ constexpr float STRING_ESCAPE_SIZE_FACTOR = 1.2f;
 template <>
 bool parse<bool>(std::string_view value) {
   if (
-    value == "y" || value == "Y" || value == "yes" ||
-    value == "t" || value == "T" || value == "true" ||
+    value == "y" || value == "Y" || value == "yes" || value == "Yes" ||
+    value == "t" || value == "T" || value == "true" || value == "True" ||
     value == "1"
   ) {
     return true;
   }
   if (
-    value == "n" || value == "N" || value == "no" ||
-    value == "f" || value == "F" || value == "false" ||
+    value == "n" || value == "N" || value == "no" || value == "No" ||
+    value == "f" || value == "F" || value == "false" || value == "False" ||
     value == "0"
   ) {
     return false;

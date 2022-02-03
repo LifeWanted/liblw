@@ -56,9 +56,37 @@ bool flags_cli_set(
   int argc
 ) {
   auto flag_itr = get_flag_map().find(hash_flag_name(flag_name));
+
+  // If there wasn't a value set and the flag wasn't found, we may have a
+  // boolean flag being disabled with a `no` prefix or by changing `enable` to
+  // `disable` in the flag name.
+  std::string alternate_flag_name;
+  if (flag_itr == get_flag_map().end() && !value) {
+    if (flag_name.size() > 2 && flag_name.starts_with("no")) {
+      flag_name.remove_prefix(2);
+      if (
+        flag_name.size() > 1 &&
+        (flag_name[0] == '-' || flag_name[0] == '_')
+      ) {
+        flag_name.remove_prefix(1);
+      }
+    } else if (flag_name.size() > 7 && flag_name.starts_with("disable")) {
+      flag_name.remove_prefix(1);
+      alternate_flag_name = std::string{flag_name};
+      alternate_flag_name[0] = 'e';
+      alternate_flag_name[1] = 'n';
+      flag_name = alternate_flag_name;
+    }
+    value = "no";
+    flag_itr = get_flag_map().find(hash_flag_name(flag_name));
+  }
+
+  // Did we find the flag?
   if (flag_itr == get_flag_map().end()) {
     throw InvalidArgument() << "Flag " << flag_name << " does not exist.";
   }
+
+  // Set the value of the flag.
   auto&& [k, flag] = *flag_itr;
   if (value) {
     flag->parse_value(*value);

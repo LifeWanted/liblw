@@ -17,6 +17,7 @@ LW_FLAG(std::string, str, "Lorem ipsum", "Completely original value.");
 
 LW_FLAG(int, change_me, 123, "This value will be changed by tests.");
 LW_FLAG(bool, change_me_bool, false, "This value will be changed by tests.");
+LW_FLAG(bool, enable_me, false, "This value will be changed by tests.");
 LW_FLAG(std::string, change_me_str, "", "This value will be changed by tests.");
 
 // These flags should not compile.
@@ -82,6 +83,30 @@ TEST(FlagsCliSet, TakesNextArgumentAsValue) {
   const char* argv[] = {"42"};
   EXPECT_TRUE(flags_cli_set("change-me", std::nullopt, argv, argc));
   EXPECT_EQ(flags::change_me, 42);
+}
+
+TEST(FlagsCliSet, DisablesWithNo) {
+  flags::change_me_bool = true;
+  int argc = 0;
+  const char* argv[] = {};
+  EXPECT_FALSE(flags_cli_set("nochange_me_bool", std::nullopt, argv, argc));
+  EXPECT_FALSE(flags::change_me_bool);
+}
+
+TEST(FlagsCliSet, DisablesWithNo_) {
+  flags::change_me_bool = true;
+  int argc = 0;
+  const char* argv[] = {};
+  EXPECT_FALSE(flags_cli_set("no_change_me_bool", std::nullopt, argv, argc));
+  EXPECT_FALSE(flags::change_me_bool);
+}
+
+TEST(FlagsCliSet, DisablesWithDisable) {
+  flags::enable_me = true;
+  int argc = 0;
+  const char* argv[] = {};
+  EXPECT_FALSE(flags_cli_set("disable_me", std::nullopt, argv, argc));
+  EXPECT_FALSE(flags::enable_me);
 }
 
 // -------------------------------------------------------------------------- //
