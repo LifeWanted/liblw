@@ -79,6 +79,17 @@ void print_flags(std::ostream& out);
 
 // -------------------------------------------------------------------------- //
 
+/**
+ * @brief Type traits that assist in working with arbitrary flag types.
+ */
+template <typename T>
+struct FlagTraits {
+  std::string format_method(const T& value) const { return format(value); }
+  T parse_method(std::string_view value) const { return parse<T>(value); }
+};
+
+// -------------------------------------------------------------------------- //
+
 class FlagBase {
 public:
   explicit FlagBase(
@@ -148,11 +159,11 @@ public:
   }
 
   std::string default_value_string() const override {
-    return format(_default);
+    return FlagTraits<T>{}.format_method(_default);
   }
 
   void parse_value(std::string_view value_str) override {
-    set_value(parse<T>(value_str));
+    set_value(FlagTraits<T>{}.parse_method(value_str));
   }
 
   template<typename U>

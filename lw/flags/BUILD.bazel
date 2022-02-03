@@ -15,6 +15,7 @@ cc_test(
   srcs = ["flags_test.cpp"],
   deps = [
     ":flags",
+    ":format",
     "@gtest//:gtest_main",
   ]
 )

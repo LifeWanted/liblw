@@ -1,10 +1,13 @@
 #include "lw/flags/flags.h"
 
 #include <sstream>
+#include <string>
+#include <string_view>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "lw/err/canonical.h"
+#include "lw/flags/format.h"
 
 LW_FLAG(bool, bool_true, true, "A true bool.");
 LW_FLAG(bool, bool_false, false, "A false bool.");
@@ -26,6 +29,37 @@ LW_FLAG(std::string, change_me_str, "", "This value will be changed by tests.");
 // LW_FLAG(int&, ref_not_allowed, 42, "Flag types must not be reference.");
 // LW_FLAG(int*, ptr_not_allowed, nullptr, "Flag types must not be pointers.");
 // LW_FLAG(std::string_view, no_str_view, "", "Strings must use std::string.");
+
+namespace other {
+
+struct CustomType {
+  int x = 0;
+  int y = 0;
+};
+
+}
+
+template <>
+struct lw::cli::FlagTraits<other::CustomType> {
+  std::string format_method(const other::CustomType& value) const {
+    return std::to_string(value.x) + "," + std::to_string(value.y);
+  }
+  other::CustomType parse_method(std::string_view value) const {
+    std::size_t comma_pos = value.find(',');
+    return {
+      .x = lw::cli::parse<int>({value.data(), comma_pos}),
+      .y = lw::cli::parse<int>({
+        value.data() + comma_pos + 1,
+        value.size() - comma_pos - 1
+      })
+    };
+  }
+};
+
+LW_FLAG(
+  other::CustomType, custom_flag, (other::CustomType{.x = 0, .y = 1}),
+  "This is a custom flag type."
+);
 
 namespace lw::cli {
 namespace {
@@ -107,6 +141,17 @@ TEST(FlagsCliSet, DisablesWithDisable) {
   const char* argv[] = {};
   EXPECT_FALSE(flags_cli_set("disable_me", std::nullopt, argv, argc));
   EXPECT_FALSE(flags::enable_me);
+}
+
+TEST(FlagsCliSet, ParsesCustomTypes) {
+  flags::custom_flag = other::CustomType{.x = 0, .y = 1};
+  int argc = 0;
+  const char* argv[] = {};
+  EXPECT_FALSE(flags_cli_set("custom_flag", "2,3", argv, argc));
+  EXPECT_EQ(flags::custom_flag.value().x, 2);
+  EXPECT_EQ(flags::custom_flag.value().y, 3);
+
+  EXPECT_EQ(flags::custom_flag.default_value_string(), "0,1");
 }
 
 // -------------------------------------------------------------------------- //
