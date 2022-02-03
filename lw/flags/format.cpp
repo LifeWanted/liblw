@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <locale>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -14,6 +15,11 @@ namespace lw::cli {
 namespace {
 
 constexpr float STRING_ESCAPE_SIZE_FACTOR = 1.2f;
+
+const std::locale& locale() {
+  static std::locale l{"en_US.UTF-8"};
+  return l;
+}
 
 }
 
@@ -146,40 +152,55 @@ template <>
 std::chrono::nanoseconds parse<std::chrono::nanoseconds>(
   std::string_view value
 ) {
+  std::string_view v = value;
   std::chrono::nanoseconds::rep count;
-  const auto [num_end, ec] = std::from_chars(value.begin(), value.end(), count);
-  if (num_end == value.end()) {
-    throw InvalidArgument()
-      << "Duration value \"" << value << "\" missing time unit suffix.";
-  } else if (num_end == value.begin() || ec == std::errc::invalid_argument) {
-    throw InvalidArgument()
-      << "Duration value \"" << value << "\" could not be parsed.";
-  } else if (ec == std::errc::result_out_of_range) {
-    throw InvalidArgument()
-      << "Duration value \"" << value << "\" too large to be represented.";
-  }
+  std::chrono::nanoseconds sum{0};
+  while (!v.empty()) {
+    const auto [num_end, ec] = std::from_chars(v.begin(), v.end(), count);
+    if (num_end == v.end()) {
+      throw InvalidArgument()
+        << "Duration value \"" << value << "\" missing time unit suffix.";
+    } else if (num_end == v.begin() || ec == std::errc::invalid_argument) {
+      throw InvalidArgument()
+        << "Duration value \"" << value << "\" could not be parsed.";
+    } else if (ec == std::errc::result_out_of_range) {
+      throw InvalidArgument()
+        << "Duration value \"" << value << "\" too large to be represented.";
+    }
 
-  std::string_view units{num_end, static_cast<uint64_t>(value.end() - num_end)};
-  if (units == "y") {
-    return std::chrono::years(count);
-  } else if (units == "d") {
-    return std::chrono::days(count);
-  } else if (units == "h") {
-    return std::chrono::hours(count);
-  } else if (units == "m") {
-    return std::chrono::minutes(count);
-  } else if (units == "s") {
-    return std::chrono::seconds(count);
-  } else if (units == "ms") {
-    return std::chrono::milliseconds(count);
-  } else if (units == "us") {
-    return std::chrono::microseconds(count);
-  } else if (units == "ns") {
-    return std::chrono::nanoseconds(count);
-  } else {
-    throw InvalidArgument()
-      << "Unknown time units \"" << units << "\" in value " << value;
+    std::size_t num_end_idx = num_end - v.begin();
+    std::size_t unit_length = 1;
+    while (
+      (num_end_idx + unit_length) < v.size() &&
+      !std::isdigit(v.at(num_end_idx + unit_length), locale())
+    ) {
+      ++unit_length;
+    }
+
+    std::string_view units{num_end, unit_length};
+    if (units == "y") {
+      sum += std::chrono::years(count);
+    } else if (units == "d") {
+      sum += std::chrono::days(count);
+    } else if (units == "h") {
+      sum += std::chrono::hours(count);
+    } else if (units == "m") {
+      sum += std::chrono::minutes(count);
+    } else if (units == "s") {
+      sum += std::chrono::seconds(count);
+    } else if (units == "ms") {
+      sum += std::chrono::milliseconds(count);
+    } else if (units == "us") {
+      sum += std::chrono::microseconds(count);
+    } else if (units == "ns") {
+      sum += std::chrono::nanoseconds(count);
+    } else {
+      throw InvalidArgument()
+        << "Unknown time units \"" << units << "\" in value " << value;
+    }
+    v.remove_prefix(num_end_idx + unit_length);
   }
+  return sum;
 }
 
 }

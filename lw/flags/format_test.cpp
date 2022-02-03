@@ -112,5 +112,13 @@ TEST(FlagCli, ParseDuration) {
   EXPECT_EQ(parse<nanoseconds>("15ns"), nanoseconds(15));
 }
 
+TEST(FlagCli, ParseComplexDuration) {
+  using namespace std::chrono;
+  EXPECT_EQ(
+    parse<nanoseconds>("1h2m3s4ms"),
+    hours(1) + minutes(2) + seconds(3) + milliseconds(4)
+  );
+}
+
 }
 }
