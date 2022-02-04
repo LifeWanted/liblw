@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "lw/co/concepts.h"
+#include "lw/co/event_system.h"
 #include "lw/co/events.h"
 #include "lw/memory/circular_queue.h"
 
@@ -17,10 +18,6 @@ namespace lw::co {
 
 class Scheduler;
 typedef int Handle;
-
-namespace internal {
-class EPoll;
-}
 
 /**
  * A per-thread singleton coroutine scheduling service.
@@ -114,7 +111,7 @@ private:
   void _schedule(Handle handle, Event events, std::function<void()> func);
 
   std::atomic_bool _continue_polling = true;
-  std::unique_ptr<internal::EPoll> _epoll;
+  std::unique_ptr<EventSystem> _events;
   CircularQueue<std::coroutine_handle<>> _coro_queue;
   Handle _queue_notification_fd = 0;
 };

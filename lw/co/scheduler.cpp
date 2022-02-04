@@ -69,7 +69,7 @@ void destroy_scheduler(std::thread::id thread_id) {
 }
 
 Scheduler::Scheduler():
-  _epoll{std::make_unique<internal::EPoll>()},
+  _events{std::make_unique<internal::EPoll>()},
   _coro_queue{flags::lw_scheduler_queue_size.value()}
 {
   if (thread_schedulers.contains(std::this_thread::get_id())) {
@@ -123,7 +123,7 @@ void Scheduler::run() {
          "created it.";
   }
 
-  while (_continue_polling && _epoll->has_pending_items()) _epoll->wait();
+  while (_continue_polling && _events->has_pending_items()) _events->wait();
 }
 
 void Scheduler::stop() {
@@ -160,7 +160,7 @@ void Scheduler::_schedule(
   Event events,
   std::function<void()> func
 ) {
-  _epoll->add(handle, events, std::move(func));
+  _events->add(handle, events, std::move(func));
 }
 
 }

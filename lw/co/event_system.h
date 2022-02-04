@@ -2,22 +2,24 @@
 
 #include <chrono>
 #include <functional>
-#include <sys/epoll.h>
-#include <unordered_map>
 
-#include "lw/co/event_system.h"
 #include "lw/co/events.h"
 
-namespace lw::co::internal {
+namespace lw::co {
 
-class EPoll : public EventSystem {
+/**
+ * Interface for event systems that the co::Scheduler may build upon.
+ */
+class EventSystem {
 public:
-  EPoll();
-  ~EPoll();
-  EPoll(EPoll&&) = delete;
-  EPoll& operator=(EPoll&&) = delete;
-  EPoll(const EPoll&) = delete;
-  EPoll& operator=(const EPoll&) = delete;
+  typedef std::function<void()> callback_type;
+
+  EventSystem() = default;
+  virtual ~EventSystem() = default;
+  EventSystem(EventSystem&&) = default;
+  EventSystem& operator=(EventSystem&&) = default;
+  EventSystem(const EventSystem&) = delete;
+  EventSystem& operator=(const EventSystem&) = delete;
 
   /**
    * Adds the given file descriptor to be watched by epoll.
@@ -29,17 +31,17 @@ public:
    * @param callback
    *  The function to call once an event triggers.
    */
-  void add(int fd, Event events, callback_type callback) override;
+  virtual void add(int fd, Event events, callback_type callback) = 0;
 
   /**
    * Stops watching for events on the file descriptor and destroys the callback.
    */
-  void remove(int fd) override;
+  virtual void remove(int fd) = 0;
 
   /**
    * Returns true if there are any pending callbacks.
    */
-  bool has_pending_items() const override { return !_callbacks.empty(); }
+  virtual bool has_pending_items() const = 0;
 
   /**
    * Wait indefinitely for an event to trigger.
@@ -47,7 +49,7 @@ public:
    * @return
    *  The number of events that were triggered.
    */
-  std::size_t wait() override { return _wait(-1); }
+  virtual std::size_t wait() = 0;
 
   /**
    * Fire any events that are ready and return immediately, even if there are
@@ -56,7 +58,7 @@ public:
    * @return
    *  The number of events that were triggered.
    */
-  std::size_t try_wait() override { return _wait(0); }
+  virtual std::size_t try_wait() = 0;
 
   /**
    * Wait for any events to fire or `timeout` to expire, whichever comes first.
@@ -71,13 +73,7 @@ public:
    * @return
    *  The number of events that were triggered.
    */
-  std::size_t wait_for(std::chrono::steady_clock::duration timeout) override;
-
-private:
-  std::size_t _wait(int timeout_ms);
-
-  int _epoll_fd = -1;
-  std::unordered_map<int, std::pair<callback_type, bool>> _callbacks;
+  virtual std::size_t wait_for(std::chrono::steady_clock::duration timeout) = 0;
 };
 
 }
