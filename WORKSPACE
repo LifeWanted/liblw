@@ -31,3 +31,20 @@ http_archive(
     'visibility = ["//visibility:public"])',
   url = "https://github.com/openssl/openssl/archive/openssl-3.0.1.zip",
 )
+
+git_repository(
+  name = "com_google_protobuf",
+  tag = "v3.19.4",
+  remote = "https://github.com/protocolbuffers/protobuf.git",
+)
+git_repository(
+  name = "com_github_grpc_grpc",
+  tag = "v1.43.2",
+  remote = "https://github.com/grpc/grpc.git",
+)
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+protobuf_deps()
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+grpc_deps()
+load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
+grpc_extra_deps()
