@@ -66,4 +66,27 @@ void ThreadAwaitable::await_suspend(std::coroutine_handle<> coro) {
 }
 
 }
+
+internal::ThreadAwaitable thread(void (*func)()) {
+    auto state = std::make_shared<internal::ThreadAwaitable::State>();
+  state->thread = std::thread{
+    [=]() {
+      func();
+      state->complete();
+    }
+  };
+  return internal::ThreadAwaitable(std::move(state));
+}
+
+internal::ThreadAwaitable thread(std::function<void()> func) {
+  auto state = std::make_shared<internal::ThreadAwaitable::State>();
+  state->thread = std::thread{
+    [state, func = std::move(func)]() {
+      func();
+      state->complete();
+    }
+  };
+  return internal::ThreadAwaitable(std::move(state));
+}
+
 }

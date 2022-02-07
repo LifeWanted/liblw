@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <coroutine>
+#include <functional>
 #include <memory>
 #include <thread>
 
@@ -54,5 +55,16 @@ auto thread(Coroutine&& coroutine) {
   };
   return internal::ThreadAwaitable{std::move(state)};
 }
+
+/**
+ * @brief Spawns a new thread and calls the given function on it.
+ *
+ * @param func
+ *  The function to call from the new thread.
+ *
+ * @return An awaitable that resolves when the thread finishes.
+ */
+internal::ThreadAwaitable thread(void (*func)());
+internal::ThreadAwaitable thread(std::function<void()> func);
 
 }

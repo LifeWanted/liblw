@@ -15,6 +15,13 @@ namespace {
 
 using ::lw::co::testing::destroy_all_schedulers;
 
+int test_counter;
+void increment() { ++test_counter; }
+co::Future<void> increment_future() {
+  ++test_counter;
+  co_await co::next_tick();
+}
+
 TEST(Thread, SpawnsNewThreads) {
   co::Scheduler::this_thread().schedule([&]() -> co::Task {
     co::Promise<std::thread::id> promise;
@@ -24,6 +31,40 @@ TEST(Thread, SpawnsNewThreads) {
     });
 
     EXPECT_NE(co_await promise.get_future(), std::this_thread::get_id());
+  });
+
+  co::Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+TEST(Thread, WorksOnVoidFunctors) {
+  co::Scheduler::this_thread().schedule([&]() -> co::Task {
+    co::Promise<std::thread::id> promise;
+    co_await thread([&]() { promise.set_value(std::this_thread::get_id()); });
+
+    EXPECT_NE(co_await promise.get_future(), std::this_thread::get_id());
+  });
+
+  co::Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+TEST(Thread, WorksOnOrdinaryVoidFunctions) {
+  co::Scheduler::this_thread().schedule([&]() -> co::Task {
+    test_counter = 0;
+    co_await thread(&increment);
+    EXPECT_EQ(test_counter, 1);
+  });
+
+  co::Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+TEST(Thread, WorksOnOrdinaryFutureFunctions) {
+  co::Scheduler::this_thread().schedule([&]() -> co::Task {
+    test_counter = 0;
+    co_await thread(&increment_future);
+    EXPECT_EQ(test_counter, 1);
   });
 
   co::Scheduler::this_thread().run();
