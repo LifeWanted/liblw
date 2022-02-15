@@ -1,3 +1,8 @@
 # TODO: Add `-Werror` once the GCC bugs are fixed...
-build --cxxopt='-std=c++20' --cxxopt='-Wall' --cxxopt='-fdiagnostics-color=always' --cxxopt='-fcoroutines'
-test --test_output=errors --compilation_mode=dbg
+build --cxxopt='-std=c++20'
+build --cxxopt='-Wall'
+build --cxxopt='-fdiagnostics-color=always'
+build --cxxopt='-fcoroutines'
+
+test --test_output=errors
+test --compilation_mode=dbg

@@ -8,6 +8,9 @@ Makefile
 # Dependencies
 external/
 
+# Experiments
+experimental/
+
 # Compiled Object files
 out/
 build/

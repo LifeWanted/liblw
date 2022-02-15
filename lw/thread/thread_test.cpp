@@ -18,8 +18,8 @@ using ::lw::co::testing::destroy_all_schedulers;
 int test_counter;
 void increment() { ++test_counter; }
 co::Future<void> increment_future() {
-  ++test_counter;
   co_await co::next_tick();
+  ++test_counter;
 }
 
 TEST(Thread, SpawnsNewThreads) {
