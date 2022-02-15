@@ -3,14 +3,49 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 package(default_visibility = ["//lw/grpc:__subpackages__"])
 
 cc_library(
+  name = "grpc_event_system",
+  hdrs = ["grpc_event_system.h"],
+  srcs = ["grpc_event_system.cpp"],
+  deps = [
+    "//lw/co:event_system",
+    "//lw/co:events",
+    "//lw/err",
+    "//lw/err:system",
+    "//lw/log",
+    "//third_party/grpc",
+  ],
+)
+
+cc_test(
+  name = "grpc_event_system_test",
+  srcs = ["grpc_event_system_test.cpp"],
+  deps = [
+    ":grpc_event_system",
+    "@gtest//:gtest_main",
+    "//lw/co:events",
+    "//lw/err",
+    "//lw/flags:format",
+    "//third_party/grpc",
+  ],
+)
+
+cc_library(
+  name = "queue_processor",
+  hdrs = ["queue_processor.h"],
+)
+
+cc_library(
   name = "server_wrapper",
   srcs = ["server_wrapper.cpp"],
   hdrs = ["server_wrapper.h"],
   deps = [
+    ":queue_processor",
     ":service_wrapper",
     "//lw/base:strings",
+    "//lw/co:task",
     "//lw/err",
     "//lw/log",
+    "//lw/thread",
     "//third_party/grpc",
   ]
 )
@@ -26,6 +61,7 @@ cc_test(
     "//lw/co:scheduler",
     "//lw/co:task",
     "//lw/co/testing:destroy_scheduler",
+    "//lw/co:time",
     "//lw/grpc/testing/proto:greeter_service_cc_grpc",
     "//lw/log",
     "//lw/thread",
