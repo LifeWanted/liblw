@@ -9,6 +9,10 @@
 namespace lw {
 using ::std::experimental::source_location;
 
+int get_system_error() {
+  return errno;
+}
+
 void check_system_error(const source_location& loc) {
   // TODO: Add support for other OS errors.
   check_system_error(errno, loc);

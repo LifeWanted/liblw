@@ -5,6 +5,14 @@
 namespace lw {
 
 /**
+ * @brief Fetches the system-wide error code (i.e. `errno`).
+ *
+ * This may change the current system error. Pass the return value of this back
+ * into `check_system_error` if there are any error types you are not handling.
+ */
+int get_system_error();
+
+/**
  * Fetches the system-wide error code (e.g. `errno`) and checks for failure.
  *
  * @throws ::lw::Error
