@@ -98,7 +98,7 @@ private:
   std::shared_ptr<TaskPromise::State> _state;
 };
 
-Task TaskPromise::get_return_object() {
+inline Task TaskPromise::get_return_object() {
   return Task{Task::handle_type::from_promise(*this), _state};
 }
 
