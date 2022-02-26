@@ -100,23 +100,46 @@ TEST(FlagsCliSet, ChecksFlagsExist) {
   );
 }
 
-TEST(FlagsCliSet, DefaultsToYesValue) {
+TEST(FlagsCliSet, DefaultsBooleansToYesValue) {
   flags::change_me_bool = false;
+  EXPECT_FALSE(flags_cli_set("change-me-bool", std::nullopt, nullptr, 0));
+  EXPECT_EQ(flags::change_me_bool, true);
+}
+
+TEST(FlagsCliSet, DoesNotDefaultOthersToYesValue) {
   flags::change_me_str = "";
   int argc = 1;
   const char* argv[] = {"--some-other-arg"};
-  EXPECT_FALSE(flags_cli_set("change-me-bool", std::nullopt, nullptr, 0));
-  EXPECT_FALSE(flags_cli_set("change-me-str", std::nullopt, argv, argc));
-  EXPECT_EQ(flags::change_me_bool, true);
-  EXPECT_EQ(flags::change_me_str, "yes");
+  EXPECT_THROW(
+    flags_cli_set("change-me-str", std::nullopt, argv, argc),
+    InvalidArgument
+  );
 }
 
-TEST(FlagsCliSet, TakesNextArgumentAsValue) {
+TEST(FlagsCliSet, NonBooleanTakesNextArgumentAsValue) {
   flags::change_me = 1234;
   int argc = 1;
   const char* argv[] = {"42"};
   EXPECT_TRUE(flags_cli_set("change-me", std::nullopt, argv, argc));
   EXPECT_EQ(flags::change_me, 42);
+}
+
+TEST(FlagsCliSet, BooleanDoesNotTakeNextArgumentAsValue) {
+  flags::change_me_bool = true;
+  int argc = 1;
+  const char* argv[] = {"no"};
+  EXPECT_FALSE(flags_cli_set("change-me-bool", std::nullopt, argv, argc));
+  EXPECT_TRUE(flags::change_me_bool);
+
+  flags::change_me_bool = false;
+  const char* argv2[] = {"yes"};
+  EXPECT_FALSE(flags_cli_set("change-me-bool", std::nullopt, argv2, argc));
+  EXPECT_TRUE(flags::change_me_bool); // Booleans default to true.
+
+  flags::change_me_bool = false;
+  const char* argv3[] = {"gibberish"};
+  EXPECT_FALSE(flags_cli_set("change-me-bool", std::nullopt, argv3, argc));
+  EXPECT_TRUE(flags::change_me_bool); // Booleans default to true.
 }
 
 TEST(FlagsCliSet, DisablesWithNo) {
@@ -127,7 +150,7 @@ TEST(FlagsCliSet, DisablesWithNo) {
   EXPECT_FALSE(flags::change_me_bool);
 }
 
-TEST(FlagsCliSet, DisablesWithNo_) {
+TEST(FlagsCliSet, DisablesWithNoAndUnderscore) {
   flags::change_me_bool = true;
   int argc = 0;
   const char* argv[] = {};

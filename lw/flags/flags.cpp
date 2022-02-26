@@ -17,6 +17,7 @@ namespace {
 constexpr std::size_t FLAG_PRINT_WIDTH  = 80;
 constexpr std::size_t MAX_FLAG_NAME     = 20;
 constexpr std::string_view FLAG_PREFIX  = " --";
+constexpr std::string_view BOOLEAN_TYPE_NAME = "bool";
 
 std::unordered_map<std::size_t, FlagBase*>& get_flag_map() {
   static std::unordered_map<std::size_t, FlagBase*>* flags =
@@ -88,20 +89,19 @@ bool flags_cli_set(
 
   // Set the value of the flag.
   auto&& [k, flag] = *flag_itr;
+  if (!value && flag->type_name() == BOOLEAN_TYPE_NAME) value = "yes";
   if (value) {
     flag->parse_value(*value);
+    return false;
   } else if (argc > 0) {
     std::string_view next_arg{*rest_args};
-    if (next_arg.starts_with("--")) {
-      flag->parse_value("yes");
-    } else {
+    if (!next_arg.starts_with("--")) {
       flag->parse_value(next_arg);
       return true;
     }
-  } else {
-    flag->parse_value("yes");
   }
-  return false;
+  throw InvalidArgument()
+    << "Flag " << flag_name << " missing " << flag->type_name() << " value.";
 }
 
 void print_flags(std::ostream& out) {
