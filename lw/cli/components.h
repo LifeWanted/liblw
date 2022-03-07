@@ -9,6 +9,9 @@
 
 namespace lw::cli {
 
+/**
+ * @brief Base class for drawable elements.
+ */
 class Renderable {
 public:
   Renderable() = default;
@@ -21,22 +24,31 @@ public:
   virtual const Image& render(UIVector2d dimensions) = 0;
 };
 
+/**
+ * @brief A dimensioned, renderable UI component.
+ */
 class Component: public Renderable {
 public:
   explicit Component(UIVector2d dimensions): _renderer{dimensions} {}
   Component(const Component&) = delete;
   Component(Component&&) = default;
-  virtual ~Component() = default;
+  ~Component() override = default;
   Component& operator=(const Component&) = delete;
   Component& operator=(Component&&) = default;
 
 protected:
+  /**
+   * @brief Direct access to renderer used for this component.
+   */
   Renderer& renderer() { return _renderer; };
 
 private:
   Renderer _renderer;
 };
 
+/**
+ * @brief A UI component with a rendered frame surrounding the contents.
+ */
 class FrameBox: public Component {
 public:
   struct CustomFrame {
@@ -61,12 +73,17 @@ public:
     Color foreground;
   };
 
+  static const SimpleFrame DOUBLE_BAR_FRAME;
+  static const SimpleFrame SINGLE_BAR_FRAME;
+  static const SimpleFrame BOLD_BAR_FRAME;
+
   FrameBox(CustomFrame frame, UIVector2d dimensions):
     Component{dimensions},
     _frame{std::move(frame)}
   {}
 
   FrameBox(SimpleFrame frame, UIVector2d dimensions);
+  ~FrameBox() override = default;
 
   const Image& render(UIVector2d dimensions) override;
 

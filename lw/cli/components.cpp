@@ -4,6 +4,38 @@
 
 namespace lw::cli {
 
+// https://en.wikipedia.org/wiki/Box-drawing_character#Box_Drawing
+const FrameBox::SimpleFrame FrameBox::DOUBLE_BAR_FRAME{
+  .top_left = U'╔',
+  .top_right = U'╗',
+  .bottom_left = U'╚',
+  .bottom_right = U'╝',
+  .horizontal = U'═',
+  .vertical = U'║',
+  .background = lw::cli::Color::transparent(),
+  .foreground = {0x000000}
+};
+const FrameBox::SimpleFrame FrameBox::SINGLE_BAR_FRAME{
+  .top_left = U'┌',
+  .top_right = U'┐',
+  .bottom_left = U'└',
+  .bottom_right = U'┘',
+  .horizontal = U'─',
+  .vertical = U'│',
+  .background = lw::cli::Color::transparent(),
+  .foreground = {0x000000}
+};
+const FrameBox::SimpleFrame FrameBox::BOLD_BAR_FRAME{
+  .top_left = U'┏',
+  .top_right = U'┓',
+  .bottom_left = U'┗',
+  .bottom_right = U'┛',
+  .horizontal = U'━',
+  .vertical = U'┃',
+  .background = lw::cli::Color::transparent(),
+  .foreground = {0x000000}
+};
+
 FrameBox::FrameBox(SimpleFrame frame, UIVector2d dimensions):
   FrameBox{
     CustomFrame{
