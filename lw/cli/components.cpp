@@ -59,10 +59,8 @@ FrameBox::FrameBox(SimpleFrame frame, UIVector2d dimensions):
 
 const Image& FrameBox::render(UIVector2d dimensions) {
   // Calculate the size of the frame and contents.
-  UIVector2d render_dims{
-    std::min(renderer().image().width(), dimensions.x),
-    std::min(renderer().image().height(), dimensions.y)
-  };
+  renderer().constrain_dimensions(dimensions);
+  UIVector2d render_dims = renderer().dimensions();
   UIVector2d content_dims{render_dims.x - 2, render_dims.y - 2};
   if (render_dims.x < 3 || render_dims.y < 3) {
     renderer().clear({0xff00ff});
@@ -108,6 +106,20 @@ const Image& FrameBox::render(UIVector2d dimensions) {
   }
   renderer().draw(_frame.bottom_right);
 
+  return renderer().image();
+}
+
+// -------------------------------------------------------------------------- //
+
+const Image& StaticTextBox::render(UIVector2d dimensions) {
+  renderer().constrain_dimensions(dimensions);
+  const std::size_t max_size =
+    renderer().image().width() * renderer().image().height();
+  std::size_t drawn = 0;
+  for (const char c : _text) {
+    if (++drawn > max_size) break;
+    renderer().draw(c);
+  }
   return renderer().image();
 }
 

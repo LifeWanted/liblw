@@ -1,6 +1,8 @@
 #pragma once
 
 #include <algorithm>
+#include <string>
+#include <string_view>
 #include <memory>
 
 #include "lw/cli/color.h"
@@ -77,12 +79,12 @@ public:
   static const SimpleFrame SINGLE_BAR_FRAME;
   static const SimpleFrame BOLD_BAR_FRAME;
 
-  FrameBox(CustomFrame frame, UIVector2d dimensions):
+  explicit FrameBox(CustomFrame frame, UIVector2d dimensions):
     Component{dimensions},
     _frame{std::move(frame)}
   {}
 
-  FrameBox(SimpleFrame frame, UIVector2d dimensions);
+  explicit FrameBox(SimpleFrame frame, UIVector2d dimensions);
   ~FrameBox() override = default;
 
   const Image& render(UIVector2d dimensions) override;
@@ -90,6 +92,20 @@ public:
 private:
   CustomFrame _frame;
   std::shared_ptr<Renderable> _contents;
+};
+
+class StaticTextBox: public Component {
+public:
+  explicit StaticTextBox(std::string_view text, UIVector2d dimensions):
+    Component{dimensions},
+    _text{text}
+  {}
+  ~StaticTextBox() override = default;
+
+  const Image& render(UIVector2d dimensions) override;
+
+private:
+  std::string _text;
 };
 
 }
