@@ -4,6 +4,16 @@
 
 namespace lw::cli {
 
+struct rgb_t { explicit rgb_t() = default; };
+struct bgr_t { explicit bgr_t() = default; };
+struct argb_t { explicit argb_t() = default; };
+struct rgba_t { explicit rgba_t() = default; };
+
+constexpr rgb_t rgb;
+constexpr bgr_t bgr;
+constexpr argb_t argb;
+constexpr rgba_t rgba;
+
 struct Color {
   Color(): Color(0x000000) {}
   Color(std::uint32_t rgb):
@@ -14,6 +24,42 @@ struct Color {
   Color(std::uint8_t r, std::uint8_t g, std::uint8_t b): r{r}, g{g}, b{b} {}
   Color(std::uint8_t a, std::uint8_t r, std::uint8_t g, std::uint8_t b):
     r{r}, g{g}, b{b}, a{a}
+  {}
+
+  Color(rgb_t, std::uint8_t r, std::uint8_t g, std::uint8_t b):
+    r{r}, g{g}, b{b}
+  {}
+  Color(bgr_t, std::uint8_t b, std::uint8_t g, std::uint8_t r):
+    r{r}, g{g}, b{b}
+  {}
+  Color(argb_t, std::uint8_t a, std::uint8_t r, std::uint8_t g, std::uint8_t b):
+    r{r}, g{g}, b{b}, a{a}
+  {}
+  Color(rgba_t, std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a):
+    r{r}, g{g}, b{b}, a{a}
+  {}
+
+  Color(rgb_t, std::uint32_t rgb):
+    r{static_cast<std::uint8_t>((rgb & 0x00ff0000) >> 16)},
+    g{static_cast<std::uint8_t>((rgb & 0x0000ff00) >>  8)},
+    b{static_cast<std::uint8_t>((rgb & 0x000000ff) >>  0)}
+  {}
+  Color(bgr_t, std::uint32_t bgr):
+    r{static_cast<std::uint8_t>((bgr & 0x000000ff) >>  0)},
+    g{static_cast<std::uint8_t>((bgr & 0x0000ff00) >>  8)},
+    b{static_cast<std::uint8_t>((bgr & 0x00ff0000) >> 16)}
+  {}
+  Color(argb_t, std::uint32_t argb):
+    r{static_cast<std::uint8_t>((argb & 0x00ff0000) >> 16)},
+    g{static_cast<std::uint8_t>((argb & 0x0000ff00) >>  8)},
+    b{static_cast<std::uint8_t>((argb & 0x000000ff) >>  0)},
+    a{static_cast<std::uint8_t>((argb & 0xff000000) >> 24)}
+  {}
+  Color(rgba_t, std::uint32_t rgba):
+    r{static_cast<std::uint8_t>((rgba & 0xff000000) >> 24)},
+    g{static_cast<std::uint8_t>((rgba & 0x00ff0000) >> 16)},
+    b{static_cast<std::uint8_t>((rgba & 0x0000ff00) >>  8)},
+    a{static_cast<std::uint8_t>((rgba & 0x000000ff) >>  0)}
   {}
 
   static const Color& transparent() {
@@ -56,6 +102,9 @@ struct Color {
       reinterpret_cast<const std::uint32_t&>(*this) ==
       reinterpret_cast<const std::uint32_t&>(other)
     );
+  }
+  bool operator!=(const Color& other) const {
+    return !(*this == other);
   }
 };
 

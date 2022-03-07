@@ -5,6 +5,16 @@ cc_library(
   hdrs = ["color.h"],
 )
 
+cc_test(
+  name = "color_test",
+  srcs = ["color_test.cpp"],
+  size = "small",
+  deps = [
+    ":color",
+    "@gtest//:gtest_main",
+  ],
+)
+
 cc_library(
   name = "components",
   hdrs = ["components.h"],
