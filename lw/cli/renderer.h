@@ -12,7 +12,10 @@ namespace lw::cli {
  */
 class Renderer {
 public:
-  Renderer(UIVector2d dimensions): _buffer{dimensions} {}
+  Renderer(UIVector2d dimensions):
+    _buffer{dimensions},
+    _render_dimensions{dimensions}
+  {}
 
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
@@ -64,6 +67,14 @@ public:
 
   void blend_foreground();
 
+  void constrain_dimensions(UIVector2d dimensions) {
+    _render_dimensions = {
+      std::min(_buffer.width(), dimensions.x),
+      std::min(_buffer.height(), dimensions.y)
+    };
+  }
+  const UIVector2d& dimensions() const { return _render_dimensions; }
+
 private:
   void _advance_position();
   void _advance_column();
@@ -78,6 +89,7 @@ private:
   );
 
   Image _buffer;
+  UIVector2d _render_dimensions;
   Color _background = Color::transparent();
   Color _foreground;
   UIVector2d _position = {0, 0};
