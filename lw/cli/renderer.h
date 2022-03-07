@@ -76,6 +76,7 @@ public:
   const UIVector2d& dimensions() const { return _render_dimensions; }
 
 private:
+  bool _position_in_constraint() const;
   void _advance_position();
   void _advance_column();
   void _advance_line();

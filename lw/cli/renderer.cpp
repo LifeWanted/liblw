@@ -17,10 +17,12 @@ void Renderer::clear() {
 }
 
 void Renderer::draw(char32_t glyph) {
-  Pixel& p = _buffer.pixel(_position);
-  p.glyph = glyph;
-  p.fg = _foreground;
-  if (_background.a) p.bg = _background;
+  if (_position_in_constraint()) {
+    Pixel& p = _buffer.pixel(_position);
+    p.glyph = glyph;
+    p.fg = _foreground;
+    if (_background.a) p.bg = _background;
+  }
   _advance_position();
 }
 
@@ -28,7 +30,7 @@ void Renderer::draw(const Image& image, Box crop) {
   std::size_t starting_x = _position.x;
   for (std::size_t y = crop.position.y; y < crop.size.y; ++y) {
     for (std::size_t x = crop.position.x; x < crop.size.x; ++x) {
-      _blend_pixel(image.pixel(x, y));
+      if (_position_in_constraint()) _blend_pixel(image.pixel(x, y));
       _advance_column();
     }
     _advance_line();
@@ -41,6 +43,13 @@ void Renderer::blend_foreground() {
     p.fg = _alphablend(p.bg, p.fg);
     p.fg.a = 255;
   }
+}
+
+bool Renderer::_position_in_constraint() const {
+  return (
+    _position.x < _render_dimensions.x &&
+    _position.y < _render_dimensions.y
+  );
 }
 
 void Renderer::_advance_position() {
