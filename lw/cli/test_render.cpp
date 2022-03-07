@@ -157,6 +157,10 @@ int main(int argc, char** argv) {
   ui_layers.front().move_to({5, 5});
   ui_layers.front().draw(frame.render({10, 5}));
 
+  lw::cli::StaticTextBox text{"foobar yeah boi", {6, 2}};
+  ui_layers.front().move_to({6, 15});
+  ui_layers.front().draw(text.render({6, 2}));
+
   lw::cli::Pixel cursor{
     lw::cli::Color::transparent(),
     {0xff00ff},
