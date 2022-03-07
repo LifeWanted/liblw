@@ -36,7 +36,9 @@ void print_bg_gradient(
       lw::lerp(start.g, end.g, x),
       lw::lerp(start.b, end.b, x)
     };
-    renderer.draw({color, lw::cli::Color::transparent(), static_cast<char32_t>(c)});
+    renderer.draw(
+      {color, lw::cli::Color::transparent(), static_cast<char32_t>(c)}
+    );
   }
 }
 
@@ -46,7 +48,8 @@ void print_bg_gradient_sequence(
   std::size_t width,
   char c
 ) {
-  double band_width = static_cast<double>(width) / static_cast<double>(colors.size() - 1);
+  double band_width =
+    static_cast<double>(width) / static_cast<double>(colors.size() - 1);
   for (std::size_t i = 0; i < colors.size() - 2; ++i) {
     print_bg_gradient(renderer, colors[i], colors[i + 1], band_width, c);
   }
@@ -61,13 +64,29 @@ void print_bg_gradient_sequence(
 }
 
 void print_greyscale(lw::cli::Renderer& renderer) {
-  print_bg_gradient(renderer, lw::cli::Color::transparent(), {0xffffff}, renderer.image().width(), ' ');
+  print_bg_gradient(
+    renderer,
+    lw::cli::Color::transparent(), {0xffffff},
+    renderer.image().width(), ' '
+  );
 }
 
 void print_rgb(lw::cli::Renderer& renderer) {
-  print_bg_gradient(renderer, lw::cli::Color::transparent(), {0xff0000}, renderer.image().width(), ' ');
-  print_bg_gradient(renderer, lw::cli::Color::transparent(), {0x00ff00}, renderer.image().width(), ' ');
-  print_bg_gradient(renderer, lw::cli::Color::transparent(), {0x0000ff}, renderer.image().width(), ' ');
+  print_bg_gradient(
+    renderer,
+    lw::cli::Color::transparent(), {0xff0000},
+    renderer.image().width(), ' '
+  );
+  print_bg_gradient(
+    renderer,
+    lw::cli::Color::transparent(), {0x00ff00},
+    renderer.image().width(), ' '
+  );
+  print_bg_gradient(
+    renderer,
+    lw::cli::Color::transparent(), {0x0000ff},
+    renderer.image().width(), ' '
+  );
 }
 
 void print_rainbow(lw::cli::Renderer& renderer) {
@@ -134,19 +153,7 @@ int main(int argc, char** argv) {
 
   print_debug(ui_layers.front());
 
-  lw::cli::FrameBox frame{
-    lw::cli::FrameBox::SimpleFrame{
-      .top_left = U'╔',
-      .top_right = U'╗',
-      .bottom_left = U'╚',
-      .bottom_right = U'╝',
-      .horizontal = U'═',
-      .vertical = U'║',
-      .background = lw::cli::Color::transparent(),
-      .foreground = {0x000000}
-    },
-    {10, 5}
-  };
+  lw::cli::FrameBox frame{lw::cli::FrameBox::BOLD_BAR_FRAME, {10, 5}};
   ui_layers.front().move_to({5, 5});
   ui_layers.front().draw(frame.render({10, 5}));
 
@@ -173,13 +180,23 @@ int main(int argc, char** argv) {
 
     i = terminal->read();
 
+    // Adjust cursor from inputs.
     if (i == lw::cli::Input::ARROW_UP && cursor_pos.y > 0) {
       --cursor_pos.y;
-    } else if (i == lw::cli::Input::ARROW_DOWN && cursor_pos.y < terminal->height() - 1) {
+    } else if (
+      i == lw::cli::Input::ARROW_DOWN &&
+      cursor_pos.y < terminal->height() - 1
+    ) {
       ++cursor_pos.y;
-    } else if (i == lw::cli::Input::ARROW_LEFT && cursor_pos.x > 0) {
+    } else if (
+      i == lw::cli::Input::ARROW_LEFT &&
+      cursor_pos.x > 0
+    ) {
       --cursor_pos.x;
-    } else if (i == lw::cli::Input::ARROW_RIGHT && cursor_pos.x < terminal->width() - 1) {
+    } else if (
+      i == lw::cli::Input::ARROW_RIGHT &&
+      cursor_pos.x < terminal->width() - 1
+    ) {
       ++cursor_pos.x;
     }
   } while (i != lw::cli::Input::ESCAPE);
