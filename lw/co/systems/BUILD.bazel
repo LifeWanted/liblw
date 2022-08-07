@@ -2,6 +2,23 @@
 # coroutine scheduler class only.
 package(default_visibility = ["//lw/co:__subpackages__"])
 
+constraint_setting(
+  name = "event_loop",
+  default_constraint_value = ":grpc_event_loop",
+)
+constraint_value(name = "epoll_event_loop", constraint_setting="event_loop")
+constraint_value(name = "grpc_event_loop", constraint_setting="event_loop")
+
+config_setting(
+  name = "use_epoll",
+  constraint_values = [":epoll_event_loop"]
+)
+
+config_setting(
+  name = "use_grpc",
+  constraint_values = [":grpc_event_loop"],
+)
+
 cc_library(
   name = "epoll",
   hdrs = ["epoll.h"],
@@ -22,5 +39,32 @@ cc_test(
     ":epoll",
     "@gtest//:gtest_main",
     "//lw/err",
+  ],
+)
+
+cc_library(
+  name = "grpc_event_system",
+  hdrs = ["grpc_event_system.h"],
+  srcs = ["grpc_event_system.cpp"],
+  deps = [
+    "//lw/co:event_system",
+    "//lw/co:events",
+    "//lw/err",
+    "//lw/err:system",
+    "//lw/log",
+    "//third_party/grpc",
+  ],
+)
+
+cc_test(
+  name = "grpc_event_system_test",
+  srcs = ["grpc_event_system_test.cpp"],
+  deps = [
+    ":grpc_event_system",
+    "@gtest//:gtest_main",
+    "//lw/co:events",
+    "//lw/err",
+    "//lw/flags:format",
+    "//third_party/grpc",
   ],
 )

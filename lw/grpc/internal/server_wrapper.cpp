@@ -8,9 +8,13 @@
 #include "grpcpp/grpcpp.h"
 #include "lw/base/strings.h"
 #include "lw/co/future.h"
+#include "lw/co/scheduler.h"
+#include "lw/co/task.h"
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
+#include "lw/grpc/internal/queue_processor.h"
 #include "lw/log/log.h"
+#include "lw/thread/thread.h"
 
 namespace lw::grpc::internal {
 
@@ -57,15 +61,35 @@ co::Future<void> ServerWrapper::run() {
   LW_CHECK_NULL_INTERNAL(_builder);
   _queue = _builder->AddCompletionQueue();
   _server = _builder->BuildAndStart();
-  _builder = nullptr;
+  // _builder = nullptr;
 
+  // Initialize the services on this thread so they attach to this scheduler.
   log(INFO) << "gRPC server starting " << _services.size() << " services.";
-  std::vector<co::Future<void>> futures;
-  futures.reserve(_services.size());
+  std::vector<co::Future<void>> service_futures;
+  service_futures.reserve(_services.size());
   for (ServiceWrapper* service : _services) {
-    futures.push_back(service->run(_queue.get()));
+    service_futures.push_back(service->initialize(_queue.get()));
   }
-  co_await co::all_void(futures.begin(), futures.end());
+
+  // Run the gRPC queue on a background thread so the long-running loop waiting
+  // on the completion queue does not block this thread's scheduler.
+  log(INFO) << "gRPC services started, executing completion queue.";
+  co_await thread([&]() -> co::Task {
+    void* tag = nullptr;
+    bool ok = false;
+    while (_queue->Next(&tag, &ok)) {
+      if (!ok) {
+        // TODO: Handle this failure mode correctly.
+        throw Internal() << "Queue unexpectedly not ok.";
+      }
+      LW_CHECK_NULL_INTERNAL(tag) << "Queue tag came back null!?";
+      static_cast<QueueProcessor*>(tag)->grpc_queue_tick();
+    }
+    co_return;
+  });
+
+  log(INFO) << "gRPC queue exited. Awaiting service shutdowns.";
+  co_await co::all_void(service_futures.begin(), service_futures.end());
   log(INFO) << "gRPC services finished, exiting.";
 }
 

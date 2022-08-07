@@ -1,0 +1,9 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+  name = "grpc_router",
+  hdrs = ["grpc_router.h"],
+  deps = [
+    "//third_party/grpc",
+  ],
+)

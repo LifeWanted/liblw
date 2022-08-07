@@ -39,4 +39,9 @@ concept CallableCoroutine = requires(T a) {
   { a() } -> Scheduleable;
 };
 
+template <typename T>
+concept CallableAwaitable = requires(T a) {
+  { a() } -> Awaitable;
+};
+
 }

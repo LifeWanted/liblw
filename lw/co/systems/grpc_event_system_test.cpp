@@ -1,4 +1,4 @@
-#include "lw/grpc/internal/grpc_event_system.h"
+#include "lw/co/systems/grpc_event_system.h"
 
 #include <chrono>
 #include <limits>
@@ -10,7 +10,7 @@
 #include "lw/err/canonical.h"
 #include "lw/flags/format.h"
 
-namespace lw::grpc::internal {
+namespace lw::co::internal {
 namespace {
 
 using std::chrono::high_resolution_clock;
@@ -24,7 +24,7 @@ TEST(GrpcEventSystem, EmptyTryWaitShouldNotBlock) {
   auto end = high_resolution_clock::now();
 
   EXPECT_LT(end - start, milliseconds(1))
-    << "Elapsed time: " << lw::cli::format(end - start);
+    << "Elapsed time: " << cli::format(end - start);
 }
 
 TEST(GrpcEventSystem, TimerFd) {
@@ -42,7 +42,7 @@ TEST(GrpcEventSystem, TimerFd) {
   bool called = false;
   events.add(
     timer,
-    co::Event::READABLE | co::Event::ONE_SHOT,
+    Event::READABLE | Event::ONE_SHOT,
     [&]() { called = true; }
   );
 
@@ -74,8 +74,8 @@ TEST(GrpcEventSystem, RejectAlreadyAddedFileDescriptors) {
   int timer = ::timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK);
   ::grpc::CompletionQueue queue;
   GrpcEventSystem events{queue};
-  events.add(timer, co::Event::READABLE, []() {});
-  EXPECT_THROW(events.add(timer, co::Event::READABLE, []() {}), AlreadyExists);
+  events.add(timer, Event::READABLE, []() {});
+  EXPECT_THROW(events.add(timer, Event::READABLE, []() {}), AlreadyExists);
 }
 
 TEST(GrpcEventSystem, RejectUnknownFileDescriptorsOnRemoval) {

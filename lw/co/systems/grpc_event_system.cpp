@@ -1,4 +1,4 @@
-#include "lw/grpc/internal/grpc_event_system.h"
+#include "lw/co/systems/grpc_event_system.h"
 
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
@@ -11,7 +11,7 @@
 #include "lw/err/system.h"
 #include "lw/log/log.h"
 
-namespace lw::grpc::internal {
+namespace lw::co::internal {
 namespace {
 
 struct GrpcEvent {
@@ -23,7 +23,7 @@ struct GrpcEvent {
 
 class EpollEvent : public GrpcEvent {
 public:
-  static EpollEvent* from_callback(co::EventSystem::callback_type callback) {
+  static EpollEvent* from_callback(EventSystem::callback_type callback) {
     return new EpollEvent(std::move(callback));
   }
 
@@ -35,27 +35,27 @@ public:
   ::grpc::Alarm& alarm() { return _alarm; }
 
 private:
-  explicit EpollEvent(co::EventSystem::callback_type callback):
+  explicit EpollEvent(EventSystem::callback_type callback):
     _callback{std::move(callback)}
   {}
   ~EpollEvent() = default;
 
-  co::EventSystem::callback_type _callback;
+  EventSystem::callback_type _callback;
   ::grpc::Alarm _alarm;
 };
 
-std::uint32_t co_event_to_epoll_event(co::Event events) {
+std::uint32_t co_event_to_epoll_event(Event events) {
   std::uint32_t ret = 0;
-  if (events & co::Event::READABLE)     ret |= EPOLLIN;
-  if (events & co::Event::WRITABLE)     ret |= EPOLLOUT;
-  if (events & co::Event::READ_CLOSED)  ret |= EPOLLRDHUP;
-  if (events & co::Event::PEER_CLOSED)  ret |= EPOLLHUP;
-  if (events & co::Event::POLLPRI)      ret |= EPOLLPRI;
-  if (events & co::Event::ERROR)        ret |= EPOLLERR;
-  if (events & co::Event::EDGE_TRIGGER) ret |= EPOLLET;
-  if (events & co::Event::ONE_SHOT)     ret |= EPOLLONESHOT;
-  if (events & co::Event::WAKE_UP)      ret |= EPOLLWAKEUP;
-  if (events & co::Event::EXCLUSIVE)    ret |= EPOLLEXCLUSIVE;
+  if (events & Event::READABLE)     ret |= EPOLLIN;
+  if (events & Event::WRITABLE)     ret |= EPOLLOUT;
+  if (events & Event::READ_CLOSED)  ret |= EPOLLRDHUP;
+  if (events & Event::PEER_CLOSED)  ret |= EPOLLHUP;
+  if (events & Event::POLLPRI)      ret |= EPOLLPRI;
+  if (events & Event::ERROR)        ret |= EPOLLERR;
+  if (events & Event::EDGE_TRIGGER) ret |= EPOLLET;
+  if (events & Event::ONE_SHOT)     ret |= EPOLLONESHOT;
+  if (events & Event::WAKE_UP)      ret |= EPOLLWAKEUP;
+  if (events & Event::EXCLUSIVE)    ret |= EPOLLEXCLUSIVE;
   return ret;
 }
 
@@ -112,7 +112,7 @@ GrpcEventSystem::~GrpcEventSystem() {
   if (shutdown_signal > 0) ::close(shutdown_signal);
 }
 
-void GrpcEventSystem::add(int fd, co::Event events, callback_type callback) {
+void GrpcEventSystem::add(int fd, Event events, callback_type callback) {
   ::epoll_event ev = {
     .events = co_event_to_epoll_event(events),
     .data = {.ptr = EpollEvent::from_callback(std::move(callback))}

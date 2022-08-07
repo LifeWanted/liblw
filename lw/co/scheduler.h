@@ -43,6 +43,10 @@ public:
    */
   static Scheduler& for_thread(std::thread::id thread_id);
 
+  void set_event_system(std::unique_ptr<EventSystem> system) {
+    _events = std::move(system);
+  }
+
   /**
    * Schedules the given task for execution. Upon completion, the callback will
    * be called with the result of the task.

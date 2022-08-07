@@ -8,7 +8,6 @@
 #include <unordered_map>
 
 #include "lw/co/events.h"
-#include "lw/co/systems/epoll.h"
 #include "lw/err/canonical.h"
 #include "lw/err/macros.h"
 #include "lw/err/system.h"
@@ -68,8 +67,10 @@ void destroy_scheduler(std::thread::id thread_id) {
 
 }
 
+std::unique_ptr<EventSystem> make_scheduler_event_system();
+
 Scheduler::Scheduler():
-  _events{std::make_unique<internal::EPoll>()},
+  _events{make_scheduler_event_system()},
   _coro_queue{flags::lw_scheduler_queue_size.value()}
 {
   if (thread_schedulers.contains(std::this_thread::get_id())) {

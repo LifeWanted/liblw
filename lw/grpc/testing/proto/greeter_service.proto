@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package lw.grpc.testing;
+
+service GreeterService {
+  rpc SayHello (HelloRequest) returns (HelloResponse) {}
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}

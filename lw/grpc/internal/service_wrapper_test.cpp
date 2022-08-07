@@ -27,7 +27,7 @@ TEST(ServiceWrapper, CallsAddedRunners) {
   });
 
   co::Scheduler::this_thread().schedule([&]() -> co::Task {
-    co_await wrapper.run(
+    co_await wrapper.initialize(
       // Don't think about it.
       reinterpret_cast<::grpc::ServerCompletionQueue*>(&counter)
     );

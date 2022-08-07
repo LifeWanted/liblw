@@ -77,17 +77,22 @@ cc_test(
 cc_library(
   name = "scheduler",
   hdrs = ["scheduler.h"],
-  srcs = ["scheduler.cpp"],
+  srcs = ["scheduler.cpp"] + select({
+    "//lw/co/systems:use_grpc": ["scheduler_grpc.cpp"],
+    "//lw/co/systems:use_epoll": ["scheduler_epoll.cpp"],
+  }),
   visibility = ["//visibility:public"],
   deps = [
     ":concepts",
     ":event_system",
     ":events",
-    "//lw/co/systems:epoll",
     "//lw/err",
     "//lw/flags",
     "//lw/memory:circular_queue",
-  ],
+  ] + select({
+    "//lw/co/systems:use_grpc": ["//lw/co/systems:grpc_event_system"],
+    "//lw/co/systems:use_epoll": ["//lw/co/systems:epoll"],
+  }),
 )
 
 cc_test(

@@ -35,10 +35,9 @@ public:
   }
 
   /**
-   * Executes all service endpoint runners concurrently. The future resolves
-   * when all the endpoint runners resolve, which is likely service shutdown.
+   *
    */
-  co::Future<void> run(::grpc::ServerCompletionQueue* queue);
+  co::Future<void> initialize(::grpc::ServerCompletionQueue* queue);
 
 private:
   ::grpc::Service* _service;

@@ -2,6 +2,13 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
   name = "grpc",
-  visibility = ["//lw/grpc:__subpackages__"],
-  deps = ["@com_github_grpc_grpc//:grpc++"]
+  visibility = [
+    "//experimental:__subpackages__",
+    "//lw/co/systems:__subpackages__",
+    "//lw/grpc:__subpackages__",
+  ],
+  deps = [
+    "@com_github_grpc_grpc//:grpc++",
+    "@com_google_protobuf//:protobuf",
+  ]
 )

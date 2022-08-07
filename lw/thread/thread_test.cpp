@@ -17,7 +17,7 @@ using ::lw::co::testing::destroy_all_schedulers;
 
 int test_counter;
 void increment() { ++test_counter; }
-co::Future<void> increment_future() {
+co::Task increment_task() {
   co_await co::next_tick();
   ++test_counter;
 }
@@ -63,7 +63,7 @@ TEST(Thread, WorksOnOrdinaryVoidFunctions) {
 TEST(Thread, WorksOnOrdinaryFutureFunctions) {
   co::Scheduler::this_thread().schedule([&]() -> co::Task {
     test_counter = 0;
-    co_await thread(&increment_future);
+    co_await thread(&increment_task);
     EXPECT_EQ(test_counter, 1);
   });
 

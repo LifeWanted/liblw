@@ -7,15 +7,49 @@
 
 namespace lw {
 
-#define _LW_DEFINE_ERROR(name)                        \
-  class name : public ::lw::Error {                   \
-  public:                                             \
-    name(                                             \
-      const std::experimental::source_location& loc = \
-        std::experimental::source_location::current() \
-    ):                                                \
-      ::lw::Error(#name, loc)                         \
-    {}                                                \
+class CanonicalError: public Error {
+public:
+  enum Code {
+    Aborted,
+    AlreadyExists,
+    Cancelled,
+    DeadlineExceeded,
+    FailedPrecondition,
+    Internal,
+    InvalidArgument,
+    NotFound,
+    OutOfRange,
+    PermissionDenied,
+    ResourceExhausted,
+    Unavailable,
+    Unimplemented
+  };
+
+  Code code() const { return _code; }
+
+protected:
+  CanonicalError(
+    Code code,
+    std::string_view name,
+    const std::experimental::source_location& loc
+  ):
+    Error{name, loc},
+    _code{code}
+  {}
+
+private:
+  Code _code;
+};
+
+#define _LW_DEFINE_ERROR(name)                                \
+  class name : public CanonicalError {                        \
+  public:                                                     \
+    name(                                                     \
+      const std::experimental::source_location& loc =         \
+        std::experimental::source_location::current()         \
+    ):                                                        \
+      CanonicalError(CanonicalError::Code:: name, #name, loc) \
+    {}                                                        \
   }
 
 _LW_DEFINE_ERROR(Aborted);

@@ -7,9 +7,9 @@
 #include "lw/co/event_system.h"
 #include "lw/co/events.h"
 
-namespace lw::grpc::internal {
+namespace lw::co::internal {
 
-class GrpcEventSystem : public co::EventSystem {
+class GrpcEventSystem : public EventSystem {
 public:
   explicit GrpcEventSystem(::grpc::CompletionQueue& queue);
   ~GrpcEventSystem();
@@ -28,7 +28,7 @@ public:
    * @param callback
    *  The function to call once an event triggers.
    */
-  void add(int fd, co::Event events, callback_type callback) override;
+  void add(int fd, Event events, callback_type callback) override;
 
   /**
    * Stops watching for events on the file descriptor and destroys the callback.
