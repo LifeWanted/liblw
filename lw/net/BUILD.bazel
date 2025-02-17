@@ -1,175 +1,175 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "router",
-  visibility = ["//visibility:public"],
-  hdrs = ["router.h"],
-  srcs = ["router.cpp"],
-  deps = [
-    "//lw/co:task",
-    "//lw/err",
-    "//lw/io/co",
-  ]
+    name = "router",
+    srcs = ["router.cpp"],
+    hdrs = ["router.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lw/co:task",
+        "//lw/err",
+        "//lw/io/co",
+    ],
 )
 
 cc_test(
-  name = "router_test",
-  srcs = ["router_test.cpp"],
-  deps = [
-    ":router",
-    "@gtest//:gtest_main",
-    "//lw/co:task",
-  ]
+    name = "router_test",
+    srcs = ["router_test.cpp"],
+    deps = [
+        ":router",
+        "//lw/co:task",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "server_resource",
-  hdrs = ["server_resource.h"],
-  srcs = ["server_resource.cpp"],
-  deps = [
-    "//lw/base:tuple",
-    "//lw/co:future",
-    "//lw/err",
-  ],
+    name = "server_resource",
+    srcs = ["server_resource.cpp"],
+    hdrs = ["server_resource.h"],
+    deps = [
+        "//lw/base:tuple",
+        "//lw/co:future",
+        "//lw/err",
+    ],
 )
 
 cc_test(
-  name = "server_resource_test",
-  srcs = ["server_resource_test.cpp"],
-  deps = [
-    ":server_resource",
-    "@gtest//:gtest_main",
-    "//lw/co:future",
-    "//lw/co:scheduler",
-    "//lw/co:task",
-    "//lw/co/testing:destroy_scheduler",
-  ],
+    name = "server_resource_test",
+    srcs = ["server_resource_test.cpp"],
+    deps = [
+        ":server_resource",
+        "//lw/co:future",
+        "//lw/co:scheduler",
+        "//lw/co:task",
+        "//lw/co/testing:destroy_scheduler",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "server",
-  visibility = ["//visibility:public"],
-  hdrs = ["server.h"],
-  srcs = ["server.cpp"],
-  deps = [
-    ":router",
-    ":socket",
-    "//lw/co:scheduler",
-    "//lw/co:task",
-    "//lw/err",
-  ]
+    name = "server",
+    srcs = ["server.cpp"],
+    hdrs = ["server.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":router",
+        ":socket",
+        "//lw/co:scheduler",
+        "//lw/co:task",
+        "//lw/err",
+    ],
 )
 
 cc_test(
-  name = "server_test",
-  srcs = ["server_test.cpp"],
-  deps = [
-    ":router",
-    ":server",
-    ":socket",
-    "@gtest//:gtest_main",
-    "//lw/co:scheduler",
-    "//lw/co:task",
-    "//lw/co/testing:destroy_scheduler",
-    "//lw/io/co",
-  ]
+    name = "server_test",
+    srcs = ["server_test.cpp"],
+    deps = [
+        ":router",
+        ":server",
+        ":socket",
+        "//lw/co:scheduler",
+        "//lw/co:task",
+        "//lw/co/testing:destroy_scheduler",
+        "//lw/io/co",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "socket",
-  hdrs = ["socket.h"],
-  srcs = ["socket.cpp"],
-  deps = [
-    "//lw/co:future",
-    "//lw/co:scheduler",
-    "//lw/err",
-    "//lw/err:system",
-    "//lw/flags",
-    "//lw/io/co",
-    "//lw/memory:buffer",
-  ]
+    name = "socket",
+    srcs = ["socket.cpp"],
+    hdrs = ["socket.h"],
+    deps = [
+        "//lw/co:future",
+        "//lw/co:scheduler",
+        "//lw/err",
+        "//lw/err:system",
+        "//lw/flags",
+        "//lw/io/co",
+        "//lw/memory:buffer",
+    ],
 )
 
 cc_test(
-  name = "socket_test",
-  srcs = ["socket_test.cpp"],
-  deps = [
-    ":socket",
-    "@gtest//:gtest_main",
-    "//lw/co:scheduler",
-    "//lw/co:time",
-    "//lw/co/testing:destroy_scheduler",
-    "//lw/err",
-    "//lw/memory:buffer",
-  ]
+    name = "socket_test",
+    srcs = ["socket_test.cpp"],
+    deps = [
+        ":socket",
+        "//lw/co:scheduler",
+        "//lw/co:time",
+        "//lw/co/testing:destroy_scheduler",
+        "//lw/err",
+        "//lw/memory:buffer",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "tls_options",
-  visibility = ["//visibility:public"],
-  hdrs = ["tls_options.h"],
+    name = "tls_options",
+    hdrs = ["tls_options.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
-  name = "tls_router",
-  visibility = ["//visibility:public"],
-  hdrs = ["tls_router.h"],
-  srcs = ["tls_router.cpp"],
-  deps = [
-    ":router",
-    ":tls_options",
-    ":tls",
-    "//lw/co:await",
-    "//lw/co:future",
-    "//lw/co:task",
-    "//lw/log",
-  ],
+    name = "tls_router",
+    srcs = ["tls_router.cpp"],
+    hdrs = ["tls_router.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":router",
+        ":tls",
+        ":tls_options",
+        "//lw/co:await",
+        "//lw/co:future",
+        "//lw/co:task",
+        "//lw/log",
+    ],
 )
 
 cc_test(
-  name = "tls_router_test",
-  srcs = ["tls_router_test.cpp"],
-  deps = [
-    ":tls_router",
-    "@gtest//:gtest_main",
-    "//lw/co:scheduler",
-    "//lw/co:task",
-    "//lw/co/testing:destroy_scheduler",
-    "//lw/io/co/testing:string_connection",
-    "//lw/net/testing:mock_router",
-    "//lw/net/testing:tls_credentials",
-  ],
+    name = "tls_router_test",
+    srcs = ["tls_router_test.cpp"],
+    deps = [
+        ":tls_router",
+        "//lw/co:scheduler",
+        "//lw/co:task",
+        "//lw/co/testing:destroy_scheduler",
+        "//lw/io/co/testing:string_connection",
+        "//lw/net/testing:mock_router",
+        "//lw/net/testing:tls_credentials",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "tls",
-  visibility = ["//visibility:public"],
-  hdrs = ["tls.h"],
-  srcs = ["tls.cpp"],
-  deps = [
-    ":tls_options",
-    "//lw/co:future",
-    "//lw/flags",
-    "//lw/io/co",
-    "//lw/memory:buffer",
-    "//lw/memory:buffer_view",
-    "//lw/net/internal:tls_client",
-    "//lw/net/internal:tls_context",
-  ],
+    name = "tls",
+    srcs = ["tls.cpp"],
+    hdrs = ["tls.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":tls_options",
+        "//lw/co:future",
+        "//lw/flags",
+        "//lw/io/co",
+        "//lw/memory:buffer",
+        "//lw/memory:buffer_view",
+        "//lw/net/internal:tls_client",
+        "//lw/net/internal:tls_context",
+    ],
 )
 
 cc_test(
-  name = "tls_test",
-  srcs = ["tls_test.cpp"],
-  data = ["//lw/net/testing:tls_credentials"],
-  deps = [
-    ":tls",
-    ":tls_options",
-    "@gtest//:gtest_main",
-    "//lw/co/testing:destroy_scheduler",
-    "//lw/co:scheduler",
-    "//lw/io/co/testing:string_connection",
-    "//lw/io/co/testing:string_stream",
-    "//lw/net/testing:tls_credentials",
-  ],
+    name = "tls_test",
+    srcs = ["tls_test.cpp"],
+    data = ["//lw/net/testing:tls_credentials"],
+    deps = [
+        ":tls",
+        ":tls_options",
+        "//lw/co:scheduler",
+        "//lw/co/testing:destroy_scheduler",
+        "//lw/io/co/testing:string_connection",
+        "//lw/io/co/testing:string_stream",
+        "//lw/net/testing:tls_credentials",
+        "@googletest//:gtest_main",
+    ],
 )

@@ -15,33 +15,29 @@ namespace {
 std::unordered_map<std::type_index, std::unique_ptr<ServerResourceFactoryBase>>&
 get_server_resources() {
   static auto* resource_map = new std::unordered_map<
-    std::type_index,
-    std::unique_ptr<ServerResourceFactoryBase>
-  >{};
+      std::type_index,
+      std::unique_ptr<ServerResourceFactoryBase>>{};
   return *resource_map;
 }
 
-}
+} // namespace
 
 bool register_server_resource(
-  const std::type_info& resource_info,
-  std::unique_ptr<ServerResourceFactoryBase> factory
-) {
-  get_server_resources().insert({{resource_info}, std::move(factory)});
+    const std::type_info& resource_info,
+    std::unique_ptr<ServerResourceFactoryBase> factory) {
+  get_server_resources().insert(
+      {std::type_index{resource_info}, std::move(factory)});
   return true;
 }
 
 co::Future<std::unique_ptr<ServerResourceBase>> construct_server_resource(
-  const std::type_info& resource_info,
-  ServerResourceContext& context
-) {
+    const std::type_info& resource_info, ServerResourceContext& context) {
   std::type_index resource_idx{resource_info};
   if (!get_server_resources().contains(resource_idx)) {
-    throw NotFound()
-      << "Server resource " << resource_info.name()
-      << " has no factory registered.";
+    throw NotFound() << "Server resource " << resource_info.name()
+                     << " has no factory registered.";
   }
   return (*get_server_resources()[resource_idx])(context);
 }
 
-}
+} // namespace lw

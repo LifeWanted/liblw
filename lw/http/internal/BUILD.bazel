@@ -3,23 +3,23 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 package(default_visibility = ["//lw/http:__subpackages__"])
 
 cc_library(
-  name = "http_mount_path",
-  hdrs = ["http_mount_path.h"],
-  srcs = ["http_mount_path.cpp"],
-  deps = [
-    "//lw/base:strings",
-    "//lw/err",
-    "//lw/http:headers",
-    "//lw/http:http_handler",
-  ],
+    name = "http_mount_path",
+    srcs = ["http_mount_path.cpp"],
+    hdrs = ["http_mount_path.h"],
+    deps = [
+        "//lw/base:strings",
+        "//lw/err",
+        "//lw/http:headers",
+        "//lw/http:http_handler",
+    ],
 )
 
 cc_test(
-  name = "http_mount_path_test",
-  srcs = ["http_mount_path_test.cpp"],
-  deps = [
-    ":http_mount_path",
-    "@gtest//:gtest_main",
-    "//lw/http:http_handler",
-  ],
+    name = "http_mount_path_test",
+    srcs = ["http_mount_path_test.cpp"],
+    deps = [
+        ":http_mount_path",
+        "//lw/http:http_handler",
+        "@googletest//:gtest_main",
+    ],
 )

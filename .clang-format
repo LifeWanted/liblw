@@ -1,0 +1,27 @@
+---
+BasedOnStyle: LLVM
+
+ColumnLimit: 80
+IndentWidth: 2
+ContinuationIndentWidth: 4
+UseTab: Never
+ReflowComments: true
+
+SortIncludes: CaseInsensitive
+AlignAfterOpenBracket: AlwaysBreak
+AlignOperands: DontAlign
+BinPackArguments: false
+BinPackParameters: false
+
+---
+
+Language: Cpp
+
+AllowShortBlocksOnASingleLine: Always
+AllowShortIfStatementsOnASingleLine: WithoutElse
+IndentCaseLabels: true
+BreakInheritanceList: AfterColon
+BreakTemplateDeclarations: Yes
+SeparateDefinitionBlocks: Leave
+SortUsingDeclarations: Lexicographic
+PointerAlignment: Left

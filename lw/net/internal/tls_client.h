@@ -2,7 +2,7 @@
 
 #include "lw/memory/buffer.h"
 #include "lw/memory/buffer_view.h"
-#include "openssl/types.h"
+#include "openssl/base.h"
 
 namespace lw::net::internal {
 
@@ -51,15 +51,8 @@ struct TLSIOResult {
  */
 class TLSClientImpl {
 public:
-  TLSClientImpl(
-    SSL* client,
-    BIO* encrypted,
-    BIO* plaintext
-  ):
-    _client{client},
-    _encrypted{encrypted},
-    _plaintext{plaintext}
-  {}
+  TLSClientImpl(SSL* client, BIO* encrypted, BIO* plaintext)
+      : _client{client}, _encrypted{encrypted}, _plaintext{plaintext} {}
 
   ~TLSClientImpl();
 
@@ -121,4 +114,4 @@ private:
   BIO* _plaintext = nullptr;
 };
 
-}
+} // namespace lw::net::internal

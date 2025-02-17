@@ -1,39 +1,39 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "serializer",
-  visibility = ["//visibility:public"],
-  hdrs = [
-    "concepts.h",
-    "formatter.h",
-    "parser.h",
-    "serialized_value.h",
-    "serializer.h",
-  ],
-  deps = [
-    "//lw/base:concepts",
-    "//lw/co:future",
-  ],
+    name = "serializer",
+    hdrs = [
+        "concepts.h",
+        "formatter.h",
+        "parser.h",
+        "serialized_value.h",
+        "serializer.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lw/base:concepts",
+        "//lw/co:future",
+    ],
 )
 
 cc_test(
-  name = "serializer_test",
-  srcs = ["serializer_test.cpp"],
-  deps = [
-    ":serializer",
-    "@gtest//:gtest_main",
-    "//lw/io/serializer/testing:mock_formatter",
-    "//lw/io/serializer/testing:tagged_types",
-  ],
+    name = "serializer_test",
+    srcs = ["serializer_test.cpp"],
+    deps = [
+        ":serializer",
+        "//lw/io/serializer/testing:mock_formatter",
+        "//lw/io/serializer/testing:tagged_types",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_test(
-  name = "serialized_value_test",
-  srcs = ["serialized_value_test.cpp"],
-  deps = [
-    ":serializer",
-    "@gtest//:gtest_main",
-    "//lw/io/serializer/testing:mock_parser",
-    "//lw/io/serializer/testing:tagged_types",
-  ],
+    name = "serialized_value_test",
+    srcs = ["serialized_value_test.cpp"],
+    deps = [
+        ":serializer",
+        "//lw/io/serializer/testing:mock_parser",
+        "//lw/io/serializer/testing:tagged_types",
+        "@googletest//:gtest_main",
+    ],
 )

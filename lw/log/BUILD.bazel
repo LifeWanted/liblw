@@ -1,22 +1,22 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "log",
-  hdrs = ["log.h"],
-  srcs = ["log.cpp"],
-  visibility = ["//visibility:public"],
-  deps = [
-    "//lw/err",
-    "//lw/flags",
-  ],
+    name = "log",
+    srcs = ["log.cpp"],
+    hdrs = ["log.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lw/err",
+        "//lw/flags",
+    ],
 )
 
 cc_test(
-  name = "log_test",
-  srcs = ["log_test.cpp"],
-  deps = [
-    ":log",
-    "@gtest//:gtest_main",
-    "//lw/flags",
-  ],
+    name = "log_test",
+    srcs = ["log_test.cpp"],
+    deps = [
+        ":log",
+        "//lw/flags",
+        "@googletest//:gtest_main",
+    ],
 )

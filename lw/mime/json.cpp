@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stack>
 #include <string_view>
@@ -28,15 +29,12 @@ namespace lw::mime {
 //                                                                            //
 // -------------------------------------------------------------------------- //
 
-JSONSerializationFormatter::JSONSerializationFormatter(std::ostream& output):
-  _output{output}
-{
+JSONSerializationFormatter::JSONSerializationFormatter(std::ostream& output)
+    : _output{output} {
   _state.push(State::VALUE);
 }
 
-void JSONSerializationFormatter::put_null() {
-  _add_literal("null");
-}
+void JSONSerializationFormatter::put_null() { _add_literal("null"); }
 
 void JSONSerializationFormatter::put_boolean(bool boolean) {
   _add_literal(boolean ? "true" : "false");
@@ -76,7 +74,8 @@ void JSONSerializationFormatter::put_string(std::string_view str) {
   _check_can_add_string();
   _maybe_comma();
   _output << '"';
-  for (char c : str) _put_char(c);
+  for (char c : str)
+    _put_char(c);
   _output << '"';
   _string_added();
 }
@@ -91,7 +90,7 @@ void JSONSerializationFormatter::start_list() {
 void JSONSerializationFormatter::end_list() {
   if (_state.top() != State::LIST && _state.top() != State::LIST_VALUE) {
     throw FailedPrecondition()
-      << "Unexpected end of list while formatting JSON.";
+        << "Unexpected end of list while formatting JSON.";
   }
   _output << ']';
   _value_added();
@@ -102,13 +101,12 @@ void JSONSerializationFormatter::start_object() {
   _maybe_comma();
   _output << '{';
   _state.push(State::OBJECT);
-
 }
 
 void JSONSerializationFormatter::end_object() {
   if (_state.top() != State::OBJECT && _state.top() != State::OBJECT_VALUE) {
     throw FailedPrecondition()
-      << "Unexpected end of object while formatting JSON.";
+        << "Unexpected end of object while formatting JSON.";
   }
   _output << '}';
   _value_added();
@@ -117,7 +115,7 @@ void JSONSerializationFormatter::end_object() {
 void JSONSerializationFormatter::start_pair_key() {
   if (_state.top() != State::OBJECT && _state.top() != State::OBJECT_VALUE) {
     throw FailedPrecondition()
-      << "Unexpected start of object key while formatting JSON.";
+        << "Unexpected start of object key while formatting JSON.";
   }
   _maybe_comma();
   _state.push(State::KEY_STARTED);
@@ -126,7 +124,7 @@ void JSONSerializationFormatter::start_pair_key() {
 void JSONSerializationFormatter::end_pair_key() {
   if (_state.top() != State::KEY_ADDED) {
     throw FailedPrecondition()
-      << "Unexpected end of object key while formatting JSON.";
+        << "Unexpected end of object key while formatting JSON.";
   }
   _output << ':';
   _state.pop();
@@ -136,43 +134,31 @@ void JSONSerializationFormatter::end_pair_key() {
 void JSONSerializationFormatter::end_pair() {
   if (_state.top() != State::OBJECT && _state.top() != State::OBJECT_VALUE) {
     throw FailedPrecondition()
-      << "Unexpected end of object value while formatting JSON.";
+        << "Unexpected end of object value while formatting JSON.";
   }
   _value_added();
 }
 
 void JSONSerializationFormatter::_maybe_comma() {
-  if (
-    _state.top() == State::LIST_VALUE ||
-    _state.top() == State::OBJECT_VALUE
-  ) {
+  if (_state.top() == State::LIST_VALUE ||
+      _state.top() == State::OBJECT_VALUE) {
     _output << ',';
   }
 }
 
 void JSONSerializationFormatter::_check_can_add_value(
-  const std::experimental::source_location& loc
-) {
-  if (
-    _state.top() != State::VALUE &&
-    _state.top() != State::LIST &&
-    _state.top() != State::LIST_VALUE &&
-    _state.top() != State::KEY_ENDED
-  ) {
+    const std::experimental::source_location& loc) {
+  if (_state.top() != State::VALUE && _state.top() != State::LIST &&
+      _state.top() != State::LIST_VALUE && _state.top() != State::KEY_ENDED) {
     throw InvalidArgument(loc) << "Unexpected value while formatting JSON.";
   }
 }
 
 void JSONSerializationFormatter::_check_can_add_string(
-  const std::experimental::source_location& loc
-) {
-  if (
-    _state.top() != State::VALUE &&
-    _state.top() != State::LIST &&
-    _state.top() != State::LIST_VALUE &&
-    _state.top() != State::KEY_STARTED &&
-    _state.top() != State::KEY_ENDED
-  ) {
+    const std::experimental::source_location& loc) {
+  if (_state.top() != State::VALUE && _state.top() != State::LIST &&
+      _state.top() != State::LIST_VALUE && _state.top() != State::KEY_STARTED &&
+      _state.top() != State::KEY_ENDED) {
     throw InvalidArgument(loc) << "Unexpected string while formatting JSON.";
   }
 }
@@ -251,7 +237,7 @@ void JSONSerializationFormatter::_put_char(char c) {
 
 namespace {
 
-enum class JSONType: int {
+enum class JSONType : int {
   NUL = 0,
   BOOLEAN,
   STRING,
@@ -263,14 +249,7 @@ enum class JSONType: int {
 
 std::string_view json_type_name(JSONType type) {
   static std::string_view names[] = {
-    "NUL",
-    "BOOLEAN",
-    "STRING",
-    "INTEGER",
-    "FLOAT",
-    "LIST",
-    "OBJECT"
-  };
+      "NUL", "BOOLEAN", "STRING", "INTEGER", "FLOAT", "LIST", "OBJECT"};
   return names[static_cast<int>(type)];
 }
 
@@ -322,27 +301,21 @@ std::string decode_string(std::string_view token) {
   return out;
 }
 
-class JSONScalarToken: public io::DeserializationToken {
+class JSONScalarToken : public io::DeserializationToken {
 public:
-  JSONScalarToken(JSONType type, std::string_view token):
-    _type{type},
-    _token{token}
-  {
+  JSONScalarToken(JSONType type, std::string_view token)
+      : _type{type}, _token{token} {
     if (_type == JSONType::STRING) _decoded_string = decode_string(token);
   }
   ~JSONScalarToken() = default;
 
-  JSONType type() const {
-    return _type;
-  }
-  std::string_view token() const {
-    return _token;
-  }
+  JSONType type() const { return _type; }
+  std::string_view token() const { return _token; }
 
   std::size_t size() const override {
     if (is_string()) return _decoded_string.size();
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(_type) << " which does not have a size.";
+    throw FailedPrecondition() << "Token is " << json_type_name(_type)
+                               << " which does not have a size.";
   }
 
   bool is_null() const override { return _type == JSONType::NUL; }
@@ -362,8 +335,8 @@ public:
   bool get_boolean() const override {
     if (!is_boolean()) {
       throw FailedPrecondition()
-        << "Token is " << json_type_name(_type) << ", not "
-        << json_type_name(JSONType::BOOLEAN);
+          << "Token is " << json_type_name(_type) << ", not "
+          << json_type_name(JSONType::BOOLEAN);
     }
     return _token == "true";
   }
@@ -371,7 +344,7 @@ public:
   char get_char() const override {
     if (!is_char()) {
       throw FailedPrecondition()
-        << "Token is " << json_type_name(_type) << ", not CHAR";
+          << "Token is " << json_type_name(_type) << ", not CHAR";
     }
     return _decoded_string.front();
   }
@@ -379,8 +352,8 @@ public:
   std::int64_t get_signed_integer() const override {
     if (!is_signed_integer()) {
       throw FailedPrecondition()
-        << "Token is " << json_type_name(_type) << ", not "
-        << json_type_name(JSONType::INTEGER);
+          << "Token is " << json_type_name(_type) << ", not "
+          << json_type_name(JSONType::INTEGER);
     }
 
     auto begin = _token.begin();
@@ -389,10 +362,10 @@ public:
     auto [end, err] = std::from_chars(begin, _token.end(), out);
     if (end != _token.end() || err == std::errc::invalid_argument) {
       throw InvalidArgument()
-        << "String " << _token << " is not a valid signed integer.";
+          << "String " << _token << " is not a valid signed integer.";
     } else if (err == std::errc::result_out_of_range) {
       throw InvalidArgument()
-        << "Value " << _token << " is too large for a 64-bit integer.";
+          << "Value " << _token << " is too large for a 64-bit integer.";
     }
     return out;
   }
@@ -400,8 +373,8 @@ public:
   std::uint64_t get_unsigned_integer() const override {
     if (!is_unsigned_integer()) {
       throw FailedPrecondition()
-        << "Token is " << json_type_name(_type) << ", not unsigned "
-        << json_type_name(JSONType::INTEGER);
+          << "Token is " << json_type_name(_type) << ", not unsigned "
+          << json_type_name(JSONType::INTEGER);
     }
 
     auto begin = _token.begin();
@@ -410,30 +383,29 @@ public:
     auto [end, err] = std::from_chars(begin, _token.end(), out);
     if (end != _token.end() || err == std::errc::invalid_argument) {
       throw InvalidArgument()
-        << "String " << _token << " is not a valid unsigned integer.";
+          << "String " << _token << " is not a valid unsigned integer.";
     } else if (err == std::errc::result_out_of_range) {
       throw InvalidArgument()
-        << "Value " << _token
-        << " is too large for an unsigned 64-bit integer.";
+          << "Value " << _token
+          << " is too large for an unsigned 64-bit integer.";
     }
     return out;
   }
 
   double get_floating_point() const override {
     if (!is_floating_point()) {
-      throw FailedPrecondition()
-        << "Token is " << json_type_name(_type) << ", not "
-        << json_type_name(JSONType::FLOAT);
+      throw FailedPrecondition() << "Token is " << json_type_name(_type)
+                                 << ", not " << json_type_name(JSONType::FLOAT);
     }
 
     char* end = nullptr;
     double out = std::strtod(_token.begin(), &end);
     if (end != _token.end()) {
       throw InvalidArgument()
-        << "String \"" << _token << "\" is not a valid double value.";
+          << "String \"" << _token << "\" is not a valid double value.";
     } else if (out == HUGE_VAL) {
       throw InvalidArgument()
-        << "Value \"" << _token << "\" is too large for double.";
+          << "Value \"" << _token << "\" is too large for double.";
     }
     return out;
   }
@@ -441,24 +413,22 @@ public:
   std::string_view get_string() const override {
     if (!is_string()) {
       throw FailedPrecondition()
-        << "Token is " << json_type_name(_type) << ", not "
-        << json_type_name(JSONType::STRING);
+          << "Token is " << json_type_name(_type) << ", not "
+          << json_type_name(JSONType::STRING);
     }
     return _decoded_string;
   }
 
   bool has_index(std::size_t idx) const override { return false; }
   const io::DeserializationToken& get_index(std::size_t idx) const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(_type) << ", not "
-      << json_type_name(JSONType::LIST);
+    throw FailedPrecondition() << "Token is " << json_type_name(_type)
+                               << ", not " << json_type_name(JSONType::LIST);
   }
 
   bool has_key(std::string_view key) const override { return false; }
   const io::DeserializationToken& get_key(std::string_view key) const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(_type) << ", not "
-      << json_type_name(JSONType::LIST);
+    throw FailedPrecondition() << "Token is " << json_type_name(_type)
+                               << ", not " << json_type_name(JSONType::LIST);
   }
 
 private:
@@ -467,7 +437,7 @@ private:
   std::string _decoded_string;
 };
 
-class JSONListToken: public io::DeserializationToken {
+class JSONListToken : public io::DeserializationToken {
 public:
   JSONListToken() = default;
   ~JSONListToken() = default;
@@ -489,34 +459,28 @@ public:
   bool is_object() const override { return false; }
 
   bool get_boolean() const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::LIST) << ", not "
-      << json_type_name(JSONType::BOOLEAN);
+    throw FailedPrecondition() << "Token is " << json_type_name(JSONType::LIST)
+                               << ", not " << json_type_name(JSONType::BOOLEAN);
   }
   char get_char() const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::LIST) << ", not "
-      << json_type_name(JSONType::STRING);
+    throw FailedPrecondition() << "Token is " << json_type_name(JSONType::LIST)
+                               << ", not " << json_type_name(JSONType::STRING);
   }
   std::int64_t get_signed_integer() const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::LIST) << ", not "
-      << json_type_name(JSONType::INTEGER);
+    throw FailedPrecondition() << "Token is " << json_type_name(JSONType::LIST)
+                               << ", not " << json_type_name(JSONType::INTEGER);
   }
   std::uint64_t get_unsigned_integer() const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::LIST) << ", not "
-      << json_type_name(JSONType::INTEGER);
+    throw FailedPrecondition() << "Token is " << json_type_name(JSONType::LIST)
+                               << ", not " << json_type_name(JSONType::INTEGER);
   }
   double get_floating_point() const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::LIST) << ", not "
-      << json_type_name(JSONType::FLOAT);
+    throw FailedPrecondition() << "Token is " << json_type_name(JSONType::LIST)
+                               << ", not " << json_type_name(JSONType::FLOAT);
   }
   std::string_view get_string() const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::LIST) << ", not "
-      << json_type_name(JSONType::STRING);
+    throw FailedPrecondition() << "Token is " << json_type_name(JSONType::LIST)
+                               << ", not " << json_type_name(JSONType::STRING);
   }
 
   bool has_index(std::size_t idx) const override {
@@ -524,36 +488,32 @@ public:
   }
   const io::DeserializationToken& get_index(std::size_t idx) const override {
     if (!has_index(idx)) {
-      throw OutOfRange()
-        << "Index " << idx << " is larger than this list of "
-        << _elements.size();
+      throw OutOfRange() << "Index " << idx << " is larger than this list of "
+                         << _elements.size();
     }
     return *_elements.at(idx);
   }
 
   bool has_key(std::string_view key) const override { return false; }
   const io::DeserializationToken& get_key(std::string_view key) const override {
-    throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::LIST) << ", not "
-      << json_type_name(JSONType::OBJECT);
+    throw FailedPrecondition() << "Token is " << json_type_name(JSONType::LIST)
+                               << ", not " << json_type_name(JSONType::OBJECT);
   }
 
 private:
   std::vector<std::unique_ptr<io::DeserializationToken>> _elements;
 };
 
-class JSONObjectToken: public io::DeserializationToken {
+class JSONObjectToken : public io::DeserializationToken {
 public:
   JSONObjectToken() = default;
   ~JSONObjectToken() = default;
 
   void insert(
-    std::string_view key,
-    std::unique_ptr<io::DeserializationToken> value
-  ) {
+      std::string_view key, std::unique_ptr<io::DeserializationToken> value) {
     if (has_key(key)) {
       throw FailedPrecondition()
-        << "Key " << key << " already added to object.";
+          << "Key " << key << " already added to object.";
     }
     _elements.insert({key, std::move(value)});
   }
@@ -572,40 +532,40 @@ public:
 
   bool get_boolean() const override {
     throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
-      << json_type_name(JSONType::BOOLEAN);
+        << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
+        << json_type_name(JSONType::BOOLEAN);
   }
   char get_char() const override {
     throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
-      << json_type_name(JSONType::STRING);
+        << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
+        << json_type_name(JSONType::STRING);
   }
   std::int64_t get_signed_integer() const override {
     throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
-      << json_type_name(JSONType::INTEGER);
+        << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
+        << json_type_name(JSONType::INTEGER);
   }
   std::uint64_t get_unsigned_integer() const override {
     throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
-      << json_type_name(JSONType::INTEGER);
+        << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
+        << json_type_name(JSONType::INTEGER);
   }
   double get_floating_point() const override {
     throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
-      << json_type_name(JSONType::FLOAT);
+        << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
+        << json_type_name(JSONType::FLOAT);
   }
   std::string_view get_string() const override {
     throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
-      << json_type_name(JSONType::STRING);
+        << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
+        << json_type_name(JSONType::STRING);
   }
 
   bool has_index(std::size_t idx) const override { return false; }
   const io::DeserializationToken& get_index(std::size_t idx) const override {
     throw FailedPrecondition()
-      << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
-      << json_type_name(JSONType::LIST);
+        << "Token is " << json_type_name(JSONType::OBJECT) << ", not "
+        << json_type_name(JSONType::LIST);
   }
 
   bool has_key(std::string_view key) const override {
@@ -619,18 +579,17 @@ public:
   }
 
 private:
-  std::unordered_map<
-    std::string_view,
-    std::unique_ptr<io::DeserializationToken>
-  > _elements;
+  std::
+      unordered_map<std::string_view, std::unique_ptr<io::DeserializationToken>>
+          _elements;
 };
 
 typedef std::variant<
-  char,
-  std::unique_ptr<JSONScalarToken>,
-  std::unique_ptr<JSONListToken>,
-  std::unique_ptr<JSONObjectToken>
-> JSONToken;
+    char,
+    std::unique_ptr<JSONScalarToken>,
+    std::unique_ptr<JSONListToken>,
+    std::unique_ptr<JSONObjectToken>>
+    JSONToken;
 
 bool is_char(const JSONToken& token) {
   return std::holds_alternative<char>(token);
@@ -648,9 +607,7 @@ bool is_object(const JSONToken& token) {
   return std::holds_alternative<std::unique_ptr<JSONObjectToken>>(token);
 }
 
-const char& as_char(const JSONToken& token) {
-  return std::get<char>(token);
-}
+const char& as_char(const JSONToken& token) { return std::get<char>(token); }
 
 const std::unique_ptr<JSONScalarToken>& as_scalar(const JSONToken& token) {
   return std::get<std::unique_ptr<JSONScalarToken>>(token);
@@ -698,8 +655,8 @@ public:
       if (_final_value) {
         // TODO(alaina): Test failure modes.
         throw InvalidArgument()
-          << "Unexpected additional input after value at character " << i
-          << " in JSON.";
+            << "Unexpected additional input after value at character " << i
+            << " in JSON.";
       }
 
       switch (c) {
@@ -710,7 +667,7 @@ public:
         case '}': {
           if (!is_object(_token_stack.top())) {
             throw InvalidArgument()
-              << "Unexpected '}' at character " << i << " in JSON.";
+                << "Unexpected '}' at character " << i << " in JSON.";
           }
           _pop_top(i);
           break;
@@ -722,7 +679,7 @@ public:
         case ']': {
           if (!is_list(_token_stack.top())) {
             throw InvalidArgument()
-              << "Unexpected ']' at character " << i << " in JSON.";
+                << "Unexpected ']' at character " << i << " in JSON.";
           }
           _pop_top(i);
           break;
@@ -730,7 +687,7 @@ public:
         case ':': {
           if (_token_stack.empty() || !is_scalar(_token_stack.top())) {
             throw InvalidArgument()
-              << "Unexpected ':' at character " << i << " in JSON.";
+                << "Unexpected ':' at character " << i << " in JSON.";
           }
           _token_stack.push(':');
           break;
@@ -738,7 +695,7 @@ public:
         case ',': {
           if (!is_list(_token_stack.top()) && !is_object(_token_stack.top())) {
             throw InvalidArgument()
-              << "Unexpected ',' at character " << i << " in JSON.";
+                << "Unexpected ',' at character " << i << " in JSON.";
           }
           break;
         }
@@ -773,7 +730,7 @@ public:
 
         default: {
           throw InvalidArgument()
-            << "Unexpected '" << c << "' at character " << i << " in JSON.";
+              << "Unexpected '" << c << "' at character " << i << " in JSON.";
         }
       }
     }
@@ -799,15 +756,11 @@ private:
     }
     if (end < i) {
       throw InvalidArgument()
-        << "Unexpected end of input at character " << i
-        << " in JSON string starting at character " << start;
+          << "Unexpected end of input at character " << i
+          << " in JSON string starting at character " << start;
     }
-    _token_stack.push(
-      std::make_unique<JSONScalarToken>(
-        JSONType::STRING,
-        str.substr(start, end - start + 1)
-      )
-    );
+    _token_stack.push(std::make_unique<JSONScalarToken>(
+        JSONType::STRING, str.substr(start, end - start + 1)));
     return end;
   }
 
@@ -816,26 +769,20 @@ private:
     std::unique_ptr<JSONScalarToken> token;
     if (substr.starts_with("true")) {
       token = std::make_unique<JSONScalarToken>(
-        JSONType::BOOLEAN,
-        substr.substr(0, 4)
-      );
+          JSONType::BOOLEAN, substr.substr(0, 4));
       substr = substr.substr(4);
     } else if (substr.starts_with("false")) {
       token = std::make_unique<JSONScalarToken>(
-        JSONType::BOOLEAN,
-        substr.substr(0, 5)
-      );
+          JSONType::BOOLEAN, substr.substr(0, 5));
       substr = substr.substr(5);
     } else if (substr.starts_with("null")) {
-      token = std::make_unique<JSONScalarToken>(
-        JSONType::NUL,
-        substr.substr(0, 4)
-      );
+      token =
+          std::make_unique<JSONScalarToken>(JSONType::NUL, substr.substr(0, 4));
       substr = substr.substr(4);
     }
     if (!token || std::isalnum(substr[0]) || substr[0] == '_') {
       throw InvalidArgument()
-        << "Unknown keyword at character " << pos << " in JSON.";
+          << "Unknown keyword at character " << pos << " in JSON.";
     }
     _token_stack.push(std::move(token));
     return substr.begin() - str.begin() - 1;
@@ -854,20 +801,19 @@ private:
       ++pos;
       if (pos < str.size() && std::isdigit(str[pos])) {
         throw InvalidArgument()
-          << "Unexpected digit at character " << pos
-          << " in JSON number. Expected '.' or end of number.";
+            << "Unexpected digit at character " << pos
+            << " in JSON number. Expected '.' or end of number.";
       }
     } else if (!std::isdigit(str[pos])) {
-      throw InvalidArgument()
-        << "Unexpected '" << str[pos] << "' at character " << pos
-        << " in JSON number.";
+      throw InvalidArgument() << "Unexpected '" << str[pos] << "' at character "
+                              << pos << " in JSON number.";
     }
 
     for (; pos < str.size(); ++pos) {
       if (str[pos] == '.') {
         if (type == JSONType::FLOAT) {
           throw InvalidArgument()
-            << "Unexpected '.' at character " << pos << " in JSON number.";
+              << "Unexpected '.' at character " << pos << " in JSON number.";
         }
         type = JSONType::FLOAT;
       } else if (!std::isdigit(str[pos])) {
@@ -876,12 +822,11 @@ private:
     }
     if (str[pos - 1] == '.') {
       throw InvalidArgument()
-        << "Unexpected end of number at character " << pos << " in JSON.";
+          << "Unexpected end of number at character " << pos << " in JSON.";
     }
 
-    _token_stack.push(
-      std::make_unique<JSONScalarToken>(type, str.substr(start, pos - start))
-    );
+    _token_stack.push(std::make_unique<JSONScalarToken>(
+        type, str.substr(start, pos - start)));
     return pos - 1;
   }
 
@@ -893,15 +838,14 @@ private:
       return;
     }
     if (is_char(rhs)) {
-      throw InvalidArgument()
-        << "Unexpected '" << as_char(rhs) << "'" << " at character " << i
-        << " in JSON.";
+      throw InvalidArgument() << "Unexpected '" << as_char(rhs) << "'"
+                              << " at character " << i << " in JSON.";
     }
     if (is_object(_token_stack.top())) {
       if (!is_scalar(rhs) || !as_scalar(rhs)->is_string()) {
         throw InvalidArgument()
-          << "Unexpected " << token_type_name(rhs) << " at character " << i
-          << " in JSON map. Expected STRING key.";
+            << "Unexpected " << token_type_name(rhs) << " at character " << i
+            << " in JSON map. Expected STRING key.";
       }
       _token_stack.push(std::move(rhs));
       return;
@@ -918,8 +862,8 @@ private:
         _token_stack.pop();
         if (!is_object(_token_stack.top())) {
           throw InvalidArgument()
-            << "Unexpected key-value pair found at character " << i
-            << "outside of JSON object.";
+              << "Unexpected key-value pair found at character " << i
+              << "outside of JSON object.";
         }
         std::string_view key = as_scalar(lhs)->token();
         key.remove_prefix(1);
@@ -936,11 +880,10 @@ private:
   std::optional<JSONToken> _final_value;
 };
 
-}
+} // namespace
 
-std::unique_ptr<io::DeserializationToken> JSONDeserializationParser::parse(
-  std::string_view str
-) const {
+std::unique_ptr<io::DeserializationToken>
+JSONDeserializationParser::parse(std::string_view str) const {
   JSONParse parser;
   auto token = parser.update(str);
   if (!token) {
@@ -952,4 +895,4 @@ std::unique_ptr<io::DeserializationToken> JSONDeserializationParser::parse(
   return to_io_token(std::move(*token));
 }
 
-}
+} // namespace lw::mime

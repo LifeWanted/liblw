@@ -1,37 +1,37 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "co",
-  visibility = ["//visibility:public"],
-  hdrs = ["co.h"],
-  srcs = ["co.cpp"],
-  deps = [
-    ":concepts",
-    "//lw/co:future",
-    "//lw/err",
-    "//lw/flags",
-    "//lw/memory:buffer",
-  ],
+    name = "co",
+    srcs = ["co.cpp"],
+    hdrs = ["co.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":concepts",
+        "//lw/co:future",
+        "//lw/err",
+        "//lw/flags",
+        "//lw/memory:buffer",
+    ],
 )
 
 cc_test(
-  name = "co_test",
-  srcs = ["co_test.cpp"],
-  deps = [
-    ":co",
-    "@gtest//:gtest_main",
-    "//lw/co:scheduler",
-    "//lw/co:task",
-    "//lw/io/co/testing:string_readable",
-  ]
+    name = "co_test",
+    srcs = ["co_test.cpp"],
+    deps = [
+        ":co",
+        "//lw/co:scheduler",
+        "//lw/co:task",
+        "//lw/io/co/testing:string_readable",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "concepts",
-  visibility = ["//visibility:public"],
-  hdrs = ["concepts.h"],
-  deps = [
-    "//lw/co:concepts",
-    "//lw/memory:buffer",
-  ],
+    name = "concepts",
+    hdrs = ["concepts.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lw/co:concepts",
+        "//lw/memory:buffer",
+    ],
 )

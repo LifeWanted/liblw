@@ -1,34 +1,34 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(
-  default_visibility = [
-    "//lw/http:__subpackages__",
-    "//lw/net:__subpackages__",
-  ],
+    default_visibility = [
+        "//lw/http:__subpackages__",
+        "//lw/net:__subpackages__",
+    ],
 )
 
 cc_library(
-  name = "mock_router",
-  hdrs = ["mock_router.h"],
-  testonly = True,
-  deps = [
-    "@gtest//:gtest",
-    "//lw/net:router",
-  ],
+    name = "mock_router",
+    testonly = True,
+    hdrs = ["mock_router.h"],
+    deps = [
+        "//lw/net:router",
+        "@googletest//:gtest",
+    ],
 )
 
 filegroup(
-  name = "tls_credential_files",
-  testonly = True,
-  srcs = [
-    "test.cert.pem",
-    "test.key.pem",
-  ],
+    name = "tls_credential_files",
+    testonly = True,
+    srcs = [
+        "test.cert.pem",
+        "test.key.pem",
+    ],
 )
 
 cc_library(
-  name = "tls_credentials",
-  hdrs = ["tls_credentials.h"],
-  testonly = True,
-  data = [":tls_credential_files"],
+    name = "tls_credentials",
+    testonly = True,
+    hdrs = ["tls_credentials.h"],
+    data = [":tls_credential_files"],
 )

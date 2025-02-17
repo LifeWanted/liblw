@@ -1,36 +1,36 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-  name = "mock_formatter",
-  hdrs = ["mock_formatter.h"],
-  visibility = ["//lw/io/serializer:__subpackages__"],
-  testonly = True,
-  deps = [
-    "@gtest//:gtest",
-    "//lw/io/serializer",
-  ],
+    name = "mock_formatter",
+    testonly = True,
+    hdrs = ["mock_formatter.h"],
+    visibility = ["//lw/io/serializer:__subpackages__"],
+    deps = [
+        "//lw/io/serializer",
+        "@googletest//:gtest",
+    ],
 )
 
 cc_library(
-  name = "mock_parser",
-  hdrs = ["mock_parser.h"],
-  visibility = ["//lw/io/serializer:__subpackages__"],
-  testonly = True,
-  deps = [
-    "@gtest//:gtest",
-    "//lw/io/serializer",
-  ],
+    name = "mock_parser",
+    testonly = True,
+    hdrs = ["mock_parser.h"],
+    visibility = ["//lw/io/serializer:__subpackages__"],
+    deps = [
+        "//lw/io/serializer",
+        "@googletest//:gtest",
+    ],
 )
 
 cc_library(
-  name = "tagged_types",
-  hdrs = ["tagged_types.h"],
-  visibility = [
-    "//lw/io/serializer:__subpackages__",
-    "//lw/mime:__subpackages__",
-  ],
-  testonly = True,
-  deps = [
-    "//lw/io/serializer",
-  ],
+    name = "tagged_types",
+    testonly = True,
+    hdrs = ["tagged_types.h"],
+    visibility = [
+        "//lw/io/serializer:__subpackages__",
+        "//lw/mime:__subpackages__",
+    ],
+    deps = [
+        "//lw/io/serializer",
+    ],
 )

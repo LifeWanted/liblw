@@ -18,7 +18,7 @@ public:
   class promise_type;
   using handle_type = std::coroutine_handle<promise_type>;
 
-  explicit Generator(handle_type handle): _handle{std::move(handle)} {}
+  explicit Generator(handle_type handle) : _handle{std::move(handle)} {}
   ~Generator() = default;
 
   Generator(Generator&&) = default;
@@ -32,13 +32,9 @@ public:
     return !_handle.done();
   }
 
-  const T& value() const {
-    return *_handle.promise()._current_value;
-  }
+  const T& value() const { return *_handle.promise()._current_value; }
 
-  T& value() {
-    return *_handle.promise()._current_value;
-  }
+  T& value() { return *_handle.promise()._current_value; }
 
   GeneratorIterator<T> begin();
   GeneratorIterator<T> end();
@@ -65,9 +61,7 @@ public:
     return Generator{handle_type::from_promise(*this)};
   }
 
-  auto return_void() const {
-    return std::suspend_never{};
-  }
+  auto return_void() const { return std::suspend_never{}; }
 
   template <typename U>
   auto yield_value(U&& value) {
@@ -75,9 +69,7 @@ public:
     return std::suspend_always{};
   }
 
-  void unhandled_exception() {
-    std::terminate();
-  }
+  void unhandled_exception() { std::terminate(); }
 
 private:
   std::unique_ptr<T> _current_value;
@@ -87,7 +79,7 @@ private:
 template <typename T>
 class GeneratorIterator {
 public:
-  GeneratorIterator(Generator<T>* generator): _generator{generator} {}
+  GeneratorIterator(Generator<T>* generator) : _generator{generator} {}
 
   GeneratorIterator& operator++() {
     if (_generator && !_generator->next()) _generator = nullptr;
@@ -98,7 +90,7 @@ public:
   const T& operator*() const { return _generator->value(); }
 
   template <typename U>
-  bool operator==(const GeneratorIterator<U>& other) {
+  bool operator==(const GeneratorIterator<U>& other) const {
     return _generator == other._generator;
   }
 
@@ -124,7 +116,7 @@ class AsyncGenerator {
 public:
   class promise_type;
 
-  AsyncGenerator(): _state{std::make_shared<SharedState>()} {};
+  AsyncGenerator() : _state{std::make_shared<SharedState>()} {};
   ~AsyncGenerator() = default;
 
   AsyncGenerator(AsyncGenerator&&) = default;
@@ -139,13 +131,9 @@ public:
     return _state->next.get_future();
   }
 
-  const T& value() const {
-    return *_state->current_value;
-  }
+  const T& value() const { return *_state->current_value; }
 
-  T& value() {
-    return *_state->current_value;
-  }
+  T& value() { return *_state->current_value; }
 
 private:
   struct SharedState {
@@ -159,13 +147,9 @@ private:
 template <typename T>
 class AsyncGenerator<T>::promise_type {
 public:
-  auto initial_suspend() const {
-    return std::suspend_never{};
-  }
+  auto initial_suspend() const { return std::suspend_never{}; }
 
-  auto final_suspend() const noexcept {
-    return std::suspend_never{};
-  }
+  auto final_suspend() const noexcept { return std::suspend_never{}; }
 
   AsyncGenerator get_return_object() {
     AsyncGenerator generator;
@@ -199,4 +183,4 @@ private:
   std::shared_ptr<AsyncGenerator<T>::SharedState> _state;
 };
 
-}
+} // namespace lw::co

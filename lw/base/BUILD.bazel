@@ -1,66 +1,66 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "base",
-  visibility = ["//visibility:public"],
-  hdrs = ["base.h"],
-  deps = [":init"]
+    name = "base",
+    hdrs = ["base.h"],
+    visibility = ["//visibility:public"],
+    deps = [":init"],
 )
 
 cc_library(
-  name = "concepts",
-  visibility = ["//visibility:public"],
-  hdrs = ["concepts.h"],
+    name = "concepts",
+    hdrs = ["concepts.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
-  name = "init",
-  hdrs = ["init.h"],
-  srcs = ["init.cpp"],
-  deps = [
-    "//lw/err",
-    "//lw/flags",
-  ]
+    name = "init",
+    srcs = ["init.cpp"],
+    hdrs = ["init.h"],
+    deps = [
+        "//lw/err",
+        "//lw/flags",
+    ],
 )
 
 cc_test(
-  name = "init_test",
-  srcs = ["init_test.cpp"],
-  deps = [
-    ":init",
-    "@gtest//:gtest_main",
-  ]
+    name = "init_test",
+    srcs = ["init_test.cpp"],
+    deps = [
+        ":init",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "strings",
-  visibility = ["//visibility:public"],
-  hdrs = ["strings.h"],
-  deps = [
-    "//lw/err",
-  ]
+    name = "strings",
+    hdrs = ["strings.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lw/err",
+    ],
 )
 
 cc_test(
-  name = "strings_test",
-  srcs = ["strings_test.cpp"],
-  deps = [
-    ":strings",
-    "@gtest//:gtest_main",
-  ]
+    name = "strings_test",
+    srcs = ["strings_test.cpp"],
+    deps = [
+        ":strings",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
-  name = "tuple",
-  visibility = ["//visibility:public"],
-  hdrs = ["tuple.h"],
+    name = "tuple",
+    hdrs = ["tuple.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
-  name = "tuple_test",
-  srcs = ["tuple_test.cc"],
-  deps = [
-    ":tuple",
-    "@gtest//:gtest_main",
-  ],
+    name = "tuple_test",
+    srcs = ["tuple_test.cc"],
+    deps = [
+        ":tuple",
+        "@googletest//:gtest_main",
+    ],
 )

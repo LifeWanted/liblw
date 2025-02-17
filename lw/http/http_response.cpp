@@ -124,7 +124,7 @@ Buffer HttpResponse::serialize() const {
 std::ostream& operator<<(std::ostream& stream, const HttpResponse& res) {
   const char end[] = "\r\n";
   stream
-    << "HTTP/1.1 " << res.status() << ' ' << res.status_message() << end;
+    << "HTTP/1.1 " << res.status() << " " << res.status_message() << end;
 
   for (const auto& [key, value] : res.headers()) {
     stream << key << ": " << value << end;

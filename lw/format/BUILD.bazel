@@ -1,18 +1,18 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "blobs",
-  visibility = ["//visibility:public"],
-  hdrs = ["blobs.h"],
-  srcs = ["blobs.cpp"],
-  deps = ["//lw/memory:buffer_view"],
+    name = "blobs",
+    srcs = ["blobs.cpp"],
+    hdrs = ["blobs.h"],
+    visibility = ["//visibility:public"],
+    deps = ["//lw/memory:buffer_view"],
 )
 
 cc_test(
-  name = "blobs_test",
-  srcs = ["blobs_test.cpp"],
-  deps = [
-    ":blobs",
-    "@gtest//:gtest_main",
-  ],
+    name = "blobs_test",
+    srcs = ["blobs_test.cpp"],
+    deps = [
+        ":blobs",
+        "@googletest//:gtest_main",
+    ],
 )

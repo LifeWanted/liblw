@@ -1,17 +1,17 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
-  name = "buffer",
-  visibility = ["//visibility:public"],
-  hdrs = ["buffer.h"],
-  srcs = ["buffer.cpp"]
+    name = "buffer",
+    srcs = ["buffer.cpp"],
+    hdrs = ["buffer.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
-  name = "buffer_test",
-  srcs = ["buffer_test.cpp"],
-  deps = [
-    ":buffer",
-    "@gtest//:gtest_main",
-  ]
+    name = "buffer_test",
+    srcs = ["buffer_test.cpp"],
+    deps = [
+        ":buffer",
+        "@googletest//:gtest_main",
+    ],
 )

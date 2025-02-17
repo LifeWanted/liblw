@@ -51,8 +51,9 @@ TEST(Buffer, MoveOwnedConstructor) {
   const char* str = "Hello, World!";
   const std::size_t size = std::strlen(str);
   char* data = new char[50];
-  std::copy(str, str + size, data );
-  Buffer* buffer = new Buffer(reinterpret_cast<std::uint8_t*>(data), size, true);
+  std::copy(str, str + size, data);
+  Buffer* buffer =
+      new Buffer(reinterpret_cast<std::uint8_t*>(data), size, true);
   Buffer* buffer2 = new Buffer(std::move(*buffer));
 
   EXPECT_EQ(size, buffer2->size());
@@ -103,7 +104,7 @@ TEST(Buffer, Destructor) {
 
   // Should not delete the associated data by default.
   EXPECT_NO_THROW({ delete buffer; });
-  EXPECT_NO_THROW({ delete data; });
+  EXPECT_NO_THROW({ delete[] data; });
 }
 
 TEST(Buffer, OwnedDataDestructor) {
@@ -130,22 +131,21 @@ TEST(Buffer, SetMemory) {
 
 TEST(Buffer, BeginEndCopy) {
   const std::uint8_t* bufferValue =
-    reinterpret_cast<const std::uint8_t*>("Hello\0\0\0\0\0");
+      reinterpret_cast<const std::uint8_t*>("Hello\0\0\0\0\0");
   char data[] = "Hello World!";
   Buffer buffer(10);
   Buffer buffer2(bufferValue, bufferValue + 10);
   buffer.set_memory(0);
 
   buffer.copy(
-    reinterpret_cast<std::uint8_t*>(data),
-    reinterpret_cast<std::uint8_t*>(data) + 5
-  );
+      reinterpret_cast<std::uint8_t*>(data),
+      reinterpret_cast<std::uint8_t*>(data) + 5);
   EXPECT_EQ(buffer2, buffer);
 }
 
 TEST(Buffer, SizedCopy) {
   const std::uint8_t* bufferValue =
-    reinterpret_cast<const std::uint8_t*>("Hello\0\0\0\0\0");
+      reinterpret_cast<const std::uint8_t*>("Hello\0\0\0\0\0");
   char data[] = "Hello World!";
   Buffer buffer(10);
   Buffer buffer2(bufferValue, bufferValue + 10);
@@ -177,8 +177,9 @@ TEST(Buffer, MoveOwnedOperator) {
   const char* str = "Hello, World!";
   const std::size_t size = std::strlen(str);
   char* data = new char[50];
-  std::copy(str, str + size, data );
-  Buffer* buffer = new Buffer(reinterpret_cast<std::uint8_t*>(data), size, true);
+  std::copy(str, str + size, data);
+  Buffer* buffer =
+      new Buffer(reinterpret_cast<std::uint8_t*>(data), size, true);
   Buffer* buffer2 = new Buffer();
   *buffer2 = std::move(*buffer);
 
@@ -233,5 +234,5 @@ TEST(Buffer, TrimSuffix) {
   EXPECT_EQ(trimmed[4], 'o');
 }
 
-}
-}
+} // namespace
+} // namespace lw
