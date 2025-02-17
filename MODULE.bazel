@@ -2,7 +2,7 @@
 Suite of services for monitoring the weather at specific locations.
 """
 
-module(name = "liblw", repo_name = "liblw")
+module(name = "liblw", repo_name = "com_github_lifewanted_liblw")
 
 bazel_dep(name = "boringssl", version = "0.0.0-20240530-2db0eb3")
 bazel_dep(name = "googletest", version = "1.14.0")
