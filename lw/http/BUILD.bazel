@@ -14,6 +14,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":http_handler",
+        ":http_status",
         "//lw/base:strings",
         "//lw/co:future",
         "//lw/err",
@@ -77,6 +78,7 @@ cc_library(
     hdrs = ["http_response.h"],
     deps = [
         ":headers",
+        ":http_status",
         "//lw/memory:buffer",
     ],
 )
@@ -88,6 +90,11 @@ cc_test(
         ":http_response",
         "@googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "http_status",
+    hdrs = ["http_status.h"],
 )
 
 cc_library(
