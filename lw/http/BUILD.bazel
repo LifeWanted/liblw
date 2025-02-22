@@ -1,6 +1,28 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
+    name = "client_request",
+    srcs = ["client_request.cpp"],
+    hdrs = ["client_request.h"],
+    deps = [
+        ":headers",
+        ":http_method",
+        "//lw/err",
+        "//lw/memory:buffer",
+    ],
+)
+
+cc_test(
+    name = "client_request_test",
+    srcs = ["client_request_test.cpp"],
+    deps = [
+        ":client_request",
+        ":http_method",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "headers",
     hdrs = ["headers.h"],
     visibility = ["//lw/http:__subpackages__"],
@@ -46,6 +68,13 @@ cc_library(
         ":http_response",
         "//lw/co:future",
     ],
+)
+
+cc_library(
+    name = "http_method",
+    srcs = ["http_method.cpp"],
+    hdrs = ["http_method.h"],
+    deps = ["//lw/err"],
 )
 
 cc_library(

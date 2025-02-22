@@ -12,9 +12,9 @@ namespace lw {
 
 class HttpResponse {
 public:
-  // TODO: Turn this into a more advanced class capable of handling streams and
-  // serializing based on MIME type.
-  typedef std::string Body;
+  // TODO: #16 Turn this into a more advanced class capable of handling streams
+  // and serializing based on MIME type.
+  using Body = std::string;
 
   int status() const {
     return _status_code ? _status_code : to_int(HttpStatus::OK);
