@@ -9,9 +9,10 @@ namespace lw {
 namespace {
 
 constexpr std::string_view HOST_HEADER = "Host";
-constexpr std::string_view CONTENT_LENGTH_HEADER = "Content-Length";
 constexpr std::string_view HEADER_SEP = ": ";
 constexpr std::string_view HEADER_ENDL = "\r\n";
+constexpr std::string_view CONTENT_LENGTH_HEADER = "Content-Length";
+constexpr std::string_view CONTENT_TYPE_HEADER = "Content-Type";
 
 } // namespace
 
@@ -53,13 +54,19 @@ std::ostream& operator<<(std::ostream& stream, const HttpClientRequest& req) {
     stream << key << HEADER_SEP << value << HEADER_ENDL;
   }
 
-  if (!req.body().empty() && !req.has_header(CONTENT_LENGTH_HEADER)) {
-    stream << CONTENT_LENGTH_HEADER << HEADER_SEP << req.body().size()
-           << HEADER_ENDL;
+  if (!req.body().empty()) {
+    if (!req.has_header(CONTENT_LENGTH_HEADER)) {
+      stream << CONTENT_LENGTH_HEADER << HEADER_SEP << req.body().size()
+             << HEADER_ENDL;
+    }
+    if (!req.has_header(CONTENT_TYPE_HEADER)) {
+      stream << CONTENT_TYPE_HEADER << HEADER_SEP << req.body().content_type()
+             << HEADER_ENDL;
+    }
   }
 
   // Blank line before the body, nothing after.
-  stream << HEADER_ENDL << req.body();
+  stream << HEADER_ENDL << req.body().content();
   return stream;
 }
 

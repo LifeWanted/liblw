@@ -45,6 +45,7 @@ TEST(HttpClientRequest, SetBody) {
       "GET /a/path HTTP/1.1\r\n"
       "Host: example.com\r\n"
       "Content-Length: 6\r\n"
+      "Content-Type: text/plain\r\n"
       "\r\n"
       "foobar");
 }

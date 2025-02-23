@@ -6,6 +6,7 @@ cc_library(
     hdrs = ["client_request.h"],
     deps = [
         ":headers",
+        ":http_body",
         ":http_method",
         "//lw/err",
         "//lw/memory:buffer",
@@ -56,6 +57,12 @@ cc_test(
         "//lw/io/co/testing:string_stream",
         "@googletest//:gtest_main",
     ],
+)
+
+cc_library(
+    name = "http_body",
+    srcs = ["http_body.cpp"],
+    hdrs = ["http_body.h"],
 )
 
 cc_library(

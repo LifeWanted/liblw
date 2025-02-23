@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "lw/http/headers.h"
+#include "lw/http/http_body.h"
 #include "lw/http/http_method.h"
 #include "lw/memory/buffer.h"
 
@@ -16,10 +17,6 @@ namespace lw {
  */
 class HttpClientRequest {
 public:
-  // TODO: #16 Turn this into a more advanced class capable of handling streams
-  // and serializing based on MIME type.
-  using Body = std::string;
-
   HttpClientRequest(
       HttpMethod method, std::string_view host, std::string_view path)
       : HttpClientRequest(to_string(method), host, path) {}
@@ -40,8 +37,9 @@ public:
 
   const http::Headers& headers() const { return _headers; }
 
-  void body(std::string_view content) { _body = Body{content}; }
-  const Body& body() const { return _body; }
+  void body(HttpBody content) { _body = std::move(content); }
+  void body(std::string_view content) { _body = HttpBody::text(content); }
+  const HttpBody& body() const { return _body; }
 
   Buffer serialize() const;
 
@@ -49,7 +47,7 @@ private:
   std::string _method;
   std::string _path;
   http::Headers _headers;
-  Body _body;
+  HttpBody _body;
 };
 
 std::ostream& operator<<(std::ostream& stream, const HttpClientRequest& req);
