@@ -1,6 +1,6 @@
 #include "lw/net/internal/errors.h"
 
-#include <experimental/source_location>
+#include <source_location>
 #include <string_view>
 
 #include "lw/err/canonical.h"
@@ -9,9 +9,7 @@
 
 namespace lw::net::internal {
 
-using ::std::experimental::source_location;
-
-void check_openssl_error(long unsigned int err_code, source_location loc) {
+void check_openssl_error(long unsigned int err_code, std::source_location loc) {
   if (!err_code) return;
 
   // OpenSSL recommends a minimum of 256 bytes for this buffer.
@@ -23,17 +21,15 @@ void check_openssl_error(long unsigned int err_code, source_location loc) {
   throw Internal(loc) << "OpenSSL error: " << static_cast<char*>(err);
 }
 
-void check_openssl_error(source_location loc) {
+void check_openssl_error(std::source_location loc) {
   check_openssl_error(ERR_get_error());
 }
 
-[[noreturn]] void check_all_errors(
-  std::string_view backup_message,
-  source_location loc
-) {
+[[noreturn]] void
+check_all_errors(std::string_view backup_message, std::source_location loc) {
   check_openssl_error(loc);
   check_system_error(loc);
   throw Internal(loc) << backup_message;
 }
 
-}
+} // namespace lw::net::internal

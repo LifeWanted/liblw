@@ -1,6 +1,6 @@
 #pragma once
 
-#include <experimental/source_location>
+#include <source_location>
 
 namespace lw {
 
@@ -12,9 +12,7 @@ namespace lw {
  *  class of exception thrown is dependent on the error code.
  */
 void check_system_error(
-  const std::experimental::source_location& loc =
-    std::experimental::source_location::current()
-);
+    const std::source_location& loc = std::source_location::current());
 
 /**
  * Checks the given error code against the system error codes.
@@ -26,9 +24,7 @@ void check_system_error(
  *  exception thrown is dependent on the error code.
  */
 void check_system_error(
-  int err_code,
-  const std::experimental::source_location& loc =
-    std::experimental::source_location::current()
-);
+    int err_code,
+    const std::source_location& loc = std::source_location::current());
 
-}
+} // namespace lw

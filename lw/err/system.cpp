@@ -2,21 +2,22 @@
 
 #include <cerrno>
 #include <cstring>
-#include <experimental/source_location>
+#include <source_location>
 
 #include "lw/err/canonical.h"
 
 namespace lw {
-using ::std::experimental::source_location;
 
-void check_system_error(const source_location& loc) {
+void check_system_error(const std::source_location& loc) {
   // TODO: Add support for other OS errors.
   check_system_error(errno, loc);
 }
 
-void check_system_error(int err_code, const source_location& loc) {
+void check_system_error(int err_code, const std::source_location& loc) {
   switch (err_code) {
-    case 0: { return; }
+    case 0: {
+      return;
+    }
 
     case EAGAIN:
     // case EWOULDBLOCK: // Same as EAGAIN
@@ -25,29 +26,29 @@ void check_system_error(int err_code, const source_location& loc) {
     // case EDEADLOCK: // Same as EDEADLK
     case ENETRESET:
     case ERESTART: {
-      throw Aborted(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+      throw Aborted(loc) << "System error " << err_code << ": "
+                         << std::strerror(err_code);
     }
 
     case EALREADY:
     case EEXIST:
     case EINPROGRESS: {
       throw AlreadyExists(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case ECANCELED:
     case ECONNRESET:
     case EINTR:
     case ENOLINK: {
-      throw Cancelled(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+      throw Cancelled(loc) << "System error " << err_code << ": "
+                           << std::strerror(err_code);
     }
 
     case ETIME:
     case ETIMEDOUT: {
       throw DeadlineExceeded(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case EADDRINUSE:
@@ -70,7 +71,7 @@ void check_system_error(int err_code, const source_location& loc) {
     case ESHUTDOWN:
     case EUNATCH: {
       throw FailedPrecondition(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case EBADE:
@@ -88,8 +89,8 @@ void check_system_error(int err_code, const source_location& loc) {
     case ELIBEXEC:
     case ENOTRECOVERABLE:
     case ERFKILL: {
-      throw Internal(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+      throw Internal(loc) << "System error " << err_code << ": "
+                          << std::strerror(err_code);
     }
 
     case E2BIG:
@@ -111,7 +112,7 @@ void check_system_error(int err_code, const source_location& loc) {
     case ESPIPE:
     case ESTALE: {
       throw InvalidArgument(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case ENODEV:
@@ -119,8 +120,8 @@ void check_system_error(int err_code, const source_location& loc) {
     case ENOMSG:
     case ENXIO:
     case ESRCH: {
-      throw NotFound(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+      throw NotFound(loc) << "System error " << err_code << ": "
+                          << std::strerror(err_code);
     }
 
     case ECHRNG:
@@ -128,7 +129,7 @@ void check_system_error(int err_code, const source_location& loc) {
     // case ELNRANGE: // Not defined on Linux?
     case ERANGE: {
       throw OutOfRange(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case EACCES:
@@ -138,7 +139,7 @@ void check_system_error(int err_code, const source_location& loc) {
     case EPERM:
     case EROFS: {
       throw PermissionDenied(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case EDQUOT:
@@ -160,7 +161,7 @@ void check_system_error(int err_code, const source_location& loc) {
     case EUSERS:
     case EXFULL: {
       throw ResourceExhausted(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case EBUSY:
@@ -171,7 +172,7 @@ void check_system_error(int err_code, const source_location& loc) {
     case ENOPROTOOPT:
     case ETXTBSY: {
       throw Unavailable(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     case EAFNOSUPPORT:
@@ -182,13 +183,12 @@ void check_system_error(int err_code, const source_location& loc) {
     case EPROTONOSUPPORT:
     case ESOCKTNOSUPPORT: {
       throw Unimplemented(loc)
-        << "System error " << err_code << ": " << std::strerror(err_code);
+          << "System error " << err_code << ": " << std::strerror(err_code);
     }
 
     default: {
-      throw Internal()
-        << "Unknown system error " << err_code << " with message: "
-        << std::strerror(err_code);
+      throw Internal() << "Unknown system error " << err_code
+                       << " with message: " << std::strerror(err_code);
     }
   }
 
@@ -208,4 +208,4 @@ void check_system_error(int err_code, const source_location& loc) {
   // EXDEV           Improper link (POSIX.1-2001).
 }
 
-}
+} // namespace lw

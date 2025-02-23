@@ -1,6 +1,5 @@
 #include "lw/err/error.h"
 
-#include <experimental/source_location>
 #include <string_view>
 
 #include "gmock/gmock.h"
@@ -9,7 +8,6 @@
 namespace lw {
 namespace {
 
-using ::std::experimental::source_location;
 using ::testing::ContainerEq;
 using ::testing::HasSubstr;
 using ::testing::MatchesRegex;
@@ -17,12 +15,11 @@ using ::testing::Not;
 
 class TestError : public Error {
 public:
-  TestError(const source_location& loc = source_location::current()):
-    Error("TestError", loc)
-  {}
+  TestError(const std::source_location& loc = std::source_location::current())
+      : Error("TestError", loc) {}
 };
 
-bool equal(const source_location& lhs, const source_location& rhs) {
+bool equal(const std::source_location& lhs, const std::source_location& rhs) {
   if (lhs.column() != rhs.column()) return false;
   if (lhs.line() != rhs.line()) return false;
   std::string_view lhs_file = lhs.file_name();
@@ -41,9 +38,7 @@ TEST(Error, CatchAsRuntimeError) {
     throw TestError() << "oh noes!";
   } catch (const std::runtime_error& err) {
     EXPECT_THAT(err.what(), MatchesRegex(".*TestError.*oh noes!.*"));
-  } catch (...) {
-    FAIL() << "Caught in generic-catch-all block.";
-  }
+  } catch (...) { FAIL() << "Caught in generic-catch-all block."; }
 }
 
 TEST(Error, CatchAsExactErrorType) {
@@ -51,9 +46,7 @@ TEST(Error, CatchAsExactErrorType) {
     throw TestError() << "oh noes!";
   } catch (const TestError& err) {
     EXPECT_THAT(err.what(), MatchesRegex(".*TestError.*oh noes!.*"));
-  } catch (...) {
-    FAIL() << "Caught in generic-catch-all block.";
-  }
+  } catch (...) { FAIL() << "Caught in generic-catch-all block."; }
 }
 
 TEST(Error, SourceLocationCaptured) {
@@ -83,5 +76,5 @@ TEST(Error, Wrap) {
   EXPECT_EQ(++itr, err2.stack().end());
 }
 
-}
-}
+} // namespace
+} // namespace lw

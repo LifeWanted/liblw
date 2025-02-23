@@ -1,7 +1,6 @@
 #include "lw/net/socket.h"
 
 #include <cerrno>
-#include <experimental/source_location>
 #include <fcntl.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -15,20 +14,18 @@
 #include "lw/flags/flags.h"
 
 LW_FLAG(
-  int, connection_backlog_limit, 10,
-  "Maximum pending connections in socket accept queue."
-);
+    int,
+    connection_backlog_limit,
+    10,
+    "Maximum pending connections in socket accept queue.");
 
 namespace lw::net {
 namespace {
 
-using std::experimental::source_location;
-
 void check_gai_error(
-  int err,
-  const source_location& loc = source_location::current()
-) {
-  switch(err) {
+    int err,
+    const std::source_location& loc = std::source_location::current()) {
+  switch (err) {
     case 0: {
       return;
     }
@@ -41,7 +38,7 @@ void check_gai_error(
     case EAI_NONAME:
     case EAI_SOCKTYPE: {
       throw InvalidArgument(loc)
-        << "getaddrinfo failed: " << ::gai_strerror(err);
+          << "getaddrinfo failed: " << ::gai_strerror(err);
     }
 
     case EAI_ADDRFAMILY:
@@ -62,22 +59,20 @@ void check_gai_error(
     case EAI_SYSTEM: {
       check_system_error();
       throw Internal()
-        << "getaddrinfo indicated a system error, but no system error found.";
+          << "getaddrinfo indicated a system error, but no system error found.";
     }
 
     default: {
       throw Internal() // No "loc", this is an error with this method.
-        << "Unknown getaddrinfo failure code :" << err;
+          << "Unknown getaddrinfo failure code :" << err;
     }
   }
 }
 
 void enable_socket_reuse(int sock) {
   int set_true = 1;
-  if (
-    ::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &set_true, sizeof(set_true)) ==
-    -1
-  ) {
+  if (::setsockopt(
+          sock, SOL_SOCKET, SO_REUSEADDR, &set_true, sizeof(set_true)) == -1) {
     check_system_error();
     throw Internal() << "Unknown system error in setsockopt.";
   }
@@ -89,9 +84,9 @@ bool should_wait(int err) {
   return err == EAGAIN || err == EWOULDBLOCK;
 }
 
-}
+} // namespace
 
-Socket::Socket(Socket&& other): _socket_fd{other._socket_fd} {
+Socket::Socket(Socket&& other) : _socket_fd{other._socket_fd} {
   other._socket_fd = 0;
 }
 
@@ -111,7 +106,7 @@ Socket::~Socket() {
 void Socket::close() {
   if (_socket_fd == 0) {
     throw FailedPrecondition()
-      << "Socket is already closed, cannot close again.";
+        << "Socket is already closed, cannot close again.";
   }
   ::close(_socket_fd);
   _socket_fd = 0;
@@ -123,26 +118,16 @@ co::Future<void> Socket::connect(Address addr) {
   }
 
   ::addrinfo* addresses;
-  ::addrinfo hints{
-    .ai_family = AF_UNSPEC,
-    .ai_socktype = SOCK_STREAM
-  };
+  ::addrinfo hints{.ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM};
 
   int err = ::getaddrinfo(
-    addr.hostname.data(),
-    addr.service.data(),
-    &hints,
-    &addresses
-  );
+      addr.hostname.data(), addr.service.data(), &hints, &addresses);
   check_gai_error(err);
 
   ::addrinfo* mvr = addresses;
   for (; mvr != nullptr; mvr = mvr->ai_next) {
     int sock = ::socket(
-      mvr->ai_family,
-      mvr->ai_socktype | SOCK_NONBLOCK,
-      mvr->ai_protocol
-    );
+        mvr->ai_family, mvr->ai_socktype | SOCK_NONBLOCK, mvr->ai_protocol);
     if (sock <= 0) continue;
 
     int conn_result = ::connect(sock, mvr->ai_addr, mvr->ai_addrlen);
@@ -172,8 +157,8 @@ co::Future<void> Socket::connect(Address addr) {
 
   if (_socket_fd == 0) {
     // TODO: Include error message from the failed socket or connect call.
-    throw Internal()
-      << "Failed to connect to " << addr.hostname << ':' << addr.service;
+    throw Internal() << "Failed to connect to " << addr.hostname << ':'
+                     << addr.service;
   }
 }
 
@@ -204,20 +189,20 @@ co::Future<std::size_t> Socket::_do_send(const Buffer& data, int flags) {
   if (errno == EMSGSIZE) {
     if (data.size() < 2) {
       throw ResourceExhausted()
-        << "Message too large to send but too small to split.";
+          << "Message too large to send but too small to split.";
     }
     std::size_t half_size = data.size() / 2;
     std::size_t first_send =
-      co_await _do_send(data.trim_suffix(data.size() - half_size), flags);
+        co_await _do_send(data.trim_suffix(data.size() - half_size), flags);
     std::size_t second_send =
-      co_await _do_send(data.trim_prefix(half_size), flags);
+        co_await _do_send(data.trim_prefix(half_size), flags);
     co_return first_send + second_send;
   }
 
   // Some other error happened, so fail out!
   check_system_error();
-  throw Internal()
-    << "Unknown socket error while sending " << data.size() << " bytes.";
+  throw Internal() << "Unknown socket error while sending " << data.size()
+                   << " bytes.";
 }
 
 co::Future<std::size_t> Socket::receive(Buffer& buff) {
@@ -234,7 +219,7 @@ co::Future<std::size_t> Socket::receive(Buffer& buff) {
 
 co::Future<std::size_t> Socket::_do_recv(Buffer& buff) {
   int bytes_received =
-    ::recv(_socket_fd, (void*)buff.data(), buff.size(), /*flags=*/0);
+      ::recv(_socket_fd, (void*)buff.data(), buff.size(), /*flags=*/0);
   if (bytes_received > 0) co_return static_cast<std::size_t>(bytes_received);
   if (bytes_received == 0) {
     // Receiving 0 bytes means our peer closed up.
@@ -261,25 +246,21 @@ void Socket::listen(Address addr) {
 
   ::addrinfo* addresses;
   ::addrinfo hints{
-    .ai_flags = AI_PASSIVE,
-    .ai_family = AF_UNSPEC,
-    .ai_socktype = SOCK_STREAM
-  };
+      .ai_flags = AI_PASSIVE,
+      .ai_family = AF_UNSPEC,
+      .ai_socktype = SOCK_STREAM};
 
   int err = ::getaddrinfo(
-    addr.hostname.size() ? addr.hostname.data() : nullptr,
-    addr.service.data(),
-    &hints,
-    &addresses
-  );
+      addr.hostname.size() ? addr.hostname.data() : nullptr,
+      addr.service.data(),
+      &hints,
+      &addresses);
   check_gai_error(err);
 
   ::addrinfo* mvr = addresses;
   for (; mvr != nullptr; mvr = mvr->ai_next) {
     int sock = ::socket(
-      mvr->ai_family,
-      mvr->ai_socktype | SOCK_NONBLOCK,
-      mvr->ai_protocol);
+        mvr->ai_family, mvr->ai_socktype | SOCK_NONBLOCK, mvr->ai_protocol);
     if (sock <= 0) continue;
 
     enable_socket_reuse(sock);
@@ -294,9 +275,8 @@ void Socket::listen(Address addr) {
   ::freeaddrinfo(addresses);
 
   if (!is_open()) {
-    throw Unavailable()
-      << "Unable to bind to address \"" << addr.hostname << "\" for service "
-      << addr.service;
+    throw Unavailable() << "Unable to bind to address \"" << addr.hostname
+                        << "\" for service " << addr.service;
   }
 
   if (::listen(_socket_fd, flags::connection_backlog_limit) == -1) {
@@ -308,7 +288,7 @@ void Socket::listen(Address addr) {
 co::Future<Socket> Socket::accept() const {
   if (!is_open()) {
     throw FailedPrecondition()
-      << "Socket is not open before accepting new connections.";
+        << "Socket is not open before accepting new connections.";
   }
 
   return _do_accept();
@@ -318,10 +298,7 @@ co::Future<Socket> Socket::_do_accept() const {
   ::sockaddr_storage remote_addr;
   socklen_t socket_size = sizeof(remote_addr);
   int new_sock = ::accept(
-    _socket_fd,
-    reinterpret_cast<::sockaddr*>(&remote_addr),
-    &socket_size
-  );
+      _socket_fd, reinterpret_cast<::sockaddr*>(&remote_addr), &socket_size);
 
   if (new_sock > 0) {
     int flags = ::fcntl(new_sock, F_GETFL);
@@ -347,4 +324,4 @@ co::Future<Socket> Socket::_do_accept() const {
   throw Internal() << "Unknown system error in accept.";
 }
 
-}
+} // namespace lw::net

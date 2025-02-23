@@ -1,10 +1,10 @@
 #pragma once
 
-#include <experimental/source_location>
 #include <memory>
+#include <ostream>
+#include <source_location>
 #include <stack>
 #include <string_view>
-#include <ostream>
 
 #include "lw/io/serializer/formatter.h"
 #include "lw/io/serializer/parser.h"
@@ -12,7 +12,7 @@
 
 namespace lw::mime {
 
-class JSONSerializationFormatter: public io::SerializationFormatter {
+class JSONSerializationFormatter : public io::SerializationFormatter {
 public:
   JSONSerializationFormatter(std::ostream& output);
 
@@ -46,13 +46,9 @@ private:
 
   void _maybe_comma();
   void _check_can_add_value(
-    const std::experimental::source_location& loc =
-      std::experimental::source_location::current()
-  );
+      const std::source_location& loc = std::source_location::current());
   void _check_can_add_string(
-    const std::experimental::source_location& loc =
-      std::experimental::source_location::current()
-  );
+      const std::source_location& loc = std::source_location::current());
   void _value_added();
   void _string_added();
   void _add_literal(std::string_view value);
@@ -64,20 +60,18 @@ private:
 
 // -------------------------------------------------------------------------- //
 
-class JSONDeserializationParser: public io::DeserializationParser {
+class JSONDeserializationParser : public io::DeserializationParser {
 public:
-  std::unique_ptr<io::DeserializationToken> parse(
-    std::string_view str
-  ) const override;
+  std::unique_ptr<io::DeserializationToken>
+  parse(std::string_view str) const override;
 };
 
 // -------------------------------------------------------------------------- //
 
-class JSONSerializer: public MimeSerializer {
+class JSONSerializer : public MimeSerializer {
 public:
-  std::unique_ptr<io::SerializationFormatter> make_formatter(
-    std::ostream& output
-  ) override {
+  std::unique_ptr<io::SerializationFormatter>
+  make_formatter(std::ostream& output) override {
     return std::make_unique<JSONSerializationFormatter>(output);
   }
 
@@ -86,4 +80,4 @@ public:
   }
 };
 
-}
+} // namespace lw::mime

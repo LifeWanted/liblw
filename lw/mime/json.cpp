@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <source_location>
 #include <stack>
 #include <string_view>
 #include <unordered_map>
@@ -147,7 +148,7 @@ void JSONSerializationFormatter::_maybe_comma() {
 }
 
 void JSONSerializationFormatter::_check_can_add_value(
-    const std::experimental::source_location& loc) {
+    const std::source_location& loc) {
   if (_state.top() != State::VALUE && _state.top() != State::LIST &&
       _state.top() != State::LIST_VALUE && _state.top() != State::KEY_ENDED) {
     throw InvalidArgument(loc) << "Unexpected value while formatting JSON.";
@@ -155,7 +156,7 @@ void JSONSerializationFormatter::_check_can_add_value(
 }
 
 void JSONSerializationFormatter::_check_can_add_string(
-    const std::experimental::source_location& loc) {
+    const std::source_location& loc) {
   if (_state.top() != State::VALUE && _state.top() != State::LIST &&
       _state.top() != State::LIST_VALUE && _state.top() != State::KEY_STARTED &&
       _state.top() != State::KEY_ENDED) {

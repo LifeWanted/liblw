@@ -2,6 +2,7 @@
 
 #include <experimental/source_location>
 #include <memory>
+#include <source_location>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -14,23 +15,19 @@ namespace lw {
 class Error;
 template <typename ErrorType>
 ErrorType wrap(
-  const Error& sub_error,
-  const std::experimental::source_location& loc =
-    std::experimental::source_location::current()
-);
+    const Error& sub_error,
+    const std::source_location& loc = std::source_location::current());
 template <typename ErrorType>
 ErrorType wrap(
-  Error&& sub_error,
-  const std::experimental::source_location& loc =
-    std::experimental::source_location::current()
-);
+    Error&& sub_error,
+    const std::source_location& loc = std::source_location::current());
 
 class ErrorStack {
 public:
   class Iterator {
   public:
     Iterator() = default;
-    explicit Iterator(const ErrorStack& stack): _stack{&stack} {}
+    explicit Iterator(const ErrorStack& stack) : _stack{&stack} {}
 
     bool operator==(const Iterator& rhs) const { return _stack == rhs._stack; }
     bool operator!=(const Iterator& rhs) const { return !(*this == rhs); }
@@ -51,16 +48,14 @@ public:
     const ErrorStack* _stack = nullptr;
   };
 
-  explicit ErrorStack(const std::experimental::source_location& loc);
+  explicit ErrorStack(const std::source_location& loc);
   ErrorStack(const ErrorStack& other);
   ErrorStack& operator=(const ErrorStack& rhs);
   ErrorStack(ErrorStack&&) = default;
   ErrorStack& operator=(ErrorStack&&) = default;
 
   std::string_view message() const { return _buffer.string(); }
-  const std::experimental::source_location& location() const noexcept {
-    return _location;
-  }
+  const std::source_location& location() const noexcept { return _location; }
 
   Iterator begin() const { return Iterator{*this}; }
   Iterator end() const { return Iterator{}; }
@@ -69,7 +64,7 @@ private:
   friend class Error;
   friend class Iterator;
 
-  std::experimental::source_location _location;
+  std::source_location _location;
   io::stream::StringBuffer _buffer;
   std::unique_ptr<ErrorStack> _previous;
 };
@@ -80,17 +75,15 @@ private:
  * It is a subclass of `std::runtime_error` with the addition of stream-like
  * error message formatting.
  */
-class Error: public std::runtime_error {
+class Error : public std::runtime_error {
 public:
   Error(const Error& other);
   Error(Error&& other);
   Error& operator=(const Error& other);
   Error& operator=(Error&& other);
 
-  const char* what() const noexcept override {
-    return _stack._buffer.c_str();
-  }
-  const std::experimental::source_location& where() const noexcept {
+  const char* what() const noexcept override { return _stack._buffer.c_str(); }
+  const std::source_location& where() const noexcept {
     return _stack._location;
   }
   std::string_view what_string() const noexcept {
@@ -100,7 +93,7 @@ public:
   const ErrorStack& stack() const { return _stack; }
 
 protected:
-  Error(std::string_view name, const std::experimental::source_location& loc);
+  Error(std::string_view name, const std::source_location& loc);
 
 private:
   template <typename T>
@@ -108,12 +101,9 @@ private:
   template <typename T>
   friend Error&& operator<<(Error&&, T&&);
   template <typename ErrorType>
-  friend ErrorType wrap(
-    const Error&,
-    const std::experimental::source_location&
-  );
+  friend ErrorType wrap(const Error&, const std::source_location&);
   template <typename ErrorType>
-  friend ErrorType wrap(Error&&, const std::experimental::source_location&);
+  friend ErrorType wrap(Error&&, const std::source_location&);
 
   void _set_previous(ErrorStack previous);
 
@@ -144,20 +134,18 @@ inline Error&& operator<<(Error&& err, const Error& rhs) {
 }
 
 template <
-  typename ErrorType,
-  typename T,
-  std::enable_if<std::is_base_of<Error, ErrorType>::value>::type* = nullptr
->
+    typename ErrorType,
+    typename T,
+    std::enable_if<std::is_base_of<Error, ErrorType>::value>::type* = nullptr>
 ErrorType& operator<<(ErrorType& err, T&& val) {
   static_cast<Error&>(err) << std::forward<T>(val);
   return err;
 }
 
 template <
-  typename ErrorType,
-  typename T,
-  std::enable_if<std::is_base_of<Error, ErrorType>::value>::type* = nullptr
->
+    typename ErrorType,
+    typename T,
+    std::enable_if<std::is_base_of<Error, ErrorType>::value>::type* = nullptr>
 ErrorType&& operator<<(ErrorType&& err, T&& val) {
   static_cast<Error&>(err) << std::forward<T>(val);
   return std::move(err);
@@ -175,31 +163,23 @@ ErrorType&& operator<<(ErrorType&& err, T&& val) {
  *  Source file location. Defaults to the call site.
  */
 template <typename ErrorType>
-ErrorType wrap(
-  const Error& sub_error,
-  const std::experimental::source_location& loc
-) {
+ErrorType wrap(const Error& sub_error, const std::source_location& loc) {
   static_assert(
-    std::is_base_of_v<Error, ErrorType>,
-    "Can only wrap with another liblw error class."
-  );
+      std::is_base_of_v<Error, ErrorType>,
+      "Can only wrap with another liblw error class.");
   ErrorType err{loc};
   err._set_previous(sub_error._stack);
   return err;
 }
 
 template <typename ErrorType>
-ErrorType wrap(
-  Error&& sub_error,
-  const std::experimental::source_location& loc
-) {
+ErrorType wrap(Error&& sub_error, const std::source_location& loc) {
   static_assert(
-    std::is_base_of_v<Error, ErrorType>,
-    "Can only wrap with another liblw error class."
-  );
+      std::is_base_of_v<Error, ErrorType>,
+      "Can only wrap with another liblw error class.");
   ErrorType err{loc};
   err._set_previous(std::move(sub_error._stack));
   return err;
 }
 
-}
+} // namespace lw
