@@ -14,7 +14,7 @@ struct Address {
   std::string_view service;
 };
 
-class Socket: public io::CoStream {
+class Socket : public io::CoStream {
 public:
   Socket() = default;
   Socket(Socket&& other);
@@ -31,11 +31,11 @@ public:
   void close() override;
 
   bool good() const override { return is_open(); }
-  bool eof() const override {  return is_open(); }
-  co::Future<std::size_t> write(const Buffer& data) override {
+  bool eof() const override { return is_open(); }
+  co::future<std::size_t> write(const Buffer& data) override {
     return send(data);
   }
-  co::Future<std::size_t> read(Buffer& buffer) override {
+  co::future<std::size_t> read(Buffer& buffer) override {
     return receive(buffer);
   }
 
@@ -44,7 +44,7 @@ public:
    *
    * The returned future is resolved when the connection is opened.
    */
-  co::Future<void> connect(Address addr);
+  co::future<void> connect(Address addr);
 
   /**
    * Sends the given buffer over the socket.
@@ -56,7 +56,7 @@ public:
    * @return
    *  A future that will resolve to the number of bytes sent on the wire.
    */
-  co::Future<std::size_t> send(const Buffer& data);
+  co::future<std::size_t> send(const Buffer& data);
 
   /**
    * Reads up to `buff->size()` bytes from the socket.
@@ -68,7 +68,7 @@ public:
    * @return
    *  A future that will resolve to the number of bytes read from the wire.
    */
-  co::Future<std::size_t> receive(Buffer& buff);
+  co::future<std::size_t> receive(Buffer& buff);
 
   /**
    * Binds this socket to the given address and starts listening for
@@ -83,16 +83,16 @@ public:
    * @return
    *  A future that will resolve to a new Socket if a connection comes in.
    */
-  co::Future<Socket> accept() const;
+  co::future<Socket> accept() const;
 
 private:
-  explicit Socket(int socket_fd): _socket_fd{socket_fd} {}
+  explicit Socket(int socket_fd) : _socket_fd{socket_fd} {}
 
-  co::Future<std::size_t> _do_send(const Buffer& data, int flags);
-  co::Future<std::size_t> _do_recv(Buffer& data);
-  co::Future<Socket> _do_accept() const;
+  co::future<std::size_t> _do_send(const Buffer& data, int flags);
+  co::future<std::size_t> _do_recv(Buffer& data);
+  co::future<Socket> _do_accept() const;
 
   int _socket_fd = 0;
 };
 
-}
+} // namespace lw::net

@@ -15,9 +15,8 @@ namespace lw {
  */
 class HttpRequest {
 public:
-  explicit HttpRequest(io::BaseCoReader& connection):
-    _connection{connection}
-  {}
+  explicit HttpRequest(io::BaseCoReader& connection)
+      : _connection{connection} {}
 
   std::string_view http_version() const { return _http_version; }
   std::string_view method() const { return _method; }
@@ -62,9 +61,9 @@ public:
    * @throw FailedPrecondition
    *  If the header has already been loaded.
    */
-  co::Future<void> read_header();
+  co::future<void> read_header();
 
-  co::Future<Buffer> body() const;
+  co::future<Buffer> body() const;
 
   /**
    * Reads and discards the remaining data for the request.
@@ -91,4 +90,4 @@ private:
   std::int64_t _content_length = -1;
 };
 
-}
+} // namespace lw

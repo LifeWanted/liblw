@@ -99,8 +99,8 @@ struct Serialize;
  * Serializer::write comes in 4 forms:
  *  - `void write(Serializable value)`
  *  - `void write(Serializable key, Serializable value)`
- *  - `co::Future<void> write(AsyncSerializable value)`
- *  - `co::Future<void> write(Serializable key, AsyncSerializable value)`
+ *  - `co::future<void> write(AsyncSerializable value)`
+ *  - `co::future<void> write(Serializable key, AsyncSerializable value)`
  *
  * Where `Serializable` and `AsyncSerializable` match their respective concepts.
  * There are also key-value versions that take `std::pair` to make working with
@@ -111,21 +111,14 @@ struct Serialize;
  */
 class Serializer {
 public:
-  Serializer(std::unique_ptr<SerializationFormatter> formatter):
-    _formatter{std::move(formatter)}
-  {}
+  Serializer(std::unique_ptr<SerializationFormatter> formatter)
+      : _formatter{std::move(formatter)} {}
 
-  void write(std::nullptr_t) {
-    _formatter->put_null();
-  }
+  void write(std::nullptr_t) { _formatter->put_null(); }
 
-  void write(bool b) {
-    _formatter->put_boolean(b);
-  }
+  void write(bool b) { _formatter->put_boolean(b); }
 
-  void write(char c) {
-    _formatter->put_char(c);
-  }
+  void write(char c) { _formatter->put_char(c); }
 
   template <std::signed_integral Number>
   void write(Number n) {
@@ -142,9 +135,7 @@ public:
     _formatter->put_floating_point(n);
   }
 
-  void write(const char* s) {
-    _formatter->put_string(s);
-  }
+  void write(const char* s) { _formatter->put_string(s); }
 
   template <StringSerializable String>
   void write(const String& s) {
@@ -159,7 +150,7 @@ public:
   }
 
   template <AsyncListSerializable List>
-  co::Future<void> write(const List& l) {
+  co::future<void> write(const List& l) {
     _formatter->start_list();
     co_await _serialize_list(l);
     _formatter->end_list();
@@ -173,14 +164,14 @@ public:
   }
 
   template <AsyncObjectSerializable Object>
-  co::Future<void> write(const Object& o) {
+  co::future<void> write(const Object& o) {
     _formatter->start_object();
     co_await _serialize_object(o);
     _formatter->end_object();
   }
 
   template <AsyncSerializeable Value>
-  co::Future<void> write(const Value& value) {
+  co::future<void> write(const Value& value) {
     Serialize<Value> s;
     co_await s.serialize(*this, value);
   }
@@ -205,7 +196,7 @@ public:
    * @see ::lw::io::ObjectTag
    */
   template <Serializeable Key, AsyncSerializeable Value>
-  co::Future<void> write(const std::pair<Key, Value>& pair) {
+  co::future<void> write(const std::pair<Key, Value>& pair) {
     _formatter->start_pair_key();
     write(pair.first);
     _formatter->end_pair_key();
@@ -233,7 +224,7 @@ public:
    * @see ::lw::io::ObjectTag
    */
   template <Serializeable Key, AsyncSerializeable Value>
-  co::Future<void> write(const Key& key, const Value& value) {
+  co::future<void> write(const Key& key, const Value& value) {
     _formatter->start_pair_key();
     write(key);
     _formatter->end_pair_key();
@@ -250,18 +241,20 @@ private:
 
   template <internal::ListSerializationCapable<void> List>
   void _serialize_list(const List& l) {
-    for (const auto& v : l) write(v);
+    for (const auto& v : l)
+      write(v);
   }
 
-  template <internal::ListSerializationTagged<co::Future<void>> List>
-  co::Future<void> _serialize_list(const List& l) {
+  template <internal::ListSerializationTagged<co::future<void>> List>
+  co::future<void> _serialize_list(const List& l) {
     Serialize<List> s;
     co_await s.serialize(*this, l);
   }
 
-  template <internal::ListSerializationCapable<co::Future<void>> List>
-  co::Future<void> _serialize_list(const List& l) {
-    for (const auto& v : l) co_await write(v);
+  template <internal::ListSerializationCapable<co::future<void>> List>
+  co::future<void> _serialize_list(const List& l) {
+    for (const auto& v : l)
+      co_await write(v);
   }
 
   template <internal::ObjectSerializationTagged<void> Object>
@@ -272,11 +265,12 @@ private:
 
   template <internal::ObjectSerializationCapable<void> Object>
   void _serialize_object(const Object& l) {
-    for (const auto& v : l) write(v);
+    for (const auto& v : l)
+      write(v);
   }
 
-  template <internal::ObjectSerializationTagged<co::Future<void>> Object>
-  co::Future<void> _serialize_object(const Object& o) {
+  template <internal::ObjectSerializationTagged<co::future<void>> Object>
+  co::future<void> _serialize_object(const Object& o) {
     Serialize<Object> s;
     co_await s.serialize(*this, o);
   }
@@ -302,7 +296,7 @@ struct Serialize<T> {
 
 template <AsyncListSerializable T>
 struct Serialize<T> {
-  co::Future<void> serialize(Serializer& serializer, const T& value) {
+  co::future<void> serialize(Serializer& serializer, const T& value) {
     return serializer.write(value);
   }
 };
@@ -314,4 +308,4 @@ struct Serialize<T> {
   }
 };
 
-}
+} // namespace lw::io

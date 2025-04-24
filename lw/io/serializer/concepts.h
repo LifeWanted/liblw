@@ -36,98 +36,87 @@ concept BasicSerializable = requires(Serializer& s, const T& a) {
 };
 
 template <typename T, typename SerializationResult>
-concept ListSerializationTagged =
-  requires() {
-    typename Serialize<T>;
-    typename Serialize<T>::serialization_category;
-    { typename Serialize<T>::serialization_category{} } -> std::same_as<ListTag>;
-  } &&
-  BasicSerializable<T, SerializationResult>;
+concept ListSerializationTagged = requires() {
+  typename Serialize<T>;
+  typename Serialize<T>::serialization_category;
+  { typename Serialize<T>::serialization_category{} } -> std::same_as<ListTag>;
+} && BasicSerializable<T, SerializationResult>;
 
 template <typename T, typename SerializationResult>
 concept ListSerializationCapable =
-  ForwardIterable<T> &&
-  !ForwardIterableAs<T, char> &&
-  requires(const T& a) {
-    { *a.begin() } -> BasicSerializable<SerializationResult>;
-  };
+    ForwardIterable<T> && !ForwardIterableAs<T, char> && requires(const T& a) {
+      { *a.begin() } -> BasicSerializable<SerializationResult>;
+    };
 
 template <typename T, typename SerializationResult>
-concept ObjectSerializationTagged =
-  requires() {
-    typename Serialize<T>;
-    typename Serialize<T>::serialization_category;
-    {
-      typename Serialize<T>::serialization_category{}
-    } -> std::same_as<ObjectTag>;
-  } &&
-  BasicSerializable<T, SerializationResult>;
+concept ObjectSerializationTagged = requires() {
+  typename Serialize<T>;
+  typename Serialize<T>::serialization_category;
+  {
+    typename Serialize<T>::serialization_category{}
+  } -> std::same_as<ObjectTag>;
+} && BasicSerializable<T, SerializationResult>;
 
 template <typename T, typename SerializationResult>
 concept ObjectSerializationCapable =
-  ForwardIterable<T> &&
-  requires(const T& a) {
-    typename PairTypes<decltype(*a.begin())>;
-    { a.begin()->first } -> BasicSerializable<SerializationResult>;
-    { a.begin()->second } -> BasicSerializable<SerializationResult>;
-  };
+    ForwardIterable<T> && requires(const T& a) {
+      typename PairTypes<decltype(*a.begin())>;
+      { a.begin()->first } -> BasicSerializable<SerializationResult>;
+      { a.begin()->second } -> BasicSerializable<SerializationResult>;
+    };
 
-}
+} // namespace internal
 
 template <typename T>
 concept SignedIntegerSerializable =
-  std::signed_integral<std::remove_reference_t<T>> &&
-  !std::same_as<std::remove_reference_t<T>, bool> &&
-  !std::same_as<std::remove_reference_t<T>, char>;
+    std::signed_integral<std::remove_reference_t<T>> &&
+    !std::same_as<std::remove_reference_t<T>, bool> &&
+    !std::same_as<std::remove_reference_t<T>, char>;
 
 template <typename T>
 concept UnsignedIntegerSerializable =
-  std::unsigned_integral<std::remove_reference_t<T>> &&
-  !std::same_as<std::remove_reference_t<T>, bool> &&
-  !std::same_as<std::remove_reference_t<T>, char>;
+    std::unsigned_integral<std::remove_reference_t<T>> &&
+    !std::same_as<std::remove_reference_t<T>, bool> &&
+    !std::same_as<std::remove_reference_t<T>, char>;
 
 template <typename T>
 concept IntegerSerializable =
-  SignedIntegerSerializable<T> || UnsignedIntegerSerializable<T>;
+    SignedIntegerSerializable<T> || UnsignedIntegerSerializable<T>;
 
 template <typename T>
 concept NumericSerializable =
-  IntegerSerializable<T> || std::floating_point<std::remove_reference_t<T>>;
+    IntegerSerializable<T> || std::floating_point<std::remove_reference_t<T>>;
 
 template <typename T>
 concept StringSerializable = ForwardIterableAs<T, char>;
 
 template <typename T>
 concept DirectlySerializable =
-  NumericSerializable<T> ||
-  StringSerializable<T> ||
-  std::same_as<T, bool> ||
-  std::same_as<T, std::nullptr_t>;
+    NumericSerializable<T> || StringSerializable<T> || std::same_as<T, bool> ||
+    std::same_as<T, std::nullptr_t>;
 
 template <typename T>
-concept ListSerializable =
-  internal::ListSerializationTagged<T, void> ||
-  internal::ListSerializationCapable<T, void>;
+concept ListSerializable = internal::ListSerializationTagged<T, void> ||
+    internal::ListSerializationCapable<T, void>;
 
 template <typename T>
 concept AsyncListSerializable =
-  internal::ListSerializationTagged<T, co::Future<void>> ||
-  internal::ListSerializationCapable<T, co::Future<void>>;
+    internal::ListSerializationTagged<T, co::future<void>> ||
+    internal::ListSerializationCapable<T, co::future<void>>;
 
 template <typename T>
-concept ObjectSerializable =
-  internal::ObjectSerializationTagged<T, void> ||
-  internal::ObjectSerializationCapable<T, void>;
+concept ObjectSerializable = internal::ObjectSerializationTagged<T, void> ||
+    internal::ObjectSerializationCapable<T, void>;
 
 template <typename T>
 concept AsyncObjectSerializable =
-  internal::ObjectSerializationTagged<T, co::Future<void>>; // Must be tagged.
+    internal::ObjectSerializationTagged<T, co::future<void>>; // Must be tagged.
 
 template <typename T>
 concept Serializeable = internal::BasicSerializable<T, void>;
 
 template <typename T>
-concept AsyncSerializeable = internal::BasicSerializable<T, co::Future<void>>;
+concept AsyncSerializeable = internal::BasicSerializable<T, co::future<void>>;
 
 template <typename T>
 concept Deserializeable = requires() {
@@ -137,4 +126,4 @@ concept Deserializeable = requires() {
   } -> std::same_as<T>;
 };
 
-}
+} // namespace lw::io

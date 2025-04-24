@@ -23,7 +23,7 @@ void respond_failure(
   res.body(std::string{body});
 }
 
-co::Future<bool> try_read_header(HttpRequest& req, HttpResponse& res) {
+co::future<bool> try_read_header(HttpRequest& req, HttpResponse& res) {
   try {
     co_await req.read_header();
     co_return true;
@@ -34,7 +34,7 @@ co::Future<bool> try_read_header(HttpRequest& req, HttpResponse& res) {
   }
 }
 
-co::Future<void>
+co::future<void>
 finish_request(io::CoStream& conn, HttpRequest& req, HttpResponse& res) {
   log(INFO) << "Responding " << res.status() << " to " << req.method() << ' '
             << req.path();
@@ -46,7 +46,7 @@ finish_request(io::CoStream& conn, HttpRequest& req, HttpResponse& res) {
   }
 }
 
-co::Future<void>
+co::future<void>
 run_request(io::CoStream& conn, EndpointTrie<BaseHttpHandlerFactory>& trie) {
   io::CoReader reader{conn};
   HttpRequest request{reader};
@@ -121,7 +121,7 @@ co::Task HttpRouter::run(std::unique_ptr<io::CoStream> conn) {
   --_connection_counter;
 }
 
-co::Future<void> HttpRouter::run_once(io::CoStream& conn) {
+co::future<void> HttpRouter::run_once(io::CoStream& conn) {
   return run_request(conn, _trie);
 }
 

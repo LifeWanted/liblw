@@ -9,7 +9,7 @@
  *  namespace {
  *  class MyHandler: public ::lw::HttpHandler {
  *  public:
- *    co::Future<void> get() override {
+ *    co::future<void> get() override {
  *      response().body(request().route_param("endpoint"));
  *      co_return;
  *    }
@@ -52,7 +52,7 @@ public:
   co::Task run(std::unique_ptr<io::CoStream> conn) override;
   std::size_t connection_count() const override { return _connection_counter; }
 
-  co::Future<void> run_once(io::CoStream& conn);
+  co::future<void> run_once(io::CoStream& conn);
 
 private:
   http::internal::EndpointTrie<BaseHttpHandlerFactory> _trie;

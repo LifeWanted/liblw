@@ -1,10 +1,10 @@
 #include "lw/co/generator.h"
 
-#include "gtest/gtest.h"
 #include "lw/co/future.h"
 #include "lw/co/scheduler.h"
 #include "lw/co/task.h"
 #include "lw/co/testing/destroy_scheduler.h"
+#include "gtest/gtest.h"
 
 namespace lw::co {
 namespace {
@@ -14,7 +14,7 @@ Generator<int> yield_some() {
   co_yield 2;
 }
 
-Future<int> await_some(int x) {
+future<int> await_some(int x) {
   co_await next_tick();
   co_return x;
 }
@@ -57,5 +57,5 @@ TEST(AsyncGenerator, AsyncGeneration) {
   testing::destroy_all_schedulers();
 }
 
-}
-}
+} // namespace
+} // namespace lw::co

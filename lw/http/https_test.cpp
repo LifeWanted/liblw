@@ -4,7 +4,6 @@
 #include <string_view>
 #include <tuple>
 
-#include "gtest/gtest.h"
 #include "lw/co/future.h"
 #include "lw/co/scheduler.h"
 #include "lw/co/task.h"
@@ -13,60 +12,50 @@
 #include "lw/net/testing/tls_credentials.h"
 #include "lw/net/tls.h"
 #include "lw/net/tls_options.h"
+#include "gtest/gtest.h"
 
 namespace lw {
 namespace {
 
 using ::lw::io::testing::CoStringConnection;
 
-class TestHttpsHandler: public HttpHandler {
+class TestHttpsHandler : public HttpHandler {
 public:
-  co::Future<void> get() override {
+  co::future<void> get() override {
     response().body(request().route_param("endpoint"));
     co_return;
   }
 };
 LW_REGISTER_HTTP_HANDLER(TestHttpsHandler, "/test/:endpoint");
 
-class HttpsRouterTest: public ::testing::Test {
+class HttpsRouterTest : public ::testing::Test {
 protected:
-  HttpsRouterTest():
-    _router{{
-      .private_key = net::testing::KEY_PATH,
-      .certificate = net::testing::CERT_PATH
-    }},
-    _factory{{
-      .private_key = net::testing::KEY_PATH,
-      .certificate = net::testing::CERT_PATH,
-      .connection_mode = net::TLSOptions::CONNECT
-    }}
-  {
+  HttpsRouterTest()
+      : _router{{.private_key = net::testing::KEY_PATH, .certificate = net::testing::CERT_PATH}},
+        _factory{
+            {.private_key = net::testing::KEY_PATH,
+             .certificate = net::testing::CERT_PATH,
+             .connection_mode = net::TLSOptions::CONNECT}} {
     _router.attach_routes();
   }
 
-  std::pair<
-    std::unique_ptr<net::TLSStream>,
-    std::unique_ptr<CoStringConnection>
-  >
-  make_connection() {
+  std::
+      pair<std::unique_ptr<net::TLSStream>, std::unique_ptr<CoStringConnection>>
+      make_connection() {
     std::pair<
-      std::unique_ptr<net::TLSStream>,
-      std::unique_ptr<CoStringConnection>
-    > ret;
+        std::unique_ptr<net::TLSStream>,
+        std::unique_ptr<CoStringConnection>>
+        ret;
     std::unique_ptr<CoStringConnection> client;
     std::tie(client, ret.second) = CoStringConnection::make_connection();
     ret.first = _factory.wrap_stream(std::move(client));
     return ret;
   }
 
-  co::Scheduler& scheduler() const {
-    return co::Scheduler::this_thread();
-  }
+  co::Scheduler& scheduler() const { return co::Scheduler::this_thread(); }
 
-  co::Future<std::string> send_request(
-    net::TLSStream& conn,
-    std::string_view message
-  ) const {
+  co::future<std::string>
+  send_request(net::TLSStream& conn, std::string_view message) const {
     co_await conn.handshake();
 
     Buffer buff{1024};
@@ -91,17 +80,15 @@ TEST_F(HttpsRouterTest, ExecutesRegisteredHandlers) {
   scheduler().schedule(_router.run(std::move(server)));
   scheduler().schedule([&]() -> co::Task {
     std::string response = co_await send_request(
-      *client,
-      "GET /test/foobar HTTP/1.1\r\n"
-      "Host: localhost\r\n\r\n"
-    );
+        *client,
+        "GET /test/foobar HTTP/1.1\r\n"
+        "Host: localhost\r\n\r\n");
     EXPECT_EQ(
-      response,
-      "HTTP/1.1 200 OK\r\n"
-      "Content-Length: 6\r\n"
-      "\r\n"
-      "foobar"
-    );
+        response,
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Length: 6\r\n"
+        "\r\n"
+        "foobar");
   });
 
   scheduler().run();
@@ -114,22 +101,20 @@ TEST_F(HttpsRouterTest, RespondsNotFound) {
   scheduler().schedule(_router.run(std::move(server)));
   scheduler().schedule([&]() -> co::Task {
     std::string response = co_await send_request(
-      *client,
-      "GET /gibberish HTTP/1.1\r\n"
-      "Host: localhost\r\n\r\n"
-    );
+        *client,
+        "GET /gibberish HTTP/1.1\r\n"
+        "Host: localhost\r\n\r\n");
     EXPECT_EQ(
-      response,
-      "HTTP/1.1 404 Not Found\r\n"
-      "Content-Type: text/plain\r\n"
-      "Content-Length: 10\r\n"
-      "\r\n"
-      "Not Found."
-    );
+        response,
+        "HTTP/1.1 404 Not Found\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: 10\r\n"
+        "\r\n"
+        "Not Found.");
   });
 
   scheduler().run();
 }
 
-}
-}
+} // namespace
+} // namespace lw

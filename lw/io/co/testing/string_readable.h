@@ -19,12 +19,12 @@ namespace lw::io::testing {
  */
 class StringReadable {
 public:
-  explicit StringReadable(std::string_view str): _str{str} {}
+  explicit StringReadable(std::string_view str) : _str{str} {}
 
   bool eof() const { return !good(); }
   bool good() const { return _read_pos < _str.size(); }
 
-  co::Future<std::size_t> read(Buffer& buffer) {
+  co::future<std::size_t> read(Buffer& buffer) {
     co_await co::next_tick();
     std::size_t read_size = std::min(_str.size() - _read_pos, buffer.size());
     buffer.copy(_str.begin() + _read_pos, read_size);
@@ -37,4 +37,4 @@ private:
   std::string _str;
 };
 
-}
+} // namespace lw::io::testing

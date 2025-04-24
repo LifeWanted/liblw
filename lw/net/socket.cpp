@@ -112,7 +112,7 @@ void Socket::close() {
   _socket_fd = 0;
 }
 
-co::Future<void> Socket::connect(Address addr) {
+co::future<void> Socket::connect(Address addr) {
   if (is_open()) {
     throw FailedPrecondition() << "Socket is already open before connecting.";
   }
@@ -162,7 +162,7 @@ co::Future<void> Socket::connect(Address addr) {
   }
 }
 
-co::Future<std::size_t> Socket::send(const Buffer& data) {
+co::future<std::size_t> Socket::send(const Buffer& data) {
   if (!is_open()) {
     throw FailedPrecondition() << "Socket is not open before sending.";
   }
@@ -174,7 +174,7 @@ co::Future<std::size_t> Socket::send(const Buffer& data) {
   return _do_send(data, /*flags=*/0);
 }
 
-co::Future<std::size_t> Socket::_do_send(const Buffer& data, int flags) {
+co::future<std::size_t> Socket::_do_send(const Buffer& data, int flags) {
   int bytes_sent = ::send(_socket_fd, data.data(), data.size(), flags);
   if (bytes_sent > 0) co_return static_cast<std::size_t>(bytes_sent);
 
@@ -205,7 +205,7 @@ co::Future<std::size_t> Socket::_do_send(const Buffer& data, int flags) {
                    << " bytes.";
 }
 
-co::Future<std::size_t> Socket::receive(Buffer& buff) {
+co::future<std::size_t> Socket::receive(Buffer& buff) {
   if (!is_open()) {
     throw FailedPrecondition() << "Socket is not open before receiving.";
   }
@@ -217,7 +217,7 @@ co::Future<std::size_t> Socket::receive(Buffer& buff) {
   return _do_recv(buff);
 }
 
-co::Future<std::size_t> Socket::_do_recv(Buffer& buff) {
+co::future<std::size_t> Socket::_do_recv(Buffer& buff) {
   int bytes_received =
       ::recv(_socket_fd, (void*)buff.data(), buff.size(), /*flags=*/0);
   if (bytes_received > 0) co_return static_cast<std::size_t>(bytes_received);
@@ -285,7 +285,7 @@ void Socket::listen(Address addr) {
   }
 }
 
-co::Future<Socket> Socket::accept() const {
+co::future<Socket> Socket::accept() const {
   if (!is_open()) {
     throw FailedPrecondition()
         << "Socket is not open before accepting new connections.";
@@ -294,7 +294,7 @@ co::Future<Socket> Socket::accept() const {
   return _do_accept();
 }
 
-co::Future<Socket> Socket::_do_accept() const {
+co::future<Socket> Socket::_do_accept() const {
   ::sockaddr_storage remote_addr;
   socklen_t socket_size = sizeof(remote_addr);
   int new_sock = ::accept(

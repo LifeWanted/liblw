@@ -2,12 +2,12 @@
 
 #include <string>
 
-#include "gtest/gtest.h"
 #include "lw/co/scheduler.h"
 #include "lw/co/testing/destroy_scheduler.h"
 #include "lw/co/time.h"
 #include "lw/err/error.h"
 #include "lw/memory/buffer.h"
+#include "gtest/gtest.h"
 
 namespace lw::net {
 namespace {
@@ -16,13 +16,9 @@ using ::lw::co::testing::destroy_all_schedulers;
 
 class SocketTest : public ::testing::Test {
 protected:
-  ~SocketTest() {
-    destroy_all_schedulers();
-  }
+  ~SocketTest() { destroy_all_schedulers(); }
 
-  co::Scheduler& scheduler() const {
-    return co::Scheduler::this_thread();
-  }
+  co::Scheduler& scheduler() const { return co::Scheduler::this_thread(); }
 
   std::string to_string(const Buffer& buff) const {
     return std::string{buff.begin(), buff.end()};
@@ -58,11 +54,10 @@ TEST_F(SocketTest, SendAndReceive) {
     Socket sock;
     co_await sock.connect({.hostname = "www.google.com", .service = "80"});
 
-    const char request[] =
-      "GET / HTTP/1.1\r\n"
-      "Host: www.google.com\r\n"
-      "Connection: close\r\n"
-      "\r\n";
+    const char request[] = "GET / HTTP/1.1\r\n"
+                           "Host: www.google.com\r\n"
+                           "Connection: close\r\n"
+                           "\r\n";
     Buffer send_buff{std::begin(request), std::end(request)};
     std::size_t sent = co_await sock.send(send_buff);
     EXPECT_EQ(sent, send_buff.size());
@@ -109,5 +104,5 @@ TEST_F(SocketTest, AcceptConnection) {
   EXPECT_EQ(to_string(send_buff), to_string(receive_buff));
 }
 
-}
-}
+} // namespace
+} // namespace lw::net

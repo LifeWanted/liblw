@@ -1,365 +1,281 @@
 #pragma once
 
 #include <atomic>
+#include <concepts>
 #include <coroutine>
 #include <exception>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <tuple>
 
-#include "lw/co/scheduler.h"
-#include "lw/err/canonical.h"
+#include "lw/err/macros.h"
 
 namespace lw::co {
 
 template <typename T>
-class Future;
-
+class promise;
 template <typename T>
-class Promise;
+class future;
 
-namespace internal {
-
+namespace future_internal {
 template <typename T>
-struct SharedPromiseState;
-
-template <>
-struct SharedPromiseState<void> {
-  virtual ~SharedPromiseState() = default;
-
-  std::atomic_bool state_set = false;
-  std::atomic_bool future_suspended = false;
-  std::exception_ptr exception = nullptr;
-  Scheduler* scheduler = nullptr;
-  std::coroutine_handle<> handle;
-};
-
-template <typename T>
-struct SharedPromiseState: public SharedPromiseState<void> {
-  std::optional<T> value;
-  std::shared_ptr<SharedPromiseState<T>> chain_state = nullptr;
-};
-
+class promise_base;
 }
 
-class [[nodiscard]] FutureBase {
+template <typename T>
+concept NotVoid = !std::is_void_v<T>;
+
+template <NotVoid T>
+future<T> make_resolved_future(T&& value);
+
+future<void> make_resolved_future();
+
+/**
+ * Create a future that is rejected with the given exception.
+ */
+template <typename T>
+future<T> make_resolved_future(std::exception_ptr err);
+
+// MARK: Future
+
+namespace future_internal {
+
+template <typename T>
+class future_base {
 public:
-  FutureBase(const FutureBase&) = delete;
-  FutureBase& operator=(const FutureBase&) = delete;
+  using promise_type = promise<T>;
 
-  FutureBase(FutureBase&&) = default;
-  FutureBase& operator=(FutureBase&& other) = default;
+  // No copy.
+  future_base(const future_base&) = delete;
+  future_base& operator=(const future_base&) = delete;
 
-  virtual ~FutureBase() = default;
+  // Moveable.
+  future_base(future_base&&) = default;
+  future_base& operator=(future_base&&) = default;
 
-  bool await_ready() const {
-    return _state->state_set;
-  }
+  ~future_base() = default;
+
+  bool await_ready() const { return _state->result != std::nullopt; }
 
   bool await_suspend(std::coroutine_handle<> handle) {
-    _state->scheduler = &Scheduler::this_thread();
     _state->handle = handle;
+    return !_state->result;
+  }
 
-    // TODO(alaina): Check this for thread safety. This statement isn't exactly
-    // atomic, and I don't know if there is a race condition around setting the
-    // state flag and actually setting the state and how that will interact with
-    // coroutine logic the compiler generates around calling the await_*
-    // methods.
-    //
-    // Possible test case involves a type with a mutex block in its copy
-    // constructor to force a delay between setting the flag and setting the
-    // value.
-    //
-    // Possible solution would be to combine state booleans into a single
-    // bitmask variable. Then compare_and_exchange could be used in a loop to
-    // check condition while setting attributes.
-    return _state->future_suspended = !_state->state_set;
+  T await_resume() {
+    LW_CHECK_NE(_state->result, std::nullopt);
+    if (!_state->result->has_value()) {
+      std::rethrow_exception(_state->result->error());
+    }
+    if constexpr (!std::is_void_v<T>) return std::move(*_state->result).value();
   }
 
 protected:
-  explicit FutureBase(
-    std::shared_ptr<internal::SharedPromiseState<void>> state
-  ):
-    _state{state}
-  {}
+  struct state {
+    std::optional<std::expected<T, std::exception_ptr>> result = std::nullopt;
+    std::optional<std::coroutine_handle<>> handle = std::nullopt;
+    std::shared_ptr<state> chain_state = nullptr;
 
-  std::shared_ptr<internal::SharedPromiseState<void>> _state;
+    void schedule_resume() {
+      if (handle) { handle->resume(); }
+      if (chain_state) {
+        chain_state->result.emplace(*std::move(result));
+        chain_state->schedule_resume();
+      }
+    }
+  };
+
+  explicit future_base(std::shared_ptr<state> state) : _state{state} {}
+
+  std::shared_ptr<state> _state;
 };
 
-template <typename T>
-class [[nodiscard]] Future: public FutureBase {
-public:
-  using promise_type = Promise<T>;
+} // namespace future_internal
 
-  T await_resume() {
-    auto state = _get_state();
-    if (!state->state_set) {
-      throw FailedPrecondition()
-        << "Cannot resume future before state is set on promise.";
-    }
-    if (state->exception) std::rethrow_exception(state->exception);
-    return std::move(*state->value);
-  }
+template <typename T>
+class [[nodiscard]] future final : public future_internal::future_base<T> {
+public:
+  using promise_type = promise<T>;
 
 private:
-  explicit Future(std::shared_ptr<internal::SharedPromiseState<T>> state):
-    FutureBase{
-      std::static_pointer_cast<internal::SharedPromiseState<void>>(state)
-    }
-  {}
+  friend class promise<T>;
+  friend class future_internal::promise_base<T>;
+  friend future<T> make_resolved_future<>(T&&);
+  template <typename U>
+  friend future<U> make_resolved_future(std::exception_ptr);
 
-  std::shared_ptr<internal::SharedPromiseState<T>> _get_state() {
-    auto state = std::static_pointer_cast<internal::SharedPromiseState<T>>(
-      _state
-    );
-    while (state->chain_state) state = state->chain_state;
-    return state;
-  }
-
-  friend class Promise<T>;
+  using future_base = future_internal::future_base<T>;
+  using future_base::_state;
+  using future_base::future_base;
+  using future_base::state;
 };
 
 template <>
-class [[nodiscard]] Future<void>: public FutureBase {
+class [[nodiscard]] future<void> final :
+    public future_internal::future_base<void> {
 public:
-  using promise_type = Promise<void>;
-
-  void await_resume() {
-    if (!_state->state_set) {
-      throw FailedPrecondition()
-        << "Cannot resume future before state is set on promise.";
-    }
-    if (_state->exception) std::rethrow_exception(_state->exception);
-  }
+  using promise_type = promise<void>;
 
 private:
-  explicit Future(std::shared_ptr<internal::SharedPromiseState<void>> state):
-    FutureBase{state}
-  {}
-
+  friend class promise<void>;
+  friend class future_internal::promise_base<void>;
+  friend future<void> make_resolved_future();
   template <typename T>
-  friend class Promise;
+  friend future<T> make_resolved_future(std::exception_ptr);
+
+  using future_base = future_internal::future_base<void>;
+  using future_base::_state;
+  using future_base::future_base;
+  using future_base::state;
 };
 
-/**
- * A coroutine friendly drop in for `std::promise`.
- *
- * TODO(alaina): Check that the state transitions are thread safe!
- */
+// -------------------------------------------------------------------------- //
+// MARK: Promise
+
+namespace future_internal {
+
 template <typename T>
-class [[nodiscard]] Promise {
+class promise_base {
 public:
-  Promise():
-    _state{std::make_shared<internal::SharedPromiseState<T>>()}
-  {}
-
-  Promise(const Promise&) = delete;
-  Promise& operator=(const Promise&) = delete;
-  Promise(Promise&& other):
-    _future_obtained{other._future_obtained.load()},
-    _state{std::move(other._state)}
-  {}
-  Promise& operator=(Promise&& other) {
-    _future_obtained = other._future_obtained.load();
-    _state = std::move(other._state);
-    return *this;
-  }
-
   /*** std::promise API ***/
 
-  Future<T> get_future() {
-    bool future_already_obtained = _future_obtained.exchange(true);
-    if (future_already_obtained) {
-      throw FailedPrecondition()
-        << "Future already obtained previously.";
-    }
-    return Future<T>{_state};
-  }
-
-  template <typename U>
-  void set_value(U&& value) {
-    _do_set_value(std::forward<U>(value));
-  }
+  future<T> get_future() { return future<T>{_state}; }
 
   void set_exception(std::exception_ptr err) {
-    auto state = _get_state();
-    _claim_state_set(state);
-    state->exception = err;
-    _schedule_task(state);
+    _state->result.emplace(std::unexpected(std::move(err)));
+    _state->schedule_resume();
   }
 
-  /*** Coroutine promise hooks ***/
+  /*** Coroutine interface ***/
+
+  void unhandled_exception() { set_exception(std::current_exception()); }
 
   auto initial_suspend() const noexcept { return std::suspend_never{}; }
   auto final_suspend() const noexcept { return std::suspend_never{}; }
 
-  Future<T> get_return_object() {
-    return get_future();
+  future<T> get_return_object() { return get_future(); }
+
+protected:
+  std::shared_ptr<typename future<T>::state> _state =
+      std::make_shared<typename future<T>::state>();
+};
+
+} // namespace future_internal
+
+template <typename T>
+class promise final : public future_internal::promise_base<T> {
+  using promise_base = future_internal::promise_base<T>;
+
+public:
+  /*** std::promise API ***/
+
+  template <std::convertible_to<T> U>
+  void set_value(U&& value) {
+    _state->result.emplace(std::forward<U>(value));
+    _state->schedule_resume();
   }
+
+  void set_value(future<T> future_value) {
+    if (future_value._state->result.has_value()) {
+      _set_value(*std::move(future_value._state));
+    } else {
+      LW_CHECK_EQ(future_value._state->chain_state, nullptr);
+      future_value._state->chain_state = _state;
+    }
+  }
+
+  using promise_base::set_exception;
+
+  /*** Coroutine interface ***/
 
   template <typename U>
   void return_value(U&& value) {
     set_value(std::forward<U>(value));
   }
 
-  void return_value(Future<T>&& value) {
-    auto val_state = std::static_pointer_cast<internal::SharedPromiseState<T>>(
-      value._state
-    );
-
-    if (val_state->state_set) {
-      if (val_state->exception) {
-        set_exception(val_state->exception);
-      } else {
-        set_value(std::move(*val_state->value));
-      }
-    } else {
-      val_state->chain_state = _state;
-    }
-  }
-
-  void unhandled_exception() {
-    set_exception(std::current_exception());
-  }
+  using promise_base::unhandled_exception;
 
 private:
-  using state_ptr = std::shared_ptr<internal::SharedPromiseState<T>>;
+  using promise_base::_state;
 
-  template <typename U>
-  void _do_set_value(U&& value) {
-    auto state = _get_state();
-    _claim_state_set(state);
-    state->value = std::forward<U>(value);
-    _schedule_task(state);
-  }
-
-  void _claim_state_set(state_ptr& state) {
-    bool state_already_set = state->state_set.exchange(true);
-    if (state_already_set) {
-      throw FailedPrecondition()
-        << "Promise state already set previously.";
+  void _set_value(future<T>::state& resolved_state) {
+    if (resolved_state.result.value().has_value()) {
+      set_value(std::move(resolved_state.result).value().value());
+    } else {
+      set_exception(std::move(resolved_state.result).value().error());
     }
   }
-
-  void _schedule_task(state_ptr& state) {
-    if (state->future_suspended) state->scheduler->schedule(state->handle);
-  }
-
-  std::shared_ptr<internal::SharedPromiseState<T>> _get_state() {
-    auto state = _state;
-    while (state->chain_state) state = state->chain_state;
-    return state;
-  }
-
-  std::atomic_bool _future_obtained = false;
-  std::shared_ptr<internal::SharedPromiseState<T>> _state;
 };
 
 template <>
-class [[nodiscard]] Promise<void> {
+class promise<void> final : public future_internal::promise_base<void> {
+  using promise_base = future_internal::promise_base<void>;
+
 public:
-  Promise():
-    _state{std::make_shared<internal::SharedPromiseState<void>>()}
-  {}
-
-  Promise(const Promise&) = delete;
-  Promise& operator=(const Promise&) = delete;
-  Promise(Promise&& other):
-    _future_obtained{other._future_obtained.load()},
-    _state{std::move(other._state)}
-  {}
-  Promise& operator=(Promise&& other) {
-    _future_obtained = other._future_obtained.load();
-    _state = std::move(other._state);
-    return *this;
-  }
-
   /*** std::promise API ***/
 
-  Future<void> get_future() {
-    bool future_already_obtained = _future_obtained.exchange(true);
-    if (future_already_obtained) {
-      throw FailedPrecondition()
-        << "Future already obtained previously.";
-    }
-    return Future<void>{_state};
-  }
-
   void set_value() {
-    _claim_state_set();
-    _schedule_task();
+    _state->result.emplace();
+    _state->schedule_resume();
   }
 
-  void set_exception(std::exception_ptr err) {
-    _claim_state_set();
-    _state->exception = err;
-    _schedule_task();
-  }
-
-  /*** Coroutine promise hooks ***/
-
-  auto initial_suspend() const {
-    return std::suspend_never{};
-  }
-
-  auto final_suspend() const noexcept {
-    return std::suspend_never{};
-  }
-
-  Future<void> get_return_object() {
-    return get_future();
-  }
-
-  void return_void() {
-    set_value();
-  }
-
-  void unhandled_exception() {
-    set_exception(std::current_exception());
-  }
-private:
-  void _claim_state_set() {
-    bool state_already_set = _state->state_set.exchange(true);
-    if (state_already_set) {
-      throw FailedPrecondition()
-        << "Promise state already set previously.";
+  void set_value(future<void> f) {
+    if (f._state->result.has_value()) {
+      _set_value(*f._state);
+    } else {
+      LW_CHECK_EQ(f._state->chain_state, nullptr);
+      f._state->chain_state = _state;
     }
   }
 
-  void _schedule_task() {
-    if (_state->future_suspended) _state->scheduler->schedule(_state->handle);
-  }
+  using promise_base::set_exception;
 
-  std::atomic_bool _future_obtained = false;
-  std::shared_ptr<internal::SharedPromiseState<void>> _state;
+  /*** Coroutine interface ***/
+
+  void return_void() { set_value(); }
+
+  using promise_base::unhandled_exception;
+
+private:
+  using promise_base::_state;
+
+  void _set_value(future<void>::state& resolved_state) {
+    if (resolved_state.result.value().has_value()) {
+      set_value();
+    } else {
+      set_exception(std::move(resolved_state.result).value().error());
+    }
+  }
 };
 
 // -------------------------------------------------------------------------- //
+// MARK: Utilities
 
 /**
  * Creates a future that is already resolved with the given value.
  */
-template <typename T>
-Future<T> make_resolved_future(T&& value) {
-  Promise<T> promise;
-  promise.set_value(std::forward<T>(value));
-  return promise.get_future();
+template <NotVoid T>
+future<T> make_resolved_future(T&& value) {
+  future<T> f{std::make_shared<typename future<T>::state>()};
+  f._state->result.emplace(std::forward<T>(value));
+  return f;
 }
 
-inline Future<void> make_resolved_future() {
-  Promise<void> promise;
-  promise.set_value();
-  return promise.get_future();
+future<void> make_resolved_future() {
+  future<void> f{std::make_shared<future<void>::state>()};
+  f._state->result.emplace();
+  return f;
 }
 
 /**
  * Create a future that is rejected with the given exception.
  */
 template <typename T>
-Future<T> make_resolved_future(std::exception_ptr err) {
-  Promise<T> promise;
-  promise.set_exception(err);
-  return promise.get_future();
+future<T> make_resolved_future(std::exception_ptr err) {
+  future<T> f{std::make_shared<typename future<T>::state>()};
+  f._state->result.emplace(std::unexpected(std::move(err)));
+  return f;
 }
 
 /**
@@ -370,9 +286,9 @@ Future<T> make_resolved_future(std::exception_ptr err) {
  *  they are specified in the arguments.
  */
 template <typename... Args>
-co::Future<std::tuple<Args...>> all(co::Future<Args>... futures) {
+future<std::tuple<Args...>> all(future<Args>... futures) {
   // TODO(#14): Implement this method for `co::Future<void>`.
   co_return std::make_tuple((co_await futures)...);
 }
 
-}
+} // namespace lw::co

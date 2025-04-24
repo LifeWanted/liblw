@@ -13,11 +13,11 @@ namespace internal {
 class TLSClientImpl;
 class TLSContextImpl;
 
-}
+} // namespace internal
 
 class TLSStreamFactory;
 
-class TLSStream: public io::CoStream {
+class TLSStream : public io::CoStream {
 public:
   ~TLSStream();
 
@@ -25,18 +25,17 @@ public:
   bool good() const override { return _raw_stream->good(); }
   void close() override { return _raw_stream->close(); }
 
-  co::Future<void> handshake();
+  co::future<void> handshake();
 
-  co::Future<std::size_t> read(Buffer& buffer) override;
-  co::Future<std::size_t> write(const Buffer& buffer) override;
+  co::future<std::size_t> read(Buffer& buffer) override;
+  co::future<std::size_t> write(const Buffer& buffer) override;
 
 private:
   friend class TLSStreamFactory;
 
   TLSStream(
-    std::unique_ptr<internal::TLSClientImpl> client,
-    std::unique_ptr<io::CoStream> raw_stream
-  );
+      std::unique_ptr<internal::TLSClientImpl> client,
+      std::unique_ptr<io::CoStream> raw_stream);
 
   std::unique_ptr<internal::TLSClientImpl> _client;
   std::unique_ptr<io::CoStream> _raw_stream;
@@ -54,4 +53,4 @@ private:
   std::unique_ptr<internal::TLSContextImpl> _context;
 };
 
-}
+} // namespace lw::net

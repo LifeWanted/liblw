@@ -84,7 +84,7 @@ private:
   };
 
   void _schedule_accept_loops();
-  co::Future<Socket*> start_socket(unsigned short port);
+  co::future<Socket*> start_socket(unsigned short port);
 
   std::atomic_bool _listening = false;
   std::atomic_bool _running = false;
@@ -92,4 +92,4 @@ private:
   std::thread::id _runner_thread;
 };
 
-}
+} // namespace lw::net

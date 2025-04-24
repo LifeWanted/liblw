@@ -3,24 +3,23 @@
 #include <functional>
 #include <memory>
 #include <tuple>
+#include <type_traits>
 #include <typeindex>
 #include <typeinfo>
-#include <type_traits>
 #include <unordered_map>
 
 #include "lw/base/tuple.h"
 #include "lw/co/future.h"
 
-#define _LW_CONCAT_INNER(x, y) x ## y
+#define _LW_CONCAT_INNER(x, y) x##y
 #define _LW_CONCAT(x, y) _LW_CONCAT_INNER(x, y)
 
-#define LW_REGISTER_RESOURCE_FACTORY(ServerResource, factory)             \
-  namespace {                                                             \
-  static const bool _LW_CONCAT(server_resource_registration, __LINE__) =  \
-    ::lw::register_server_resource(                                       \
-      typeid(ServerResource),                                             \
-      ::lw::internal::create_resource_factory<ServerResource>(factory)    \
-    );                                                                    \
+#define LW_REGISTER_RESOURCE_FACTORY(ServerResource, factory)                  \
+  namespace {                                                                  \
+  static const bool _LW_CONCAT(server_resource_registration, __LINE__) =       \
+      ::lw::register_server_resource(                                          \
+          typeid(ServerResource),                                              \
+          ::lw::internal::create_resource_factory<ServerResource>(factory));   \
   } // Ignore me.
 
 // -------------------------------------------------------------------------- //
@@ -49,9 +48,7 @@ public:
   /**
    * Gets the resource context for dependency resources.
    */
-  ServerResourceContext& server_resource_context() {
-    return *_context;
-  }
+  ServerResourceContext& server_resource_context() { return *_context; }
   const ServerResourceContext& server_resource_context() const {
     return *_context;
   }
@@ -81,7 +78,7 @@ public:
    * requested, it is constructed first.
    */
   template <typename T>
-  co::Future<T*> create_and_get();
+  co::future<T*> create_and_get();
 
   /**
    * Fetches the identified resource without performing any check for its
@@ -98,9 +95,9 @@ public:
 
 private:
   std::unordered_map<std::type_index, std::unique_ptr<ServerResourceBase>>
-  _dependencies;
+      _dependencies;
 
-  std::unordered_multimap<std::type_index, co::Promise<void>> _construction;
+  std::unordered_multimap<std::type_index, co::promise<void>> _construction;
 };
 
 // -------------------------------------------------------------------------- //
@@ -114,9 +111,9 @@ template <typename ServerResource, typename... Dependencies>
 struct ServerResourceFactoryTypes<ServerResource, std::tuple<Dependencies...>> {
   typedef ServerResource server_resource_type;
   typedef sanitize_tuple_t<std::tuple<Dependencies...>> dependencies_t;
-  typedef std::function<
-    co::Future<std::unique_ptr<ServerResource>>(Dependencies&...)
-  > factory_type;
+  typedef std::function<co::future<std::unique_ptr<ServerResource>>(
+      Dependencies&...)>
+      factory_type;
 };
 
 // -------------------------------------------------------------------------- //
@@ -125,31 +122,24 @@ template <typename Factory, typename DependenciesTuple>
 class FactoryInvocationResult;
 
 template <typename Factory, typename... Dependencies>
-class FactoryInvocationResult<Factory, std::tuple<Dependencies...>>:
-  public std::invoke_result<Factory, Dependencies&...>
-{};
+class FactoryInvocationResult<Factory, std::tuple<Dependencies...>> :
+    public std::invoke_result<Factory, Dependencies&...> {};
 
 template <typename ServerResource, typename Factory>
-class FactoryIsSynchronous:
-  public std::is_same<
-    typename FactoryInvocationResult<
-      Factory,
-      typename ServerResource::dependencies_t
-    >::type,
-    std::unique_ptr<ServerResource>
-  >
-{};
+class FactoryIsSynchronous :
+    public std::is_same<
+        typename FactoryInvocationResult<
+            Factory,
+            typename ServerResource::dependencies_t>::type,
+        std::unique_ptr<ServerResource>> {};
 
 template <typename ServerResource, typename Factory>
-class FactoryIsAsynchronous:
-  public std::is_same<
-    typename FactoryInvocationResult<
-      Factory,
-      typename ServerResource::dependencies_t
-    >::type,
-    co::Future<std::unique_ptr<ServerResource>>
-  >
-{};
+class FactoryIsAsynchronous :
+    public std::is_same<
+        typename FactoryInvocationResult<
+            Factory,
+            typename ServerResource::dependencies_t>::type,
+        co::future<std::unique_ptr<ServerResource>>> {};
 
 // -------------------------------------------------------------------------- //
 
@@ -159,10 +149,8 @@ struct FetchDependenciesAndInvoke;
 template <typename ServerResource>
 struct FetchDependenciesAndInvoke<ServerResource, std::tuple<>> {
   template <typename Factory>
-  static co::Future<std::unique_ptr<ServerResourceBase>> invoke(
-    Factory& factory,
-    ServerResourceContext& context
-  ) {
+  static co::future<std::unique_ptr<ServerResourceBase>>
+  invoke(Factory& factory, ServerResourceContext& context) {
     auto resource = co_await factory();
     resource->server_resource_context(context);
     co_return std::move(resource);
@@ -172,14 +160,11 @@ struct FetchDependenciesAndInvoke<ServerResource, std::tuple<>> {
 template <typename ServerResource, typename... Dependencies>
 struct FetchDependenciesAndInvoke<ServerResource, std::tuple<Dependencies...>> {
   template <typename Factory>
-  static co::Future<std::unique_ptr<ServerResourceBase>> invoke(
-    Factory& factory,
-    ServerResourceContext& context
-  ) {
+  static co::future<std::unique_ptr<ServerResourceBase>>
+  invoke(Factory& factory, ServerResourceContext& context) {
     auto resource = co_await std::apply(
-      [&](auto... deps) { return factory((*deps)...); },
-      co_await co::all(context.create_and_get<Dependencies>()...)
-    );
+        [&](auto... deps) { return factory((*deps)...); },
+        co_await co::all(context.create_and_get<Dependencies>()...));
 
     resource->server_resource_context(context);
     co_return std::move(resource);
@@ -189,15 +174,14 @@ struct FetchDependenciesAndInvoke<ServerResource, std::tuple<Dependencies...>> {
 // -------------------------------------------------------------------------- //
 
 template <typename T, typename Tuple>
-struct TupleContains: public std::false_type {};
+struct TupleContains : public std::false_type {};
 
 template <typename T, typename... Rest>
-struct TupleContains<T, std::tuple<T, Rest...>>: public std::true_type {};
+struct TupleContains<T, std::tuple<T, Rest...>> : public std::true_type {};
 
 template <typename T, typename U, typename... Rest>
-struct TupleContains<T, std::tuple<U, Rest...>>:
-  public TupleContains<T, std::tuple<Rest...>>
-{};
+struct TupleContains<T, std::tuple<U, Rest...>> :
+    public TupleContains<T, std::tuple<Rest...>> {};
 
 // -------------------------------------------------------------------------- //
 
@@ -205,42 +189,39 @@ template <typename ServerResource>
 class ServerResourceFactoryInvoker {
 public:
   typedef ServerResourceFactoryTypes<
-    ServerResource,
-    typename ServerResource::dependencies_t
-  > Types;
+      ServerResource,
+      typename ServerResource::dependencies_t>
+      Types;
 
   template <typename UFactory>
   ServerResourceFactoryInvoker(UFactory&& factory) {
     if constexpr (FactoryIsSynchronous<ServerResource, UFactory>::value) {
-      _factory = [factory{std::forward<UFactory>(factory)}](
-        auto&... dependencies
-      ) {
-        return co::make_resolved_future(factory(dependencies...));
-      };
+      _factory =
+          [factory{std::forward<UFactory>(factory)}](auto&... dependencies) {
+            return co::make_resolved_future(factory(dependencies...));
+          };
     } else {
       _factory = std::forward<UFactory>(factory);
     }
   }
 
-  co::Future<std::unique_ptr<ServerResourceBase>> operator()(
-    ServerResourceContext& context
-  ) {
+  co::future<std::unique_ptr<ServerResourceBase>>
+  operator()(ServerResourceContext& context) {
     return internal::FetchDependenciesAndInvoke<
-      typename Types::server_resource_type,
-      typename Types::dependencies_t
-    >::invoke(_factory, context);
+        typename Types::server_resource_type,
+        typename Types::dependencies_t>::invoke(_factory, context);
   }
 
 private:
   typename Types::factory_type _factory;
 };
 
-}
+} // namespace internal
 
 // -------------------------------------------------------------------------- //
 
 template <typename... Dependencies>
-class ServerResource: public ServerResourceBase {
+class ServerResource : public ServerResourceBase {
 public:
   typedef sanitize_tuple_t<std::tuple<Dependencies...>> dependencies_t;
 
@@ -248,20 +229,18 @@ protected:
   template <typename T>
   T& get() {
     static_assert(
-      internal::TupleContains<T, dependencies_t>::value,
-      "Can only fetch explicit dependency resources. Add this type to your "
-      "dependency tuple in order to get it."
-    );
+        internal::TupleContains<T, dependencies_t>::value,
+        "Can only fetch explicit dependency resources. Add this type to your "
+        "dependency tuple in order to get it.");
     return server_resource_context().unsafe_get<T>();
   }
 
   template <typename T>
   const T& get() const {
     static_assert(
-      internal::TupleContains<T, dependencies_t>::value,
-      "Can only fetch explicit dependency resources. Add this type to your "
-      "dependency tuple in order to get it."
-    );
+        internal::TupleContains<T, dependencies_t>::value,
+        "Can only fetch explicit dependency resources. Add this type to your "
+        "dependency tuple in order to get it.");
     return server_resource_context().unsafe_get<T>();
   }
 };
@@ -270,22 +249,19 @@ protected:
 
 class ServerResourceFactoryBase {
 public:
-  virtual co::Future<std::unique_ptr<ServerResourceBase>> operator()(
-    ServerResourceContext& context
-  ) = 0;
+  virtual co::future<std::unique_ptr<ServerResourceBase>>
+  operator()(ServerResourceContext& context) = 0;
 };
 
 template <typename ServerResource>
-class ServerResourceFactory: public ServerResourceFactoryBase {
+class ServerResourceFactory : public ServerResourceFactoryBase {
 public:
   template <typename Factory>
-  ServerResourceFactory(Factory&& factory):
-    _factory{std::forward<Factory>(factory)}
-  {}
+  ServerResourceFactory(Factory&& factory)
+      : _factory{std::forward<Factory>(factory)} {}
 
-  co::Future<std::unique_ptr<ServerResourceBase>> operator()(
-    ServerResourceContext& context
-  ) override {
+  co::future<std::unique_ptr<ServerResourceBase>>
+  operator()(ServerResourceContext& context) override {
     return _factory(context);
   }
 
@@ -296,35 +272,33 @@ private:
 // -------------------------------------------------------------------------- //
 
 bool register_server_resource(
-  const std::type_info& resource_info,
-  std::unique_ptr<ServerResourceFactoryBase> factory
-);
+    const std::type_info& resource_info,
+    std::unique_ptr<ServerResourceFactoryBase> factory);
 
-co::Future<std::unique_ptr<ServerResourceBase>> construct_server_resource(
-  const std::type_info& resource_info,
-  ServerResourceContext& context
-);
+co::future<std::unique_ptr<ServerResourceBase>> construct_server_resource(
+    const std::type_info& resource_info, ServerResourceContext& context);
 
 // -------------------------------------------------------------------------- //
 
 template <typename T>
-co::Future<T*> ServerResourceContext::create_and_get() {
+co::future<T*> ServerResourceContext::create_and_get() {
   const std::type_info& info{typeid(T)};
   std::type_index idx{info};
   if (!_dependencies.contains(idx)) {
     if (_construction.contains(idx)) {
       // The dependency is currently under construction. Add ourselves to the
       // notification queue to await its completion.
-      auto itr = _construction.emplace(idx, co::Promise<void>{});
+      auto itr = _construction.emplace(idx, co::promise<void>{});
       co_await itr->second.get_future();
     } else {
       // The dependency is not yet being built. Tag the type as under
       // construction, build it, and then notify everyone waiting for its
       // completion.
-      _construction.emplace(idx, co::Promise<void>{});
+      _construction.emplace(idx, co::promise<void>{});
       _dependencies[idx] = co_await construct_server_resource(info, *this);
       auto [itr, end] = _construction.equal_range(idx);
-      for (; itr != end; ++itr) itr->second.set_value();
+      for (; itr != end; ++itr)
+        itr->second.set_value();
       _construction.erase(idx);
     }
   }
@@ -335,19 +309,17 @@ co::Future<T*> ServerResourceContext::create_and_get() {
 
 namespace internal {
 template <typename ServerResource, typename Factory>
-std::unique_ptr<ServerResourceFactoryBase> create_resource_factory(
-  Factory&& factory
-) {
+std::unique_ptr<ServerResourceFactoryBase>
+create_resource_factory(Factory&& factory) {
   static_assert(
-    FactoryIsSynchronous<ServerResource, Factory>::value ||
-    FactoryIsAsynchronous<ServerResource, Factory>::value,
-    "Server resource factories must return a unique_ptr to the server resource "
-    "or a future unique_ptr."
-  );
+      FactoryIsSynchronous<ServerResource, Factory>::value ||
+          FactoryIsAsynchronous<ServerResource, Factory>::value,
+      "Server resource factories must return a unique_ptr to the server "
+      "resource "
+      "or a future unique_ptr.");
   return std::make_unique<ServerResourceFactory<ServerResource>>(
-    std::forward<Factory>(factory)
-  );
+      std::forward<Factory>(factory));
 }
-}
+} // namespace internal
 
-}
+} // namespace lw

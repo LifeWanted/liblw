@@ -125,9 +125,9 @@ public:
   AsyncGenerator(const AsyncGenerator&) = delete;
   AsyncGenerator& operator=(const AsyncGenerator&) = delete;
 
-  Future<bool> next() {
+  future<bool> next() {
     if (_state->done) return make_resolved_future(false);
-    _state->next = Promise<bool>{};
+    _state->next = promise<bool>{};
     return _state->next.get_future();
   }
 
@@ -138,7 +138,7 @@ public:
 private:
   struct SharedState {
     bool done = false;
-    Promise<bool> next;
+    promise<bool> next;
     std::unique_ptr<T> current_value;
   };
   std::shared_ptr<SharedState> _state;
@@ -170,7 +170,7 @@ public:
   }
 
   template <typename U>
-  Future<void> yield_value(Future<U>&& value) {
+  future<void> yield_value(future<U>&& value) {
     _state->current_value = std::make_unique<T>(co_await value);
     _state->next.set_value(true);
   }

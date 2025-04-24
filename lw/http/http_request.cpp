@@ -1,8 +1,8 @@
 #include "lw/http/http_request.h"
 
 #include <charconv>
-#include <experimental/source_location>
 #include <istream>
+#include <source_location>
 #include <string_view>
 
 #include "lw/co/future.h"
@@ -13,8 +13,6 @@
 
 namespace lw {
 namespace {
-
-using std::experimental::source_location;
 
 /**
  * Returns true if the position given is within the header and is not a
@@ -37,20 +35,19 @@ bool is_not_space(std::string_view header, std::size_t i) {
  *  return (`\r`) or newline (`\n`).
  */
 void check_is_space(
-  std::string_view header,
-  std::size_t i,
-  const source_location& loc = source_location::current()
-) {
+    std::string_view header,
+    std::size_t i,
+    const std::source_location& loc = std::source_location::current()) {
   if (i >= header.size()) {
     throw InvalidArgument(loc)
-      << "Unexpected end of input at position " << i << "; expected space.";
+        << "Unexpected end of input at position " << i << "; expected space.";
   }
 
   const char c = header.at(i);
   if (!std::isspace(c) || c == '\r' || c == '\n') {
     throw InvalidArgument(loc)
-      << "Invalid character in request at position " << i << ". Found 0x"
-      << std::hex << (int)c << ", expected space.";
+        << "Invalid character in request at position " << i << ". Found 0x"
+        << std::hex << (int)c << ", expected space.";
   }
 }
 
@@ -65,21 +62,18 @@ void check_is_space(
  *  newline (`\n`).
  */
 void check_not_line_end(
-  std::string_view header_view,
-  std::size_t i,
-  std::string_view expected,
-  const source_location& loc = source_location::current()
-) {
+    std::string_view header_view,
+    std::size_t i,
+    std::string_view expected,
+    const std::source_location& loc = std::source_location::current()) {
   if (i >= header_view.size()) {
-    throw InvalidArgument(loc)
-      << "Unexpected end of input at position " << i << "; expected "
-      << expected;
+    throw InvalidArgument(loc) << "Unexpected end of input at position " << i
+                               << "; expected " << expected;
   }
 
   if (header_view.at(i) == '\r' || header_view.at(i) == '\n') {
-    throw InvalidArgument(loc)
-      << "Unexpected end of line at position " << i << "; expected "
-      << expected;
+    throw InvalidArgument(loc) << "Unexpected end of line at position " << i
+                               << "; expected " << expected;
   }
 }
 
@@ -88,25 +82,22 @@ void check_not_line_end(
  * pairs into the provided map.
  */
 void insert_view_pairs(
-  std::string_view view,
-  std::size_t key_start,
-  std::size_t key_end,
-  std::size_t value_start,
-  std::size_t value_end,
-  http::HeadersView* pairs
-) {
+    std::string_view view,
+    std::size_t key_start,
+    std::size_t key_end,
+    std::size_t value_start,
+    std::size_t value_end,
+    http::HeadersView* pairs) {
   LW_CHECK_NULL(pairs);
   if (key_start >= key_end) return;
   if (value_start >= value_end) {
-    pairs->insert({
-      view.substr(key_start, key_end - key_start),
-      view.substr(value_start, 0)
-    });
+    pairs->insert(
+        {view.substr(key_start, key_end - key_start),
+         view.substr(value_start, 0)});
   } else {
-    pairs->insert({
-      view.substr(key_start, key_end - key_start),
-      view.substr(value_start, value_end - value_start)
-    });
+    pairs->insert(
+        {view.substr(key_start, key_end - key_start),
+         view.substr(value_start, value_end - value_start)});
   }
 }
 
@@ -116,9 +107,7 @@ void insert_view_pairs(
  * The values are not copied from the source string.
  */
 void parse_query_params(
-  std::string_view params_str,
-  http::HeadersView* query_params
-) {
+    std::string_view params_str, http::HeadersView* query_params) {
   LW_CHECK_NULL(query_params);
 
   bool parsing_key = true;
@@ -137,11 +126,7 @@ void parse_query_params(
 
     if (c == '&') {
       insert_view_pairs(
-        params_str,
-        key_start, key_end,
-        value_start, i,
-        query_params
-      );
+          params_str, key_start, key_end, value_start, i, query_params);
       key_start = key_end = value_start = i + 1;
       parsing_key = true;
     }
@@ -150,11 +135,7 @@ void parse_query_params(
   // Check for a dangling param.
   if (key_start != i) {
     insert_view_pairs(
-      params_str,
-      key_start, key_end,
-      value_start, i,
-      query_params
-    );
+        params_str, key_start, key_end, value_start, i, query_params);
   }
 }
 
@@ -172,9 +153,8 @@ void parse_query_params(
  * @return
  *  The Key-Value pair parsed from the line of header.
  */
-std::pair<std::string_view, std::string_view> parse_header_line(
-  std::string_view* header_view
-) {
+std::pair<std::string_view, std::string_view>
+parse_header_line(std::string_view* header_view) {
   LW_CHECK_NULL(header_view);
   std::size_t i = 0;
   for (; i < header_view->size() && header_view->at(i) != ':'; ++i) {
@@ -201,16 +181,15 @@ std::pair<std::string_view, std::string_view> parse_header_line(
   // extra spaces before the \r\n which should be ignored.
 
   auto results = std::make_pair(
-    header_view->substr(0, colon_pos),
-    header_view->substr(value_start, value_end - value_start)
-  );
+      header_view->substr(0, colon_pos),
+      header_view->substr(value_start, value_end - value_start));
   header_view->remove_prefix(value_end + 2);
   return results;
 }
 
-}
+} // namespace
 
-co::Future<void> HttpRequest::read_header() {
+co::future<void> HttpRequest::read_header() {
   if (!_raw_header.empty()) {
     throw FailedPrecondition() << "Header already loaded.";
   }
@@ -225,38 +204,39 @@ co::Future<void> HttpRequest::read_header() {
 
   std::size_t method_line_end = _parse_method_line(_raw_header);
   _parse_headers(
-    std::string_view{
-      _raw_header.data() + method_line_end,
-      _raw_header.size() - method_line_end
-    }
-  );
+      std::string_view{
+          _raw_header.data() + method_line_end,
+          _raw_header.size() - method_line_end});
   _parse_content_length();
 }
 
-co::Future<Buffer> HttpRequest::body() const {
+co::future<Buffer> HttpRequest::body() const {
   // TODO(alaina): Implement other methods for determining the end of an HTTP
   // request's body.
   if (content_length() == 0) return co::make_resolved_future(Buffer{});
   if (content_length() > 0) return _connection.read(content_length());
 
   throw Internal()
-    << "Unsupported method of content body determination in request.";
+      << "Unsupported method of content body determination in request.";
 }
 
 std::size_t HttpRequest::_parse_method_line(std::string_view header_view) {
   // GET /foo/bar HTTP/1.1\r\n
   // Parse HTTP verb.
   std::size_t i = 0;
-  while (is_not_space(header_view, i)) ++i;
+  while (is_not_space(header_view, i))
+    ++i;
   check_is_space(header_view, i); // May be end of sequence.
   _method = header_view.substr(0, i);
 
   // Parse path and query params.
   std::size_t start = ++i;
-  while (is_not_space(header_view, i) && header_view.at(i) != '?') ++i;
+  while (is_not_space(header_view, i) && header_view.at(i) != '?')
+    ++i;
   std::size_t end = i;
   if (i < header_view.size() && header_view.at(i) == '?') {
-    while (is_not_space(header_view, i)) ++i;
+    while (is_not_space(header_view, i))
+      ++i;
     check_is_space(header_view, i);
     parse_query_params(header_view.substr(end + 1, i - end), &_query_params);
   }
@@ -266,17 +246,18 @@ std::size_t HttpRequest::_parse_method_line(std::string_view header_view) {
 
   // Parse HTTP version.
   start = ++i;
-  while (is_not_space(header_view, i)) ++i;
+  while (is_not_space(header_view, i))
+    ++i;
   if (i + 1 >= header_view.size()) {
     throw InvalidArgument()
-      << "Unexpected end of input after HTTP method line.";
+        << "Unexpected end of input after HTTP method line.";
   } else if (header_view.at(i) != '\r' || header_view.at(i + 1) != '\n') {
     throw InvalidArgument()
-      << "Unexpected characters after HTTP version, expected \\r\\n.";
+        << "Unexpected characters after HTTP version, expected \\r\\n.";
   }
   _http_version = header_view.substr(start, i - start);
 
-  return i + 2;  // Skip \r\n
+  return i + 2; // Skip \r\n
 }
 
 void HttpRequest::_parse_headers(std::string_view header_view) {
@@ -293,15 +274,11 @@ void HttpRequest::_parse_content_length() {
 
   std::string_view content_length_str = header("content-length");
   auto res = std::from_chars(
-    content_length_str.begin(),
-    content_length_str.end(),
-    _content_length
-  );
+      content_length_str.begin(), content_length_str.end(), _content_length);
   if (res.ptr != content_length_str.end() || _content_length < 0) {
-    throw InvalidArgument()
-      << "Invalid Content-Length \"" << content_length_str
-      << "\"; expected a positive integer.";
+    throw InvalidArgument() << "Invalid Content-Length \"" << content_length_str
+                            << "\"; expected a positive integer.";
   }
 }
 
-}
+} // namespace lw

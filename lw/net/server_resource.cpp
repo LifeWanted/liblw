@@ -30,7 +30,7 @@ bool register_server_resource(
   return true;
 }
 
-co::Future<std::unique_ptr<ServerResourceBase>> construct_server_resource(
+co::future<std::unique_ptr<ServerResourceBase>> construct_server_resource(
     const std::type_info& resource_info, ServerResourceContext& context) {
   std::type_index resource_idx{resource_info};
   if (!get_server_resources().contains(resource_idx)) {

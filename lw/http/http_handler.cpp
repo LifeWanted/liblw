@@ -6,7 +6,7 @@
 
 namespace lw {
 
-co::Future<void> HttpHandler::_default_behavior() {
+co::future<void> HttpHandler::_default_behavior() {
   // TODO(alaina): Determine implemented methods so we can respond with a 405.
   // response.status(HttpStatus::METHOD_NOT_ALLOWED);
   // response.header("Allow", "");

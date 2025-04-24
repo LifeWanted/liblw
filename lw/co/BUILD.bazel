@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 cc_library(
     name = "await",
@@ -27,7 +27,6 @@ cc_library(
     hdrs = ["future.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":scheduler",
         "//lw/err",
     ],
 )
@@ -41,6 +40,7 @@ cc_test(
         ":task",
         "//lw/co/testing:destroy_scheduler",
         "//lw/err",
+        "//lw/log",
         "@googletest//:gtest_main",
     ],
 )

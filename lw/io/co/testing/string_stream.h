@@ -18,21 +18,16 @@ namespace lw::io::testing {
  * This class is only useful for testing. If you find a non-testing use for this
  * you should rearchitect your solution.
  */
-class CoStringStream: public CoStream {
+class CoStringStream : public CoStream {
 public:
-  explicit CoStringStream(
-    std::string_view in,
-    std::string& out
-  ):
-    _read_str{in},
-    _write_str{out}
-  {}
+  explicit CoStringStream(std::string_view in, std::string& out)
+      : _read_str{in}, _write_str{out} {}
 
   void close() override { _read_str.clear(); }
   bool eof() const override { return _read_pos >= _read_str.size(); }
   bool good() const override { return !eof() && !_read_str.empty(); }
 
-  co::Future<std::size_t> read(Buffer& buffer) override {
+  co::future<std::size_t> read(Buffer& buffer) override {
     co_await co::next_tick();
     std::size_t read_size = std::min(_read_str.size(), buffer.size());
     buffer.copy(_read_str.begin() + _read_pos, read_size);
@@ -40,7 +35,7 @@ public:
     co_return read_size;
   }
 
-  co::Future<std::size_t> write(const Buffer& buffer) override {
+  co::future<std::size_t> write(const Buffer& buffer) override {
     co_await co::next_tick();
     _write_str += static_cast<std::string_view>(buffer);
     co_return buffer.size();
@@ -54,4 +49,4 @@ private:
   std::string& _write_str;
 };
 
-}
+} // namespace lw::io::testing

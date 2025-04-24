@@ -2,12 +2,12 @@
 
 #include <exception>
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "lw/co/scheduler.h"
 #include "lw/co/task.h"
 #include "lw/co/testing/destroy_scheduler.h"
 #include "lw/err/canonical.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace lw::co {
 namespace {
@@ -15,25 +15,27 @@ namespace {
 using ::lw::co::testing::destroy_all_schedulers;
 using ::testing::HasSubstr;
 
+// MARK: Int Tests
+
 TEST(PromiseInt, ValueComesThroughFuture) {
-  Promise<int> p;
-  Future<int> f = p.get_future();
+  promise<int> p;
+  future<int> f = p.get_future();
   p.set_value(42);
   EXPECT_TRUE(f.await_ready());
   EXPECT_EQ(f.await_resume(), 42);
 }
 
 TEST(PromiseInt, ExceptionComesThroughFuture) {
-  Promise<int> p;
-  Future<int> f = p.get_future();
+  promise<int> p;
+  future<int> f = p.get_future();
   p.set_exception(std::make_exception_ptr(InvalidArgument() << "foobar"));
   EXPECT_TRUE(f.await_ready());
   EXPECT_THROW(f.await_resume(), InvalidArgument);
 }
 
 TEST(PromiseInt, DetectsReadiness) {
-  Promise<int> p;
-  Future<int> f = p.get_future();
+  promise<int> p;
+  future<int> f = p.get_future();
   EXPECT_FALSE(f.await_ready());
   p.set_value(123);
   EXPECT_TRUE(f.await_ready());
@@ -41,8 +43,8 @@ TEST(PromiseInt, DetectsReadiness) {
 
 TEST(PromiseInt, SignalsForSuspensionWhenNotReady) {
   Scheduler::this_thread().schedule([]() -> Task {
-    Promise<int> p;
-    Future<int> f = p.get_future();
+    promise<int> p;
+    future<int> f = p.get_future();
     EXPECT_FALSE(f.await_ready());
     EXPECT_TRUE(f.await_suspend({}));
     co_return;
@@ -53,8 +55,8 @@ TEST(PromiseInt, SignalsForSuspensionWhenNotReady) {
 
 TEST(PromiseInt, SignalsNoSuspensionWhenReady) {
   Scheduler::this_thread().schedule([]() -> Task {
-    Promise<int> p;
-    Future<int> f = p.get_future();
+    promise<int> p;
+    future<int> f = p.get_future();
     p.set_value(42);
     EXPECT_TRUE(f.await_ready());
     EXPECT_FALSE(f.await_suspend({}));
@@ -65,7 +67,7 @@ TEST(PromiseInt, SignalsNoSuspensionWhenReady) {
 }
 
 TEST(PromiseInt, FutureIsAwaitable) {
-  Promise<int> p;
+  promise<int> p;
   int result = 0;
   Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 0);
@@ -84,7 +86,7 @@ TEST(PromiseInt, FutureIsAwaitable) {
 }
 
 TEST(PromiseInt, ExceptionsAreThrown) {
-  Promise<int> p;
+  promise<int> p;
   int result = 0;
   Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 0);
@@ -104,9 +106,7 @@ TEST(PromiseInt, ExceptionsAreThrown) {
 }
 
 TEST(PromiseInt, FutureCoroutine) {
-  auto coro = [](int i) -> Future<int> {
-    co_return i * 2;
-  };
+  auto coro = [](int i) -> future<int> { co_return i * 2; };
   int result = 0;
   Scheduler::this_thread().schedule([&]() -> Task {
     ++result;
@@ -123,12 +123,8 @@ TEST(PromiseInt, FutureCoroutine) {
 }
 
 TEST(PromiseInt, CoReturnSetFuture) {
-  auto next_tick_coro = [](int i) -> Future<int> {
-    co_return i * 2;
-  };
-  auto coro = [&](int i) -> Future<int> {
-    co_return next_tick_coro(i);
-  };
+  auto next_tick_coro = [](int i) -> future<int> { co_return i * 2; };
+  auto coro = [&](int i) -> future<int> { co_return next_tick_coro(i); };
   int result = 0;
   Scheduler::this_thread().schedule([&]() -> Task {
     result += 2;
@@ -142,13 +138,11 @@ TEST(PromiseInt, CoReturnSetFuture) {
 }
 
 TEST(PromiseInt, CoReturnSuspendedFuture) {
-  auto next_tick_coro = [](int i) -> Future<int> {
+  auto next_tick_coro = [](int i) -> future<int> {
     co_await next_tick();
     co_return i * 2;
   };
-  auto coro = [&](int i) -> Future<int> {
-    co_return next_tick_coro(i);
-  };
+  auto coro = [&](int i) -> future<int> { co_return next_tick_coro(i); };
   int result = 0;
   Scheduler::this_thread().schedule([&]() -> Task {
     result += 2;
@@ -162,7 +156,7 @@ TEST(PromiseInt, CoReturnSuspendedFuture) {
 }
 
 TEST(PromiseInt, ThrowingFutureCoroutine) {
-  auto coro = []() -> Future<int> {
+  auto coro = []() -> future<int> {
     co_await next_tick();
     throw InvalidArgument() << "On noes!";
   };
@@ -182,12 +176,10 @@ TEST(PromiseInt, ThrowingFutureCoroutine) {
 }
 
 TEST(PromiseInt, CoReturnThrownFuture) {
-  auto next_tick_coro = [](int i) -> Future<int> {
+  auto next_tick_coro = [](int i) -> future<int> {
     throw InvalidArgument() << "On noes!";
   };
-  auto coro = [&](int i) -> Future<int> {
-    co_return next_tick_coro(i);
-  };
+  auto coro = [&](int i) -> future<int> { co_return next_tick_coro(i); };
   int result = 0;
   Scheduler::this_thread().schedule([&]() -> Task {
     ++result;
@@ -206,26 +198,27 @@ TEST(PromiseInt, CoReturnThrownFuture) {
 }
 
 // -------------------------------------------------------------------------- //
+// MARK: Void Tests
 
 TEST(PromiseVoid, ValueComesThroughFuture) {
-  Promise<void> p;
-  Future<void> f = p.get_future();
+  promise<void> p;
+  future<void> f = p.get_future();
   p.set_value();
   EXPECT_TRUE(f.await_ready());
   EXPECT_NO_THROW(f.await_resume());
 }
 
 TEST(PromiseVoid, ExceptionComesThroughFuture) {
-  Promise<void> p;
-  Future<void> f = p.get_future();
+  promise<void> p;
+  future<void> f = p.get_future();
   p.set_exception(std::make_exception_ptr(InvalidArgument() << "foobar"));
   EXPECT_TRUE(f.await_ready());
   EXPECT_THROW(f.await_resume(), InvalidArgument);
 }
 
 TEST(PromiseVoid, DetectsReadiness) {
-  Promise<void> p;
-  Future<void> f = p.get_future();
+  promise<void> p;
+  future<void> f = p.get_future();
   EXPECT_FALSE(f.await_ready());
   p.set_value();
   EXPECT_TRUE(f.await_ready());
@@ -233,8 +226,8 @@ TEST(PromiseVoid, DetectsReadiness) {
 
 TEST(PromiseVoid, SignalsForSuspensionWhenNotReady) {
   Scheduler::this_thread().schedule([]() -> Task {
-    Promise<void> p;
-    Future<void> f = p.get_future();
+    promise<void> p;
+    future<void> f = p.get_future();
     EXPECT_FALSE(f.await_ready());
     EXPECT_TRUE(f.await_suspend({}));
     co_return;
@@ -245,8 +238,8 @@ TEST(PromiseVoid, SignalsForSuspensionWhenNotReady) {
 
 TEST(PromiseVoid, SignalsNoSuspensionWhenReady) {
   Scheduler::this_thread().schedule([]() -> Task {
-    Promise<void> p;
-    Future<void> f = p.get_future();
+    promise<void> p;
+    future<void> f = p.get_future();
     p.set_value();
     EXPECT_TRUE(f.await_ready());
     EXPECT_FALSE(f.await_suspend({}));
@@ -257,7 +250,7 @@ TEST(PromiseVoid, SignalsNoSuspensionWhenReady) {
 }
 
 TEST(PromiseVoid, FutureIsAwaitable) {
-  Promise<void> p;
+  promise<void> p;
   int result = 1;
   Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 1);
@@ -278,7 +271,7 @@ TEST(PromiseVoid, FutureIsAwaitable) {
 }
 
 TEST(PromiseVoid, ExceptionsAreThrown) {
-  Promise<void> p;
+  promise<void> p;
   int result = 0;
   Scheduler::this_thread().schedule([&]() -> Task {
     EXPECT_EQ(result, 0);
@@ -298,7 +291,7 @@ TEST(PromiseVoid, ExceptionsAreThrown) {
 }
 
 TEST(PromiseVoid, FutureCoroutine) {
-  auto coro = [](int& i) -> Future<void> {
+  auto coro = [](int& i) -> future<void> {
     i *= 2;
     co_return;
   };
@@ -318,7 +311,7 @@ TEST(PromiseVoid, FutureCoroutine) {
 }
 
 TEST(PromiseVoid, ThrowingFutureCoroutine) {
-  auto coro = []() -> Future<void> {
+  auto coro = []() -> future<void> {
     co_await next_tick();
     throw InvalidArgument() << "On noes!";
   };
@@ -337,24 +330,112 @@ TEST(PromiseVoid, ThrowingFutureCoroutine) {
   destroy_all_schedulers();
 }
 
+TEST(PromiseVoid, SetValue_Future) {
+  promise<void> p1;
+  future<void> f1 = p1.get_future();
+
+  promise<void> p2;
+  p1.set_value(p2.get_future());
+
+  EXPECT_FALSE(f1.await_ready());
+
+  p2.set_value();
+
+  EXPECT_TRUE(f1.await_ready());
+  EXPECT_NO_THROW(f1.await_resume());
+}
+
+TEST(PromiseVoid, SetValue_CoroutineFuture) {
+  promise<void> p1;
+  future<void> f1 = p1.get_future();
+
+  auto coro = []() -> future<void> { co_await next_tick(); };
+
+  Scheduler::this_thread().schedule([&]() -> Task {
+    p1.set_value(coro());
+    co_return;
+  });
+  Scheduler::this_thread().run();
+  EXPECT_NO_THROW(f1.await_resume());
+  destroy_all_schedulers();
+}
+
+TEST(PromiseVoid, Suspended_SetValue) {
+  promise<void> p1;
+  future<void> f1 = p1.get_future();
+
+  auto next_tick_coro = [&]() -> future<void> {
+    co_await next_tick();
+    p1.set_value();
+  };
+
+  Scheduler::this_thread().schedule([&]() -> Task {
+    future<void> f2 = next_tick_coro();
+    EXPECT_FALSE(f1.await_ready());
+    EXPECT_FALSE(f2.await_ready());
+    EXPECT_NO_THROW(co_await f1); // Suspended.
+
+    EXPECT_TRUE(f1.await_ready());
+    EXPECT_FALSE(f2.await_ready());
+    co_await next_tick();
+
+    EXPECT_TRUE(f2.await_ready());
+    EXPECT_NO_THROW(co_await f2);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
+TEST(PromiseVoid, Suspended_SetValue_Future) {
+  promise<void> p1;
+  future<void> f1 = p1.get_future();
+
+  promise<void> p2;
+  future<void> f2 = p2.get_future();
+
+  auto next_tick_coro = [&]() -> future<void> {
+    co_await next_tick();
+    p1.set_value(std::move(f2));
+
+    co_await next_tick();
+    p2.set_value();
+  };
+
+  Scheduler::this_thread().schedule([&]() -> Task {
+    future<void> f3 = next_tick_coro();
+    EXPECT_FALSE(f1.await_ready());
+    EXPECT_FALSE(f3.await_ready());
+    EXPECT_NO_THROW(co_await f1); // Suspended.
+
+    EXPECT_TRUE(f1.await_ready());
+    EXPECT_FALSE(f3.await_ready());
+    co_await next_tick();
+
+    EXPECT_TRUE(f3.await_ready());
+    EXPECT_NO_THROW(co_await f3);
+  });
+  Scheduler::this_thread().run();
+  destroy_all_schedulers();
+}
+
 // -------------------------------------------------------------------------- //
+// MARK: Util Tests
 
 TEST(MakeFuture, ResolveVoid) {
-  Future<void> f = make_resolved_future();
+  future<void> f = make_resolved_future();
   EXPECT_TRUE(f.await_ready());
   EXPECT_NO_THROW(f.await_resume());
 }
 
 TEST(MakeFuture, ResolveToAValue) {
-  Future<int> f = make_resolved_future(123);
+  future<int> f = make_resolved_future(123);
   EXPECT_TRUE(f.await_ready());
   EXPECT_EQ(f.await_resume(), 123);
 }
 
 TEST(MakeFuture, RejectAValue) {
-  Future<int> f = make_resolved_future<int>(
-    std::make_exception_ptr(InvalidArgument() << "foobar")
-  );
+  future<int> f = make_resolved_future<int>(
+      std::make_exception_ptr(InvalidArgument() << "foobar"));
   EXPECT_TRUE(f.await_ready());
   EXPECT_THROW(f.await_resume(), InvalidArgument);
 }
@@ -362,10 +443,9 @@ TEST(MakeFuture, RejectAValue) {
 TEST(AwaitAll, AllResolve) {
   Scheduler::this_thread().schedule([]() -> Task {
     std::tuple<int, float, double> res = co_await all(
-      make_resolved_future<int>(1),
-      make_resolved_future<float>(2.0f),
-      make_resolved_future<double>(3.14)
-    );
+        make_resolved_future<int>(1),
+        make_resolved_future<float>(2.0f),
+        make_resolved_future<double>(3.14));
     EXPECT_EQ(std::get<int>(res), 1);
     EXPECT_EQ(std::get<float>(res), 2.0f);
     EXPECT_EQ(std::get<double>(res), 3.14);
@@ -374,18 +454,18 @@ TEST(AwaitAll, AllResolve) {
   destroy_all_schedulers();
 }
 
-// TODO(#14): Implement support for Future<void> in co::all.
+// TODO(#14): Implement support for future<void> in co::all.
 // TEST(AwaitAll, AllVoid) {
 //   int counter = 0;
-//   auto coro0 = [&]() -> Future<void> {
+//   auto coro0 = [&]() -> future<void> {
 //     co_await next_tick();
 //     EXPECT_EQ(++counter, 1);
 //   };
-//   auto coro1 = [&]() -> Future<void> {
+//   auto coro1 = [&]() -> future<void> {
 //     co_await next_tick();
 //     EXPECT_EQ(++counter, 2);
 //   };
-//   auto coro2 = [&]() -> Future<void> {
+//   auto coro2 = [&]() -> future<void> {
 //     co_await next_tick();
 //     EXPECT_EQ(++counter, 3);
 //   };
@@ -400,7 +480,7 @@ TEST(AwaitAll, AllResolve) {
 
 TEST(AwaitAll, ResolveOutOfOrder) {
   int counter = 0;
-  auto coro0 = [&]() -> Future<int> {
+  auto coro0 = [&]() -> future<int> {
     EXPECT_EQ(counter, 0);
     co_await next_tick();
     EXPECT_EQ(counter, 1);
@@ -408,13 +488,13 @@ TEST(AwaitAll, ResolveOutOfOrder) {
     EXPECT_EQ(counter, 2);
     co_return ++counter;
   };
-  auto coro1 = [&]() -> Future<int> {
+  auto coro1 = [&]() -> future<int> {
     EXPECT_EQ(counter, 0);
     co_await next_tick();
     EXPECT_EQ(counter, 1);
     co_return ++counter;
   };
-  auto coro2 = [&]() -> Future<int> {
+  auto coro2 = [&]() -> future<int> {
     EXPECT_EQ(counter, 0);
     co_return ++counter;
   };
@@ -429,5 +509,5 @@ TEST(AwaitAll, ResolveOutOfOrder) {
   destroy_all_schedulers();
 }
 
-}
-}
+} // namespace
+} // namespace lw::co
